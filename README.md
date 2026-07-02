@@ -16,7 +16,7 @@ policy. Built as a fair, equal-footing **benchmark study** to support a paper / 
 | M1 DSP core (STFT/ISTFT, bands, features) + eval harness | ✅ (perfect-reconstruction tested) |
 | M2 classical baselines (hard/soft threshold, spectral subtraction, Wiener) + data pipeline | ✅ |
 | M3 learned baselines (MaskGRU / MaskTCN / Attention) + supervised trainer | ✅ (beats baselines on synthetic; overfit-probe tested) |
-| M4 RL agent + RL-attention hybrid (online adaptation — the novelty) | ⏳ |
+| M4 RL agent + RL-attention hybrid + reference-free online adaptation (the novelty) | ✅ mechanism built & tested; frozen policy beats Wiener incl. burst. **Open experiment:** show online > frozen under noise-distribution shift (real data). |
 | M5 full benchmark tables + M6 real-time latency/RTF profiling | ⏳ |
 | M7 edge deployment (hardware chosen from M6 data) | ⏳ deferred |
 
