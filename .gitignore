@@ -8,6 +8,7 @@ __pycache__/
 venv/
 
 # Data & artifacts (too large / regenerable)
+*.zip
 data/raw/
 data/voicebank/
 data/dns/

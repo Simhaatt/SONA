@@ -41,6 +41,8 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=30, help="supervised epochs")
     ap.add_argument("--rl-epochs", type=int, default=30)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--ablate-adapters", action="store_true",
+                    help="also eval scalar/lowrank/band_bias/film online adapters")
     args = ap.parse_args()
 
     ROOT = _add_repo_to_path(args.repo)
@@ -55,7 +57,7 @@ def main() -> None:
     from src.eval.report import latex_table, markdown_table, save_rows_csv
     from src.eval.reward_squim import make_reward, squim_available
     from src.frontend import SpectralFrontend
-    from src.models import NeuralEnhancer, OnlineAdapter
+    from src.models import NeuralEnhancer, OnlineAdapter, make_adapter
     from src.train.dataset_torch import TorchPairDataset
     from src.train.train_rl import train_rl
     from src.train.train_supervised import build_frontend, train
@@ -76,6 +78,12 @@ def main() -> None:
     train_samples = list(PairDataset(manifest=out / "train.csv", limit=args.limit_train))
     test_samples = list(PairDataset(manifest=out / "test.csv", limit=args.limit_test))
     log.info("train=%d test=%d", len(train_samples), len(test_samples))
+    if not train_samples:
+        raise SystemExit(
+            "No TRAIN pairs found. The attached VoiceBank-DEMAND must include "
+            "clean_trainset_wav/ and noisy_trainset_wav/ (not just the test set).")
+    if not test_samples:
+        raise SystemExit("No TEST pairs found under --vbd-root (clean_testset_wav/noisy_testset_wav).")
 
     metrics = ["si_sdr", "si_sdr_i", "snr", "snr_i", "pesq", "stoi", "estoi", "lsd"]
     fe = SpectralFrontend(sr=16000, n_fft=512, n_bands=32)
@@ -105,10 +113,18 @@ def main() -> None:
     reward = make_reward("auto", device=device, sr=16000)
     rows += evaluate_method(NeuralEnhancer(policy, tf_rl, device=device, name="rl_frozen"),
                             test_samples, include_metrics=metrics)
-    rows += evaluate_method(
-        OnlineAdapter(policy, tf_rl, device=device, name="rl_online", steps=12, lr=0.1,
-                      reward_fn=reward),
-        test_samples, include_metrics=metrics)
+
+    online_variants = (
+        [("scalar", "rl_online_scalar"), ("lowrank", "rl_online_lowrank"),
+         ("band_bias", "rl_online_band_bias"), ("film", "rl_online_film")]
+        if args.ablate_adapters else [("band_bias", "rl_online")]
+    )
+    for adapter_kind, mname in online_variants:
+        log.info("online adapter %s", adapter_kind)
+        rows += evaluate_method(
+            OnlineAdapter(policy, tf_rl, device=device, name=mname, steps=12, lr=0.1,
+                          reward_fn=reward, adapter=make_adapter(adapter_kind, tf_rl.n_bands)),
+            test_samples, include_metrics=metrics)
 
     # ---- report
     summary = aggregate(rows, group_keys=("method",))
@@ -120,11 +136,18 @@ def main() -> None:
     print(markdown_table(summary))
 
     by = {r["method"]: r for r in summary}
-    if "rl_online" in by and "rl_frozen" in by:
-        for k in ("si_sdr_i", "pesq", "stoi", "estoi"):
-            fo, on = by["rl_frozen"].get(k), by["rl_online"].get(k)
-            if isinstance(fo, (int, float)) and isinstance(on, (int, float)):
-                print(f"delta(online - frozen) {k}: {on - fo:+.3f}")
+    frozen = by.get("rl_frozen")
+    if frozen:
+        print("\ndelta(online - frozen):")
+        for name, r in by.items():
+            if not name.startswith("rl_online"):
+                continue
+            parts = []
+            for k in ("si_sdr_i", "pesq", "stoi", "estoi"):
+                fo, on = frozen.get(k), r.get(k)
+                if isinstance(fo, (int, float)) and isinstance(on, (int, float)):
+                    parts.append(f"{k} {on - fo:+.3f}")
+            print(f"  {name}: " + " | ".join(parts))
 
 
 if __name__ == "__main__":
