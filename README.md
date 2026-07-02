@@ -1,24 +1,48 @@
-# Adaptive Audio Noise Cancellation (Learning-Based Frequency-Domain)
+# SONA — Self-supervised Online Neural Audio engine
 
-Real-time speech denoiser: **STFT → per-band attenuation (gain mask) → ISTFT/overlap-add**, with
-the suppression gains chosen by methods ranging from classical filters to a learned, *online-adaptive*
-policy. Built as a fair, equal-footing **benchmark study** to support a paper / patent / FYP.
+Real-time speech enhancement that **adapts after deployment, with no clean reference and no
+cloud**. Audio flows through **STFT → per-band attenuation (+ EQ / dynamic-range) → ISTFT /
+overlap-add**, where the gains are set by a lightweight learned controller. At inference the
+controller is refined online by maximizing a **pretrained non-intrusive quality estimator
+(TorchAudio-SQUIM)** — the reference-free reward.
 
-> Central design principle: every method — classical or learned — shares the **same STFT
+Built as a fair, equal-footing **benchmark study + a defensible novelty** to support a journal
+paper, a provisional patent, and the FYP demo.
+
+> **Central design principle:** every method — classical or learned — shares the **same STFT
 > front-end, the same per-band gain output space, and the same evaluation harness**. Only the
 > gain-estimation step differs. That is what makes the comparison publishable.
 
+## The idea (why this is novel)
+
+Plain ML frequency masking (RNNoise, DeepFilterNet, …) is well-trodden and not patentable. SONA's
+core is different and narrow enough to defend:
+
+> A learned controller adjusts the parameters of an **interpretable DSP chain**, and a
+> **low-dimensional** adaptation module is updated **online at inference** by maximizing a
+> **reference-free** quality signal — stable and cheap enough to run on edge hardware.
+
+- **Layer A (research / patent core):** reference-free online adaptation of a small controller.
+  Headline result = it beats a frozen model of equal size under **noise-distribution shift**.
+- **Layer B (product / demo / dependent claims):** the *same* controller drives EQ + dynamic
+  range; plus audio-scene context, a self-learning preference loop, GUI, and Raspberry Pi.
+
+See the full plan in the design doc referenced at the bottom.
+
 ## Status
 
-| Milestone | State |
+| Phase | State |
 |---|---|
-| M0 scaffold + utils | ✅ |
-| M1 DSP core (STFT/ISTFT, bands, features) + eval harness | ✅ (perfect-reconstruction tested) |
-| M2 classical baselines (hard/soft threshold, spectral subtraction, Wiener) + data pipeline | ✅ |
-| M3 learned baselines (MaskGRU / MaskTCN / Attention) + supervised trainer | ✅ (beats baselines on synthetic; overfit-probe tested) |
-| M4 RL agent + RL-attention hybrid + reference-free online adaptation (the novelty) | ✅ mechanism built & tested; frozen policy beats Wiener incl. burst. **Open experiment:** show online > frozen under noise-distribution shift (real data). |
-| M5 full benchmark tables + M6 real-time latency/RTF profiling | ⏳ |
-| M7 edge deployment (hardware chosen from M6 data) | ⏳ deferred |
+| Foundation: shared front-end, classical baselines, eval harness, learned models (M0–M3) | ✅ |
+| RL policy + attention hybrid + reference-free `OnlineAdapter` (M4) | ✅ |
+| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | ✅ machinery; **decision gate = real VoiceBank-DEMAND run on Kaggle** |
+| **P3** adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM) | ✅ (low-dim adaptation wins locally) |
+| **P4** differentiable parametric EQ + hum notch + compressor/limiter | ✅ built & tested |
+| P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ⏳ |
+| P5 real-time streaming, latency/RTF/power, ONNX/TFLite export, GUI, Raspberry Pi | ⏳ |
+| P6 paper write-up + provisional patent draft | ⏳ |
+
+37 tests passing.
 
 ## Install
 
@@ -26,39 +50,46 @@ policy. Built as a fair, equal-footing **benchmark study** to support a paper / 
 pip install -r requirements.txt
 ```
 
-Local dev here runs on Python 3.14 (CPU torch). `pesq`/`dnsmos`/`wer` have no wheels on 3.14 and
-degrade to `null` in the metrics table. The **full metric suite runs on Kaggle (Python 3.11)**.
+Local dev here runs on **Python 3.14 (CPU torch, no torchaudio)**: `pesq`/`dnsmos`/`wer` and
+`SQUIM` have no wheels, so metrics degrade to `null` and the reward falls back to a spectral
+heuristic. The **full metric suite + SQUIM reward run on Kaggle (Python 3.11, T4)**.
 
 ## Quick start (no downloads — synthetic data)
 
 ```bash
+# classical + learned benchmark on synthetic speech-like data
 python scripts/run_benchmark.py --config configs/baselines.yaml --limit 12
+
+# the headline experiment: train on seen noise, test on UNSEEN noise (frozen vs online-adaptive)
+python scripts/eval_shift.py --config configs/shift.yaml --epochs 12
+
+# adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM)
+python scripts/eval_shift.py --config configs/shift.yaml --epochs 12 --ablate-adapters
 ```
 
-Writes `results/summary.md`, `summary.tex`, `summary.csv`, `per_sample.csv`,
-`summary_by_noise.csv`, and before/after figures under `results/figures/`.
+## Real data (VoiceBank-DEMAND, on Kaggle)
 
-## Real data (VoiceBank-DEMAND)
-
-```bash
-# attach/download the corpus, then:
-python scripts/prepare_data.py --root /path/to/VoiceBank-DEMAND
-# point the config at data/manifests/test.csv (data.manifest), then run_benchmark.py
-```
+Open `notebooks/kaggle_benchmark.ipynb`, attach the SONA repo + a VoiceBank-DEMAND dataset, set
+the two paths, and run. It calls `scripts/kaggle_run.py`, which builds manifests and runs the full
+comparison (classical + supervised MaskGRU + RL frozen vs **RL online with SQUIM reward**) on the
+VoiceBank-DEMAND test set (whose noises are unseen in training → a built-in distribution-shift
+benchmark), with the full metric suite.
 
 ## Layout
 
 ```
-src/dsp/         STFT/ISTFT, band mapping, features        (shared front-end)
-src/frontend.py  SpectralFrontend + Enhancer interface
-src/baselines/   classical methods (all subclass Enhancer)
-src/data/        datasets, noise mixing, burst augmentation
-src/eval/        metrics, evaluate, report (tables + figures)
-src/models/      learned models (mask net, attention, RL)  [M3/M4]
-src/train/       training loops + losses                   [M3/M4]
-scripts/         prepare_data, run_benchmark
-configs/         YAML experiment configs (inherit default.yaml)
-tests/           DSP correctness + end-to-end pipeline
+src/dsp/          STFT/ISTFT, band mapping, features        (shared front-end, numpy)
+src/frontend.py   SpectralFrontend + Enhancer interface
+src/baselines/    classical methods (hard/soft threshold, spectral sub, Wiener)
+src/data/         datasets, noise mixing, burst aug, noise-type splits
+src/eval/         metrics, evaluate, report, reward_squim   (SQUIM reward + fallback)
+src/models/       torch front-end, mask/attention/RL models, OnlineAdapter,
+                  adapt.py (adaptation modules), eq.py (differentiable EQ/DRC)
+src/train/        supervised + RL training loops, losses
+scripts/          prepare_data, run_benchmark, eval_shift, kaggle_run
+notebooks/        kaggle_benchmark.ipynb (real-data run on the T4)
+configs/          YAML experiment configs (inherit default.yaml)
+tests/            DSP correctness, pipeline, reward, adapters, EQ/DRC
 ```
 
 ## Tests
@@ -67,11 +98,16 @@ tests/           DSP correctness + end-to-end pipeline
 python -m pytest -q
 ```
 
-Key guarantees: STFT→ISTFT perfect reconstruction; band gain partition-of-unity;
-end-to-end benchmark runs and the SNR-based baselines improve SI-SDR.
+Key guarantees: STFT→ISTFT perfect reconstruction; band-gain partition-of-unity; SNR-based
+baselines improve SI-SDR; SQUIM/heuristic reward is bounded; EQ unity = identity; each adapter is
+identity at reset; online adaptation runs with every adapter.
 
 ## Metrics
 
 SI-SDR & SI-SDRi, SNR & SNRi, PESQ (wb), STOI/ESTOI, DNSMOS, LSD, WER, plus latency/RTF (and
 params/MACs during profiling). Missing optional backends report `null` rather than failing.
-```
+
+---
+
+Design doc / roadmap: `C:\Users\hp\.claude\plans\c-users-hp-appdata-local-packages-53192-vectorized-wirth.md`
+(SONA plan — Layers A/B, datasets, phased milestones, patent-claim sketch).
