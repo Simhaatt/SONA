@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Data & artifacts (too large / regenerable)
+data/raw/
+data/voicebank/
+data/dns/
+results/audio/
+results/figures/
+results/*.csv
+checkpoints/
+runs/
+*.wav
+*.pt
+*.onnx
+*.ckpt
+
+# OS
+.DS_Store
+Thumbs.db

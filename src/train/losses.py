@@ -1,0 +1,42 @@
+"""Differentiable training losses.
+
+SI-SDR is the primary objective (it correlates with the SI-SDR(i) eval metric and is robust to
+scale). A magnitude-spectrogram term stabilises early training and discourages over-suppression.
+"""
+
+from __future__ import annotations
+
+import torch
+
+EPS = 1e-8
+
+
+def si_sdr_loss(estimate: torch.Tensor, reference: torch.Tensor) -> torch.Tensor:
+    """Negative mean SI-SDR (so minimising improves SI-SDR). Shapes (B, N)."""
+    est = estimate - estimate.mean(dim=-1, keepdim=True)
+    ref = reference - reference.mean(dim=-1, keepdim=True)
+    alpha = (est * ref).sum(dim=-1, keepdim=True) / (ref.pow(2).sum(dim=-1, keepdim=True) + EPS)
+    target = alpha * ref
+    noise = est - target
+    ratio = (target.pow(2).sum(dim=-1) + EPS) / (noise.pow(2).sum(dim=-1) + EPS)
+    si_sdr = 10.0 * torch.log10(ratio)
+    return -si_sdr.mean()
+
+
+def magnitude_loss(estimate: torch.Tensor, reference: torch.Tensor, n_fft: int = 512,
+                   hop: int = 128) -> torch.Tensor:
+    """L1 distance between log-magnitude spectrograms of estimate and reference."""
+    window = torch.hann_window(n_fft, periodic=True, device=estimate.device)
+    kw = dict(n_fft=n_fft, hop_length=hop, win_length=n_fft, window=window,
+              center=True, return_complex=True)
+    est_mag = torch.stft(estimate, **kw).abs()
+    ref_mag = torch.stft(reference, **kw).abs()
+    return torch.log1p(est_mag).sub(torch.log1p(ref_mag)).abs().mean()
+
+
+def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: float = 0.5,
+                  n_fft: int = 512, hop: int = 128) -> torch.Tensor:
+    loss = si_sdr_loss(estimate, reference)
+    if mag_weight > 0:
+        loss = loss + mag_weight * magnitude_loss(estimate, reference, n_fft, hop)
+    return loss

@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+passthrough & 12 & -0.000 & 3.882 & 0.000 & 3.906 & - & \textbf{0.836} & 0.441 & 40.944 & \textbf{0.005} \\
+hard_threshold & 12 & 1.106 & 4.988 & 2.726 & 6.632 & - & 0.682 & 0.134 & 9.386 & 0.007 \\
+soft_threshold & 12 & -2.449 & 1.433 & 0.031 & 3.937 & - & 0.648 & 0.099 & \textbf{9.282} & 0.007 \\
+spectral_subtraction & 12 & \textbf{4.144} & \textbf{8.026} & \textbf{4.589} & \textbf{8.495} & - & 0.829 & \textbf{0.463} & 29.836 & 0.007 \\
+wiener & 12 & 3.573 & 7.455 & 4.327 & 8.233 & - & 0.800 & 0.418 & 19.769 & 0.008 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,31 @@
+# Core numeric / audio stack
+numpy>=1.24
+scipy>=1.10
+soundfile>=0.12
+librosa>=0.10
+PyYAML>=6.0
+matplotlib>=3.7
+tqdm>=4.65
+
+# Deep learning
+torch>=2.1
+# torchaudio  # install matching your torch/CUDA build
+
+# Metrics (full suite; some need compilation and may lack wheels on very new Python)
+pystoi>=0.4
+pesq>=0.0.4            # PESQ; needs a C build. No wheel on Python 3.14 -> optional locally.
+torchmetrics>=1.2     # audio metrics (SI-SDR etc.)
+# onnxruntime>=1.16    # for DNSMOS ONNX model + edge export profiling
+# faster-whisper>=1.0  # ASR for WER (heavy); or use transformers wav2vec2
+
+# Profiling
+ptflops>=0.7          # params / MACs
+
+# Experiment logging (optional; TensorBoard used by default)
+tensorboard>=2.14
+# wandb>=0.16
+
+# ---
+# Notes:
+#  * Local dev here is Python 3.14 (torch CPU). pesq/DNSMOS/WER degrade gracefully when absent.
+#  * Full metric suite + GPU training run on Kaggle (Python 3.11) where all wheels exist.

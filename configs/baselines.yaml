@@ -1,0 +1,15 @@
+defaults: default.yaml
+
+# Hyperparameters for the classical baselines. Each maps to its Enhancer's constructor kwargs.
+methods:
+  passthrough: {}
+  hard_threshold:
+    k: 1.0
+  soft_threshold:
+    k: 1.0
+  spectral_subtraction:
+    alpha: 2.0
+    beta: 0.01
+  wiener:
+    weight: 0.98
+    min_gain: 0.05

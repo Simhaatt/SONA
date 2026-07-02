@@ -1,0 +1,47 @@
+# Base configuration inherited by all experiments (via `defaults: default.yaml`).
+# Override only what changes in each method/ablation config.
+
+seed: 1234
+sr: 16000
+
+stft:
+  n_fft: 512        # ablate 512 vs 1024
+  hop: 128          # 75% overlap
+  win_length: 512
+  center: true
+
+bands:
+  n_bands: 32       # perceptual bands for per-band gain (ablate 24/32/48)
+  scale: bark       # bark | mel | linear
+
+noise:
+  method: minstat   # noise-PSD estimator: minstat | first_frames
+
+# Metrics computed by the evaluation harness. Optional backends (pesq/dnsmos/wer) degrade to
+# null when unavailable in the environment.
+metrics:
+  - si_sdr
+  - si_sdr_i
+  - snr
+  - snr_i
+  - pesq
+  - stoi
+  - estoi
+  - lsd
+
+data:
+  # For local runs the synthetic generator is used when no dataset paths are given.
+  synthetic:
+    n: 20
+    duration: 2.0
+    snr_db_range: [0.0, 10.0]
+  # Real corpus (fill in for VoiceBank-DEMAND / Kaggle):
+  clean_dir: null
+  noisy_dir: null
+  manifest: null
+  limit: null
+
+paths:
+  results_dir: results
+  audio_out_dir: results/audio
+  figures_dir: results/figures

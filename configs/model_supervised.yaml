@@ -1,0 +1,25 @@
+defaults: default.yaml
+
+model:
+  kind: mask_gru      # mask_gru | mask_tcn | attention
+  hidden: 128
+  layers: 2
+  bidirectional: false
+
+train:
+  epochs: 20
+  batch_size: 8
+  lr: 0.0003
+  weight_decay: 0.00001
+  mag_weight: 0.5
+  crop_seconds: 2.0
+
+data:
+  synthetic:
+    n: 60             # training set size when using synthetic data
+    duration: 2.0
+    snr_db_range: [-5.0, 10.0]
+  val_synthetic:
+    n: 20
+    duration: 2.0
+    snr_db_range: [-5.0, 10.0]
