@@ -67,6 +67,8 @@ class OnlineAdapter(Enhancer):
         lr: float = 0.05,
         suppress_weight: float = 1.5,
         reg: float = 0.5,
+        reward_fn=None,
+        adapter=None,
         name: str = "rl_attention_online",
     ) -> None:
         fe = frontend or SpectralFrontend(
@@ -82,12 +84,19 @@ class OnlineAdapter(Enhancer):
         self.lr = lr
         self.suppress_weight = suppress_weight
         self.reg = reg  # keeps the online bias a *refinement* of the trained policy, not a takeover
+        # Optional waveform-domain reference-free reward (e.g. SQUIM). If None, use the built-in
+        # band-domain speech-presence heuristic. This is the primary reward for real experiments.
+        self.reward_fn = reward_fn
+        # Pluggable low-dimensional adaptation module (ablation knob). Default = per-band bias.
+        from .adapt import BandBias
+
+        self.adapter = adapter if adapter is not None else BandBias(self.tf.n_bands)
 
     def compute_gain(self, analysis: dict) -> np.ndarray:
         raise NotImplementedError("OnlineAdapter overrides enhance()")
 
     def _adapt(self, wav: np.ndarray):
-        """Run reference-free online adaptation. Returns (spec, base_gain, delta, length)."""
+        """Run reference-free online adaptation. Returns (spec, adapted_gain, length)."""
         x = torch.from_numpy(np.asarray(wav, dtype=np.float32)).unsqueeze(0).to(self.device)
         spec, feats = self.tf.analyze(x)
         noisy_band_power = torch.einsum("bft,kf->bkt", spec.abs() ** 2, self.tf.analysis)
@@ -96,28 +105,35 @@ class OnlineAdapter(Enhancer):
         with torch.no_grad():
             base_gain = self.policy(feats)  # (1, T, n_bands), deterministic mean
 
-        # A per-band additive bias, adapted per-utterance. The L2 reg keeps it a *refinement* of the
-        # trained policy so adaptation corrects for the current noise without discarding what the
-        # policy learned. No clean reference is used.
-        delta = torch.zeros(self.tf.n_bands, device=self.device, requires_grad=True)
-        opt = torch.optim.Adam([delta], lr=self.lr)
+        # Adapt a low-dimensional correction per-utterance. The L2 reg keeps it a *refinement* of
+        # the trained policy so adaptation corrects for the current noise without discarding what
+        # the policy learned. No clean reference is used.
+        params = self.adapter.reset(self.device)
+        opt = torch.optim.Adam(params, lr=self.lr)
+        length = x.shape[-1]
         for _ in range(self.steps):
             opt.zero_grad()
-            gain = (base_gain + delta.view(1, 1, -1)).clamp(0.0, 1.0).permute(0, 2, 1)
-            reward = reference_free_reward(gain, presence, self.suppress_weight)
-            loss = -reward + self.reg * delta.pow(2).mean()
+            gain_bt = self.adapter.apply(base_gain).clamp(0.0, 1.0)  # (1, T, n_bands)
+            if self.reward_fn is not None:
+                # Waveform-domain reward (SQUIM etc.): reconstruct and score, no clean reference.
+                enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
+                reward = self.reward_fn(enhanced, x)
+            else:
+                reward = reference_free_reward(gain_bt.permute(0, 2, 1), presence, self.suppress_weight)
+            loss = -reward + self.reg * self.adapter.reg()
             loss.backward()
             opt.step()
-        return spec, base_gain, delta.detach(), x.shape[-1]
+        with torch.no_grad():
+            adapted = self.adapter.apply(base_gain).clamp(0.0, 1.0)
+        return spec, adapted.detach(), length
 
     def enhance(self, wav: np.ndarray, sr: int | None = None) -> np.ndarray:
-        spec, base_gain, delta, length = self._adapt(wav)
+        spec, gain, length = self._adapt(wav)
         with torch.no_grad():
-            gain = (base_gain + delta.view(1, 1, -1)).clamp(0.0, 1.0)
             out = self.tf.apply_band_gain(spec, gain, length=length)
         return out.squeeze(0).cpu().numpy().astype(np.float32)
 
     def adaptation_delta_norm(self, wav: np.ndarray) -> float:
         """Diagnostic: magnitude of the online adaptation applied to `wav` (for the ablation)."""
-        _, _, delta, _ = self._adapt(wav)
-        return float(delta.abs().mean())
+        self._adapt(wav)
+        return self.adapter.correction_norm()

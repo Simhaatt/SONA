@@ -6,6 +6,8 @@ from .mask_net import MaskGRU, MaskTCN
 from .attention import AttentionMask
 from .rl_agent import RLGainPolicy
 from .rl_attention import RLAttentionPolicy, OnlineAdapter
+from .eq import ParametricEQ, Compressor, hum_notch_curve, GRAPHIC_EQ_FREQS
+from .adapt import make_adapter, ADAPTERS, ScalarBias, BandBias, LowRankBias, FiLM
 
 MODELS = {
     "mask_gru": MaskGRU,
@@ -29,6 +31,16 @@ __all__ = [
     "RLGainPolicy",
     "RLAttentionPolicy",
     "OnlineAdapter",
+    "ParametricEQ",
+    "Compressor",
+    "hum_notch_curve",
+    "GRAPHIC_EQ_FREQS",
+    "make_adapter",
+    "ADAPTERS",
+    "ScalarBias",
+    "BandBias",
+    "LowRankBias",
+    "FiLM",
     "MODELS",
     "RL_MODELS",
 ]

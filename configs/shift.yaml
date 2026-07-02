@@ -1,0 +1,37 @@
+defaults: default.yaml
+
+# Distribution-shift experiment: train on one set of noise types, test on UNSEEN noise types.
+# This is the paper's headline test for online adaptation (frozen vs online-adaptive).
+shift:
+  train_noise: [white, pink]   # seen during training
+  test_noise: [burst]          # unseen at test -> where online adaptation should help most
+
+model:
+  kind: rl_attention
+  hidden: 128
+  n_layers: 3
+  n_heads: 4
+  causal: true
+
+train:
+  epochs: 20
+  batch_size: 8
+  lr: 0.0003
+  value_coef: 0.5
+  entropy_coef: 0.01
+  crop_seconds: 2.0
+
+online:
+  steps: 12
+  lr: 0.1
+  reward: auto        # 'auto' -> SQUIM if torchaudio present (Kaggle), else spectral heuristic (local)
+
+data:
+  synthetic:
+    n: 60
+    duration: 2.0
+    snr_db_range: [-5.0, 10.0]
+  test_synthetic:
+    n: 24
+    duration: 2.0
+    snr_db_range: [-5.0, 10.0]

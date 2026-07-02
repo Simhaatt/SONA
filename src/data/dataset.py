@@ -102,12 +102,16 @@ class SyntheticNoisyDataset:
         duration: float = 2.0,
         snr_db_range: tuple[float, float] = (0.0, 10.0),
         seed: int = 0,
+        noise_types: tuple[str, ...] | None = None,
     ) -> None:
         self.n = n
         self.sr = sr
         self.duration = duration
         self.snr_db_range = snr_db_range
         self.seed = seed
+        # Restrict which noise types appear -> lets us build train/test splits with *disjoint*
+        # noise types for the distribution-shift experiment (e.g. train {white,pink}, test {burst}).
+        self.noise_types = tuple(noise_types) if noise_types else self.NOISE_TYPES
 
     def __len__(self) -> int:
         return self.n
@@ -117,7 +121,7 @@ class SyntheticNoisyDataset:
             rng = np.random.default_rng(self.seed * 1000 + i)
             length = int(self.sr * self.duration)
             clean = self._make_clean(length, rng)
-            noise_type = self.NOISE_TYPES[i % len(self.NOISE_TYPES)]
+            noise_type = self.noise_types[i % len(self.noise_types)]
             noise = self._make_noise(length, noise_type, rng)
             snr = float(rng.uniform(*self.snr_db_range))
             noisy, _ = mix_at_snr(clean, noise, snr, rng)
