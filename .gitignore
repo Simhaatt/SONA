@@ -12,6 +12,7 @@ venv/
 data/raw/
 data/voicebank/
 data/dns/
+external_data/
 results/audio/
 results/figures/
 results/*.csv
