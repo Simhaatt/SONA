@@ -111,18 +111,21 @@ class OnlineAdapter(Enhancer):
         params = self.adapter.reset(self.device)
         opt = torch.optim.Adam(params, lr=self.lr)
         length = x.shape[-1]
-        for _ in range(self.steps):
-            opt.zero_grad()
-            gain_bt = self.adapter.apply(base_gain).clamp(0.0, 1.0)  # (1, T, n_bands)
-            if self.reward_fn is not None:
-                # Waveform-domain reward (SQUIM etc.): reconstruct and score, no clean reference.
-                enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
-                reward = self.reward_fn(enhanced, x)
-            else:
-                reward = reference_free_reward(gain_bt.permute(0, 2, 1), presence, self.suppress_weight)
-            loss = -reward + self.reg * self.adapter.reg()
-            loss.backward()
-            opt.step()
+        # Disable cuDNN inside the loop: the reward net (SQUIM) is a frozen eval-mode RNN, and
+        # cuDNN refuses RNN backward in eval mode. The native RNN kernels allow it (a bit slower).
+        with torch.backends.cudnn.flags(enabled=False):
+            for _ in range(self.steps):
+                opt.zero_grad()
+                gain_bt = self.adapter.apply(base_gain).clamp(0.0, 1.0)  # (1, T, n_bands)
+                if self.reward_fn is not None:
+                    # Waveform-domain reward (SQUIM etc.): reconstruct + score, no clean reference.
+                    enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
+                    reward = self.reward_fn(enhanced, x)
+                else:
+                    reward = reference_free_reward(gain_bt.permute(0, 2, 1), presence, self.suppress_weight)
+                loss = -reward + self.reg * self.adapter.reg()
+                loss.backward()
+                opt.step()
         with torch.no_grad():
             adapted = self.adapter.apply(base_gain).clamp(0.0, 1.0)
         return spec, adapted.detach(), length
