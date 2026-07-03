@@ -55,11 +55,15 @@ def reference_free_reward(gain: torch.Tensor, presence: torch.Tensor,
 
 
 class OnlineAdapter(Enhancer):
-    """Wrap a trained RL policy and adapt per-band gains online (reference-free) per utterance."""
+    """Wrap a trained gain model and adapt per-band gains online per utterance.
+
+    The wrapped model can be an RL policy or any supervised mask predictor because all learned
+    models share the same ``model(feats) -> per-band gains`` interface.
+    """
 
     def __init__(
         self,
-        policy: RLGainPolicy,
+        policy: nn.Module,
         torch_frontend: TorchFrontend,
         frontend: SpectralFrontend | None = None,
         device: str = "cpu",
@@ -67,6 +71,7 @@ class OnlineAdapter(Enhancer):
         lr: float = 0.05,
         suppress_weight: float = 1.5,
         reg: float = 0.5,
+        anchor_weight: float = 0.0,
         reward_fn=None,
         adapter=None,
         name: str = "rl_attention_online",
@@ -84,6 +89,9 @@ class OnlineAdapter(Enhancer):
         self.lr = lr
         self.suppress_weight = suppress_weight
         self.reg = reg  # keeps the online bias a *refinement* of the trained policy, not a takeover
+        # Penalize deviation from the frozen model's enhanced waveform. This keeps a SQUIM-driven
+        # adaptation from improving perceptual score by drifting too far from the strong base output.
+        self.anchor_weight = anchor_weight
         # Optional waveform-domain reference-free reward (e.g. SQUIM). If None, use the built-in
         # band-domain speech-presence heuristic. This is the primary reward for real experiments.
         self.reward_fn = reward_fn
@@ -104,6 +112,7 @@ class OnlineAdapter(Enhancer):
 
         with torch.no_grad():
             base_gain = self.policy(feats)  # (1, T, n_bands), deterministic mean
+            base_enhanced = self.tf.apply_band_gain(spec, base_gain, length=x.shape[-1])
 
         # Adapt a low-dimensional correction per-utterance. The L2 reg keeps it a *refinement* of
         # the trained policy so adaptation corrects for the current noise without discarding what
@@ -122,8 +131,15 @@ class OnlineAdapter(Enhancer):
                     enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
                     reward = self.reward_fn(enhanced, x)
                 else:
+                    enhanced = None
                     reward = reference_free_reward(gain_bt.permute(0, 2, 1), presence, self.suppress_weight)
-                loss = -reward + self.reg * self.adapter.reg()
+                anchor = torch.zeros((), device=self.device)
+                if self.anchor_weight > 0.0:
+                    if enhanced is None:
+                        enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
+                    denom = base_enhanced.pow(2).mean().clamp_min(EPS)
+                    anchor = (enhanced - base_enhanced).pow(2).mean() / denom
+                loss = -reward + self.reg * self.adapter.reg() + self.anchor_weight * anchor
                 loss.backward()
                 opt.step()
         with torch.no_grad():

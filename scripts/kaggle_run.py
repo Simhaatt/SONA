@@ -43,6 +43,12 @@ def main() -> None:
                     help="comma list of supervised learned baselines to train/eval")
     ap.add_argument("--rl-epochs", type=int, default=30)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--online-supervised", default="attention,mask_gru",
+                    help="comma list of trained supervised models to wrap with online TTA; empty disables")
+    ap.add_argument("--online-supervised-adapter", default="lowrank",
+                    help="adapter kind for supervised online TTA")
+    ap.add_argument("--online-anchor-weight", type=float, default=0.05,
+                    help="lambda for frozen-output anchor penalty during online adaptation")
     ap.add_argument("--ablate-adapters", action="store_true",
                     help="also eval scalar/lowrank/band_bias/film online adapters")
     args = ap.parse_args()
@@ -104,10 +110,12 @@ def main() -> None:
     cfg_sup["train"]["epochs"] = args.epochs
     tf_sup = build_frontend(cfg_sup).to(device)
     sup_kinds = [k.strip() for k in args.sup_models.split(",") if k.strip()]
+    supervised_models = {}
     for kind in sup_kinds:
         log.info("supervised model %s", kind)
         cfg_sup["model"] = {"kind": kind}  # default width per model; fair ~128-dim across all
         model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / f"ckpt_{kind}")
+        supervised_models[kind] = model
         rows += evaluate_method(
             NeuralEnhancer(model, tf_sup, device=device, name=f"neural_{kind}"),
             test_samples, include_metrics=metrics)
@@ -130,7 +138,24 @@ def main() -> None:
         log.info("online adapter %s", adapter_kind)
         rows += evaluate_method(
             OnlineAdapter(policy, tf_rl, device=device, name=mname, steps=12, lr=0.1,
-                          reward_fn=reward, adapter=make_adapter(adapter_kind, tf_rl.n_bands)),
+                          anchor_weight=args.online_anchor_weight, reward_fn=reward,
+                          adapter=make_adapter(adapter_kind, tf_rl.n_bands)),
+            test_samples, include_metrics=metrics)
+
+    # ---- Supervised base + online TTA: the main refinement experiment after Scenario A showed
+    # SQUIM improves PESQ but can hurt SI-SDR when starting from the weaker RL policy.
+    online_sup_kinds = [k.strip() for k in args.online_supervised.split(",") if k.strip()]
+    for kind in online_sup_kinds:
+        model = supervised_models.get(kind)
+        if model is None:
+            log.warning("skip %s_online: '%s' was not trained in --sup-models", kind, kind)
+            continue
+        log.info("supervised online %s adapter=%s anchor=%.4f",
+                 kind, args.online_supervised_adapter, args.online_anchor_weight)
+        rows += evaluate_method(
+            OnlineAdapter(model, tf_sup, device=device, name=f"{kind}_online", steps=12, lr=0.1,
+                          anchor_weight=args.online_anchor_weight, reward_fn=reward,
+                          adapter=make_adapter(args.online_supervised_adapter, tf_sup.n_bands)),
             test_samples, include_metrics=metrics)
 
     # ---- report
@@ -155,6 +180,18 @@ def main() -> None:
                 if isinstance(fo, (int, float)) and isinstance(on, (int, float)):
                     parts.append(f"{k} {on - fo:+.3f}")
             print(f"  {name}: " + " | ".join(parts))
+    print("\ndelta(supervised online - frozen supervised):")
+    for kind in [k.strip() for k in args.online_supervised.split(",") if k.strip()]:
+        base = by.get(f"neural_{kind}")
+        online = by.get(f"{kind}_online")
+        if not base or not online:
+            continue
+        parts = []
+        for k in ("si_sdr_i", "pesq", "stoi", "estoi"):
+            fo, on = base.get(k), online.get(k)
+            if isinstance(fo, (int, float)) and isinstance(on, (int, float)):
+                parts.append(f"{k} {on - fo:+.3f}")
+        print(f"  {kind}_online: " + " | ".join(parts))
 
 
 if __name__ == "__main__":

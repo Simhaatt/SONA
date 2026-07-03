@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from src.utils.config import Config
-from src.models import TorchFrontend, RLGainPolicy, RLAttentionPolicy, OnlineAdapter, NeuralEnhancer
+from src.models import TorchFrontend, RLGainPolicy, RLAttentionPolicy, OnlineAdapter, NeuralEnhancer, MaskGRU
 from src.models.rl_attention import speech_presence, reference_free_reward
 from src.data import SyntheticNoisyDataset
 from src.train.train_rl import improve_reward_on_batch
@@ -62,6 +62,19 @@ def test_online_adapter_runs_and_adapts():
     assert y.shape[0] == len(s.noisy) and np.isfinite(y).all()
     # Online adaptation should produce a non-trivial per-band bias.
     assert adapter.adaptation_delta_norm(s.noisy) > 1e-4
+
+
+def test_online_adapter_wraps_supervised_model_with_anchor():
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    model = MaskGRU(n_bands=32, hidden=32, layers=1)
+
+    def reward_fn(enhanced, noisy):
+        return -((enhanced - noisy) ** 2).mean()
+
+    adapter = OnlineAdapter(model, tf, steps=2, lr=0.05, anchor_weight=0.1, reward_fn=reward_fn)
+    s = next(iter(SyntheticNoisyDataset(n=1, duration=1.0, seed=14)))
+    y = adapter.enhance(s.noisy, s.sr)
+    assert y.shape[0] == len(s.noisy) and np.isfinite(y).all()
 
 
 def test_rl_policy_plugs_into_neural_enhancer():

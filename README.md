@@ -35,14 +35,14 @@ See the full plan in the design doc referenced at the bottom.
 |---|---|
 | Foundation: shared front-end, classical baselines, eval harness, learned models (M0–M3) | ✅ |
 | RL policy + attention hybrid + reference-free `OnlineAdapter` (M4) | ✅ |
-| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | ✅ machinery; **decision gate = real VoiceBank-DEMAND run on Kaggle** |
+| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | ✅ real VoiceBank-DEMAND path + supervised-online refinement |
 | **P3** adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM) | ✅ (low-dim adaptation wins locally) |
 | **P4** differentiable parametric EQ + hum notch + compressor/limiter | ✅ built & tested |
 | P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ⏳ |
 | P5 real-time streaming, latency/RTF/power, ONNX/TFLite export, GUI, Raspberry Pi | ⏳ |
 | P6 paper write-up + provisional patent draft | ⏳ |
 
-37 tests passing.
+38 tests passing.
 
 ## Install
 
@@ -71,9 +71,10 @@ python scripts/eval_shift.py --config configs/shift.yaml --epochs 12 --ablate-ad
 
 Open `notebooks/kaggle_benchmark.ipynb`, attach the SONA repo + a VoiceBank-DEMAND dataset, set
 the two paths, and run. It calls `scripts/kaggle_run.py`, which builds manifests and runs the full
-comparison (classical + supervised MaskGRU + RL frozen vs **RL online with SQUIM reward**) on the
-VoiceBank-DEMAND test set (whose noises are unseen in training → a built-in distribution-shift
-benchmark), with the full metric suite.
+comparison (classical + supervised MaskGRU/TCN/Attention, RL frozen vs **RL online with SQUIM
+reward**, and anchored supervised-online variants such as `attention_online`) on the VoiceBank-
+DEMAND test set (whose noises are unseen in training → a built-in distribution-shift benchmark),
+with the full metric suite.
 
 ## Layout
 
