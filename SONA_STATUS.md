@@ -145,6 +145,19 @@ Interpretation:
 - Anchor 2.0 with 6 steps is slightly better on PESQ than anchor 1.0, but SI-SDRi still drops about 0.36 dB.
 - Because `dnone` was used, the actual trust-region clipping hypothesis is still untested.
 
+Overnight trust-region sweep notebook added:
+
+- `D:\noise cancellation\sona_kaggle_overnight_trust_region.ipynb`
+- Purpose: run a large unattended grid for 4-6 hours on Kaggle T4.
+- Grid:
+  - base model: `attention`
+  - adapters: `scalar,lowrank`
+  - anchors: `0.5,1.0,2.0,4.0`
+  - steps: `1,2,3,4,6`
+  - max gain deltas: `0.01,0.02,0.05,0.1,none`
+  - test clips: `300`
+- The notebook ranks configs by a safety-aware score and bundles `overnight_ranked_configs.csv`.
+
 External advice made the acceptance criteria stricter:
 
 - Do not claim success from +0.008 PESQ alone.
@@ -251,16 +264,10 @@ Next external-validation work: add an evaluation runner that loads a trained Voi
 
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_kaggle_tune_online.ipynb`.
-4. In Block 4, use:
-   - base model: `attention`
-   - adapter: `scalar`
-   - anchors: `1.0,2.0`
-   - steps: `4,6`
-   - max gain deltas: `0.02,0.05,0.1`
-   - test clips: `300`
-5. Pick the setting with the best PESQ gain while SI-SDRi and STOI stay nearly unchanged.
-6. Validate the winner on the full 824-clip test set.
+3. Run `D:\noise cancellation\sona_kaggle_overnight_trust_region.ipynb` overnight.
+4. Download `sona_overnight_trust_region_artifacts.zip`.
+5. Inspect `overnight_ranked_configs.csv`.
+6. Validate the best safe setting on the full 824-clip test set.
 
 ## Decision Gate
 
