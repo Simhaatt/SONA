@@ -35,7 +35,7 @@ See the full plan in the design doc referenced at the bottom.
 |---|---|
 | Foundation: shared front-end, classical baselines, eval harness, learned models (M0–M3) | ✅ |
 | RL policy + attention hybrid + reference-free `OnlineAdapter` (M4) | ✅ |
-| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | ✅ real VoiceBank-DEMAND path + supervised-online refinement |
+| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | In progress: real-data path works; online adaptation improves PESQ in RL but still needs tuning to preserve SI-SDR/STOI |
 | **P3** adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM) | ✅ (low-dim adaptation wins locally) |
 | **P4** differentiable parametric EQ + hum notch + compressor/limiter | ✅ built & tested |
 | P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ⏳ |
@@ -75,6 +75,12 @@ comparison (classical + supervised MaskGRU/TCN/Attention, RL frozen vs **RL onli
 reward**, and anchored supervised-online variants such as `attention_online`) on the VoiceBank-
 DEMAND test set (whose noises are unseen in training → a built-in distribution-shift benchmark),
 with the full metric suite.
+
+Latest checked artifacts are recorded under `results/`. The full Scenario A retry did **not** pass
+the thesis gate yet: `rl_online` gives the best PESQ, but loses SI-SDR/STOI, and anchored
+`attention_online` / `mask_gru_online` do not beat their frozen supervised bases. Use
+`sona_kaggle_tune_online.ipynb` next to tune anchor strength, adapter dimensionality, and adaptation
+steps before launching a full Scenario B run.
 
 ## Layout
 
