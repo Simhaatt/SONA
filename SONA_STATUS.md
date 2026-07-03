@@ -35,6 +35,14 @@ Tuning validation run 2 completed and artifacts were stored in:
 - `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run2_300clip_scalar\extracted\summary.md`
 - `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run2_300clip_scalar\extracted\summary.csv`
 
+Full-test validation run 3 completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run3_trust_region\sona_online_tune_artifacts.zip`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run3_trust_region\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run3_trust_region\extracted\summary.csv`
+
+Note: despite the folder name, this artifact contains the previous scalar setting on the full 824-clip test set, not the trust-region grid.
+
 New trust-region methodology has been added after reviewing external model advice:
 
 - `OnlineAdapter` supports `max_gain_delta` to clip online gain changes around the frozen gain.
@@ -102,6 +110,18 @@ Interpretation:
 - The PESQ gain survived on 300 clips.
 - SI-SDRi stayed within the allowed 0.5 dB tolerance.
 - This is now a plausible tuned online setting.
+
+Full-test validation run 3, `attention`, 824 test clips, scalar adapter, 6 steps, anchor 1.0:
+
+- `neural_attention`: SI-SDRi 9.124, PESQ 2.505, STOI 0.932
+- `attention_online_scalar_s6_a1`: SI-SDRi 8.876, PESQ 2.490, STOI 0.930
+- delta: PESQ -0.015, SI-SDRi -0.248, STOI -0.002
+
+Interpretation:
+
+- The 300-clip PESQ gain did not hold on the full 824-clip test set.
+- The online setting is still safe-ish on SI-SDRi, but it is not beneficial on average.
+- Do not use `attention_online_scalar_s6_a1` as the headline result.
 
 External advice made the acceptance criteria stricter:
 
