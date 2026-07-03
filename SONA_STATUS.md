@@ -43,6 +43,14 @@ Full-test validation run 3 completed and artifacts were stored in:
 
 Note: despite the folder name, this artifact contains the previous scalar setting on the full 824-clip test set, not the trust-region grid.
 
+Tuning run 4 completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run4_trust_region_grid\sona_online_tune_artifacts.zip`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run4_trust_region_grid\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run4_trust_region_grid\extracted\summary.csv`
+
+Note: this run did not apply gain clipping because all method names ended in `_dnone`. It tested scalar adapter steps/anchors only, not the actual `max_gain_delta` trust-region grid.
+
 New trust-region methodology has been added after reviewing external model advice:
 
 - `OnlineAdapter` supports `max_gain_delta` to clip online gain changes around the frozen gain.
@@ -122,6 +130,20 @@ Interpretation:
 - The 300-clip PESQ gain did not hold on the full 824-clip test set.
 - The online setting is still safe-ish on SI-SDRi, but it is not beneficial on average.
 - Do not use `attention_online_scalar_s6_a1` as the headline result.
+
+Tuning run 4, `attention`, 300 test clips, scalar adapter, no gain-delta clipping:
+
+- `neural_attention`: SI-SDRi 9.133, PESQ 2.538, STOI 0.933
+- best PESQ config: `attention_online_scalar_s6_a2_dnone`
+  - SI-SDRi 8.773
+  - PESQ 2.550
+  - STOI 0.932
+  - delta: PESQ +0.012, SI-SDRi -0.360, STOI -0.001
+
+Interpretation:
+
+- Anchor 2.0 with 6 steps is slightly better on PESQ than anchor 1.0, but SI-SDRi still drops about 0.36 dB.
+- Because `dnone` was used, the actual trust-region clipping hypothesis is still untested.
 
 External advice made the acceptance criteria stricter:
 
