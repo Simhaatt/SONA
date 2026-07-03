@@ -148,6 +148,54 @@ Suggested grid:
 If this improves the PESQ/SI-SDR/STOI tradeoff, validate the best setting on the full 824-clip test set.
 If it does not, add guarded multi-objective SQUIM reward and/or mask-polarization next.
 
+Architecture direction from external model advice:
+
+- Do not add every idea at once.
+- If trust-region tuning on `neural_attention` is still weak, the next backbone should be a Bark/ERB gain-only GTCRN-style model.
+- The next architecture path is:
+  1. plain Bark-GTCRN frozen gain estimator,
+  2. Bark-GTCRN + trust-region online adapter,
+  3. add guarded multi-objective reward and mask-polarization,
+  4. only then consider Mamba as a causal noise-memory branch,
+  5. RL should be a later governor for update/no-update and trust radius, not the direct gain generator.
+- Working future names:
+  - `SONA-HGCRN`: Hybrid Gain-Control Recurrent Network
+  - `SONA-MP-GTCRN`: Mask-Polarized Trust-Region GTCRN
+  - `SONA-MAD-MambaGTCRN`: memory-augmented future extension
+
+Staged build plan toward the large architecture:
+
+1. Finish trust-region tuning on the current `neural_attention` backbone.
+2. Build a frozen Bark-GTCRN gain model as the next stronger edge-friendly backbone.
+3. Add the trust-region online adapter to Bark-GTCRN.
+4. Add guarded multi-objective reward so PESQ gains are only accepted when SI-SDR/STOI remain safe.
+5. Add mask polarization as a reference-free confidence-restoration mechanism.
+6. Add retrieval memory for safe adapter states / noise prototypes.
+7. Add a causal Mamba noise-memory branch only after GTCRN + safe TTA are working.
+8. Add RL last as a governor for update/no-update, trust radius, adapter strength, or memory choice, not as the direct gain generator.
+
+Reason for staging: the full SONA-MAD/MambaGTCRN architecture is the destination, but building it all at once would be hard to debug and weak for ablation. Each module must prove its contribution before becoming part of the headline system.
+
+External validation dataset state:
+
+- MS-SNSD was downloaded to `D:\noise cancellation\external_data\MS-SNSD-master.zip`.
+- ZIP size: 2.278 GB.
+- Extracted dataset: `D:\noise cancellation\external_data\MS-SNSD`.
+- Extracted size: 2.86 GB.
+- Folder counts:
+  - `clean_train`: 23075 wavs, 2.043 GB
+  - `clean_test`: 1100 wavs, 0.391 GB
+  - `noise_train`: 128 wavs, 0.353 GB
+  - `noise_test`: 51 wavs, 0.071 GB
+- Added `scripts\preprocess_ms_snsd.py`.
+- Generated SONA external test manifest:
+  - `D:\noise cancellation\external_data\ms_snsd_sona\test.csv`
+  - 1100 clean/noisy pairs
+  - SNRs cycled evenly across `-5,0,5,10` dB
+  - generated noisy mixture folder size: 0.391 GB
+
+Next external-validation work: add an evaluation runner that loads a trained VoiceBank model/checkpoint and scores it on `external_data\ms_snsd_sona\test.csv`, rather than retraining on MS-SNSD.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
