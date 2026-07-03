@@ -39,6 +39,8 @@ def main() -> None:
     ap.add_argument("--limit-train", type=int, default=3000)
     ap.add_argument("--limit-test", type=int, default=None)
     ap.add_argument("--epochs", type=int, default=30, help="supervised epochs")
+    ap.add_argument("--sup-models", default="mask_gru,mask_tcn,attention",
+                    help="comma list of supervised learned baselines to train/eval")
     ap.add_argument("--rl-epochs", type=int, default=30)
     ap.add_argument("--device", default=None)
     ap.add_argument("--ablate-adapters", action="store_true",
@@ -97,13 +99,18 @@ def main() -> None:
     crop = int(16000 * 2.0)
     train_ds = TorchPairDataset(train_samples, crop_len=crop, train=True)
 
-    # ---- supervised MaskGRU
+    # ---- supervised learned baselines (all share the front-end + per-band gain output)
     cfg_sup = load_config(ROOT / "configs/model_supervised.yaml")
     cfg_sup["train"]["epochs"] = args.epochs
-    model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / "ckpt_sup")
     tf_sup = build_frontend(cfg_sup).to(device)
-    rows += evaluate_method(NeuralEnhancer(model, tf_sup, device=device, name="neural_mask_gru"),
-                            test_samples, include_metrics=metrics)
+    sup_kinds = [k.strip() for k in args.sup_models.split(",") if k.strip()]
+    for kind in sup_kinds:
+        log.info("supervised model %s", kind)
+        cfg_sup["model"] = {"kind": kind}  # default width per model; fair ~128-dim across all
+        model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / f"ckpt_{kind}")
+        rows += evaluate_method(
+            NeuralEnhancer(model, tf_sup, device=device, name=f"neural_{kind}"),
+            test_samples, include_metrics=metrics)
 
     # ---- RL policy: frozen vs online (SQUIM reward) on the unseen-noise test set
     cfg_rl = load_config(ROOT / "configs/model_rl.yaml")
