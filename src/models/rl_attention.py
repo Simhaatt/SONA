@@ -72,6 +72,9 @@ class OnlineAdapter(Enhancer):
         suppress_weight: float = 1.5,
         reg: float = 0.5,
         anchor_weight: float = 0.0,
+        max_gain_delta: float | None = None,
+        smooth_time_weight: float = 0.0,
+        smooth_band_weight: float = 0.0,
         reward_fn=None,
         adapter=None,
         name: str = "rl_attention_online",
@@ -92,6 +95,11 @@ class OnlineAdapter(Enhancer):
         # Penalize deviation from the frozen model's enhanced waveform. This keeps a SQUIM-driven
         # adaptation from improving perceptual score by drifting too far from the strong base output.
         self.anchor_weight = anchor_weight
+        # Trust-region and smoothness controls: keep online adaptation a bounded correction to the
+        # frozen gain curve, which is the key guard against PESQ reward hacking.
+        self.max_gain_delta = max_gain_delta
+        self.smooth_time_weight = smooth_time_weight
+        self.smooth_band_weight = smooth_band_weight
         # Optional waveform-domain reference-free reward (e.g. SQUIM). If None, use the built-in
         # band-domain speech-presence heuristic. This is the primary reward for real experiments.
         self.reward_fn = reward_fn
@@ -125,7 +133,7 @@ class OnlineAdapter(Enhancer):
         with torch.backends.cudnn.flags(enabled=False):
             for _ in range(self.steps):
                 opt.zero_grad()
-                gain_bt = self.adapter.apply(base_gain).clamp(0.0, 1.0)  # (1, T, n_bands)
+                gain_bt = self._bounded_gain(base_gain)  # (1, T, n_bands)
                 if self.reward_fn is not None:
                     # Waveform-domain reward (SQUIM etc.): reconstruct + score, no clean reference.
                     enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
@@ -139,12 +147,34 @@ class OnlineAdapter(Enhancer):
                         enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
                     denom = base_enhanced.pow(2).mean().clamp_min(EPS)
                     anchor = (enhanced - base_enhanced).pow(2).mean() / denom
-                loss = -reward + self.reg * self.adapter.reg() + self.anchor_weight * anchor
+                smooth = self._correction_smoothness(gain_bt, base_gain)
+                loss = (
+                    -reward
+                    + self.reg * self.adapter.reg()
+                    + self.anchor_weight * anchor
+                    + smooth
+                )
                 loss.backward()
                 opt.step()
         with torch.no_grad():
-            adapted = self.adapter.apply(base_gain).clamp(0.0, 1.0)
+            adapted = self._bounded_gain(base_gain)
         return spec, adapted.detach(), length
+
+    def _bounded_gain(self, base_gain: torch.Tensor) -> torch.Tensor:
+        adapted = self.adapter.apply(base_gain)
+        if self.max_gain_delta is not None:
+            delta = (adapted - base_gain).clamp(-self.max_gain_delta, self.max_gain_delta)
+            adapted = base_gain + delta
+        return adapted.clamp(0.0, 1.0)
+
+    def _correction_smoothness(self, gain: torch.Tensor, base_gain: torch.Tensor) -> torch.Tensor:
+        correction = gain - base_gain
+        loss = torch.zeros((), device=gain.device)
+        if self.smooth_time_weight > 0.0 and correction.shape[1] > 1:
+            loss = loss + self.smooth_time_weight * torch.diff(correction, dim=1).abs().mean()
+        if self.smooth_band_weight > 0.0 and correction.shape[2] > 1:
+            loss = loss + self.smooth_band_weight * torch.diff(correction, dim=2).abs().mean()
+        return loss
 
     def enhance(self, wav: np.ndarray, sr: int | None = None) -> np.ndarray:
         spec, gain, length = self._adapt(wav)

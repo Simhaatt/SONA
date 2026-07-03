@@ -31,8 +31,19 @@ def _csv_floats(text: str) -> list[float]:
     return [float(x) for x in _csv_items(text)]
 
 
+def _csv_optional_floats(text: str) -> list[float | None]:
+    out: list[float | None] = []
+    for x in _csv_items(text):
+        out.append(None if x.lower() in ("none", "off", "unclipped") else float(x))
+    return out
+
+
 def _fmt_float(x: float) -> str:
     return f"{x:g}".replace(".", "p")
+
+
+def _fmt_optional_float(x: float | None) -> str:
+    return "none" if x is None else _fmt_float(x)
 
 
 def main() -> None:
@@ -48,6 +59,10 @@ def main() -> None:
     ap.add_argument("--adapters", default="scalar,lowrank")
     ap.add_argument("--anchors", default="0.2,0.5,1.0")
     ap.add_argument("--steps", default="3,6")
+    ap.add_argument("--max-gain-deltas", default="none",
+                    help="comma list of trust-region gain deltas; use 'none' to disable")
+    ap.add_argument("--smooth-time-weight", type=float, default=0.0)
+    ap.add_argument("--smooth-band-weight", type=float, default=0.0)
     ap.add_argument("--lr", type=float, default=0.1)
     ap.add_argument("--reward-kind", default="auto",
                     help="'auto' uses SQUIM on Kaggle, spectral fallback locally")
@@ -79,6 +94,9 @@ def main() -> None:
              device, available_metrics(), squim_available())
     log.info("grid adapters=%s anchors=%s steps=%s",
              _csv_items(args.adapters), _csv_floats(args.anchors), _csv_ints(args.steps))
+    log.info("trust region max_gain_deltas=%s smooth_time=%.4f smooth_band=%.4f",
+             _csv_optional_floats(args.max_gain_deltas),
+             args.smooth_time_weight, args.smooth_band_weight)
 
     vbd = Path(args.vbd_root)
     build_manifest(vbd, "clean_trainset_wav", "noisy_trainset_wav", out / "train.csv")
@@ -112,18 +130,23 @@ def main() -> None:
         for adapter_kind in _csv_items(args.adapters):
             for steps in _csv_ints(args.steps):
                 for anchor in _csv_floats(args.anchors):
-                    name = (
-                        f"{kind}_online_{adapter_kind}"
-                        f"_s{steps}_a{_fmt_float(anchor)}"
-                    )
-                    log.info("eval %s", name)
-                    rows += evaluate_method(
-                        OnlineAdapter(
-                            model, tf, device=device, name=name, steps=steps, lr=args.lr,
-                            anchor_weight=anchor, reward_fn=reward,
-                            adapter=make_adapter(adapter_kind, tf.n_bands),
-                        ),
-                        test_samples, include_metrics=metrics, method_name=name)
+                    for max_delta in _csv_optional_floats(args.max_gain_deltas):
+                        name = (
+                            f"{kind}_online_{adapter_kind}"
+                            f"_s{steps}_a{_fmt_float(anchor)}"
+                            f"_d{_fmt_optional_float(max_delta)}"
+                        )
+                        log.info("eval %s", name)
+                        rows += evaluate_method(
+                            OnlineAdapter(
+                                model, tf, device=device, name=name, steps=steps, lr=args.lr,
+                                anchor_weight=anchor, max_gain_delta=max_delta,
+                                smooth_time_weight=args.smooth_time_weight,
+                                smooth_band_weight=args.smooth_band_weight,
+                                reward_fn=reward,
+                                adapter=make_adapter(adapter_kind, tf.n_bands),
+                            ),
+                            test_samples, include_metrics=metrics, method_name=name)
 
         summary = aggregate(rows, group_keys=("method",))
         save_rows_csv(rows, out / "per_sample.csv")

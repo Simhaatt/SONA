@@ -4,7 +4,7 @@ Last updated: 2026-07-03
 
 ## Current Goal
 
-Tune the online adaptation settings on a smaller Scenario A grid before launching the full Scenario B paper run.
+Tune trust-region online adaptation before launching the full Scenario B paper run.
 
 ## Current Run State
 
@@ -22,6 +22,31 @@ New tuning tooling has been added:
 - `D:\noise cancellation\sona_kaggle_tune_online.ipynb`
 
 This trains the supervised base once, then evaluates a grid of online adapter settings.
+
+Tuning run 1 completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run1\sona_online_tune_artifacts.zip`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run1\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run1\extracted\summary.csv`
+
+Tuning validation run 2 completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run2_300clip_scalar\sona_online_tune_artifacts.zip`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run2_300clip_scalar\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-03_run2_300clip_scalar\extracted\summary.csv`
+
+New trust-region methodology has been added after reviewing external model advice:
+
+- `OnlineAdapter` supports `max_gain_delta` to clip online gain changes around the frozen gain.
+- `OnlineAdapter` supports correction smoothness penalties:
+  - `smooth_time_weight`
+  - `smooth_band_weight`
+- `scripts\kaggle_tune_online.py` exposes:
+  - `--max-gain-deltas`
+  - `--smooth-time-weight`
+  - `--smooth-band-weight`
+- `sona_kaggle_tune_online.ipynb` exposes the same knobs.
+- Local tests cover trust-region gain bounds.
 
 ## What We Are Doing Right Now
 
@@ -53,19 +78,55 @@ Interpretation:
 - Anchored supervised-online did not improve the supervised frozen baselines.
 - Full Scenario B should not be launched yet.
 
+Tuning run 1, `attention` only, 120 test clips:
+
+- baseline `neural_attention`: SI-SDRi 8.889, PESQ 2.514, STOI 0.931
+- best PESQ config: `attention_online_lowrank_s3_a1`
+  - PESQ +0.015
+  - SI-SDRi -2.270
+  - not acceptable because SI-SDRi still drops too much
+- best balanced config: `attention_online_scalar_s6_a1`
+  - PESQ +0.012
+  - SI-SDRi -0.299
+  - STOI -0.001
+  - this is the first promising candidate
+
+Tuning validation run 2, `attention`, 300 test clips, scalar adapter, 6 steps, anchor 1.0:
+
+- `neural_attention`: SI-SDRi 9.116, PESQ 2.537, STOI 0.933
+- `attention_online_scalar_s6_a1`: SI-SDRi 8.759, PESQ 2.546, STOI 0.932
+- delta: PESQ +0.008, SI-SDRi -0.357, STOI -0.001
+
+Interpretation:
+
+- The PESQ gain survived on 300 clips.
+- SI-SDRi stayed within the allowed 0.5 dB tolerance.
+- This is now a plausible tuned online setting.
+
+External advice made the acceptance criteria stricter:
+
+- Do not claim success from +0.008 PESQ alone.
+- Target a guarded/trust-region result:
+  - PESQ gain ideally >= +0.03
+  - SI-SDRi drop <= 0.10-0.20 dB, or improvement
+  - STOI/ESTOI essentially unchanged
+- Next runs should test trust-region clipping before the full Scenario B paper run.
+
 ## What Happens Next
 
-When the Kaggle run finishes, inspect the final table and especially:
+The next step is a trust-region tuning pass around the current best scalar adapter.
 
-- `attention_online` vs `neural_attention`
-- `mask_gru_online` vs `neural_mask_gru`
+Suggested grid:
 
-The next step is a tuning pass:
+- base model: `attention`
+- adapter: `scalar`
+- anchors: `1.0,2.0`
+- steps: `4,6`
+- max gain deltas: `0.02,0.05,0.1`
+- test clips: `300`
 
-- increase/decrease `ONLINE_ANCHOR`
-- try `band_bias` or `scalar` instead of `lowrank`
-- change SQUIM reward weights
-- reduce/increase adaptation steps
+If this improves the PESQ/SI-SDR/STOI tradeoff, validate the best setting on the full 824-clip test set.
+If it does not, add guarded multi-objective SQUIM reward and/or mask-polarization next.
 
 ## Done
 
@@ -87,8 +148,8 @@ The next step is a tuning pass:
   - `--online-anchor-weight`
 - Added tests for the supervised-online anchored path.
 - Verified tests:
-  - Full suite: 38 passing.
-  - Focused online/reward/adapter tests: 15 passing.
+  - Full suite: 39 passing.
+  - Focused online/reward/adapter tests: 12 passing after trust-region changes.
 - Committed the update:
   - `61c1dcb feat: add anchored supervised online adaptation`
 - Refreshed repo upload zip:
@@ -99,15 +160,17 @@ The next step is a tuning pass:
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Upload refreshed `D:\noise cancellation\sona.zip` to `sona-repo` as a new Kaggle dataset version.
+2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Run `D:\noise cancellation\sona_kaggle_tune_online.ipynb`.
-4. Start with the conservative grid already in the notebook:
+4. In Block 4, use:
    - base model: `attention`
-   - adapters: `scalar,lowrank`
-   - anchors: `0.2,0.5,1.0`
-   - steps: `3,6`
-   - test clips: `120`
-5. Choose the setting with the best PESQ/STOI improvement while SI-SDRi stays close to `neural_attention`.
+   - adapter: `scalar`
+   - anchors: `1.0,2.0`
+   - steps: `4,6`
+   - max gain deltas: `0.02,0.05,0.1`
+   - test clips: `300`
+5. Pick the setting with the best PESQ gain while SI-SDRi and STOI stay nearly unchanged.
+6. Validate the winner on the full 824-clip test set.
 
 ## Decision Gate
 

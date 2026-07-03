@@ -77,6 +77,18 @@ def test_online_adapter_wraps_supervised_model_with_anchor():
     assert y.shape[0] == len(s.noisy) and np.isfinite(y).all()
 
 
+def test_online_adapter_trust_region_bounds_gain_delta():
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    model = MaskGRU(n_bands=32, hidden=32, layers=1)
+    adapter = OnlineAdapter(model, tf, steps=1, max_gain_delta=0.05)
+    base = torch.full((1, 4, 32), 0.5)
+    adapter.adapter.reset("cpu")
+    with torch.no_grad():
+        adapter.adapter.params()[0].fill_(1.0)
+    gain = adapter._bounded_gain(base)
+    assert torch.all((gain - base).abs() <= 0.0501)
+
+
 def test_rl_policy_plugs_into_neural_enhancer():
     tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
     pol = RLGainPolicy(n_bands=32, trunk="gru", hidden=64)
