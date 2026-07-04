@@ -188,6 +188,41 @@ Interpretation:
 - `max_gain_delta=0.01` is much safer, with smaller PESQ gain and almost no STOI/ESTOI movement.
 - Next validation should use the full 824-clip VoiceBank test set on the `lowrank` trust-region neighborhood.
 
+Full 824-clip trust-region validation completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\sona_online_tune_artifacts.zip`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\ckpt_attention\last.pt`
+
+Full 824 result, `attention`, `lowrank`, trust-region grid:
+
+- frozen `neural_attention`:
+  - SI-SDRi 9.098
+  - PESQ 2.503
+  - STOI 0.932225
+  - ESTOI 0.834488
+  - LSD 5.973
+- best online config: `attention_online_lowrank_s1_a2_d0p02`
+  - SI-SDRi 9.018, delta -0.079
+  - PESQ 2.513, delta +0.009
+  - STOI 0.931543, delta -0.000682
+  - ESTOI 0.833655, delta -0.000833
+  - LSD 5.960, delta -0.012
+- safest useful config: `attention_online_lowrank_s1_a2_d0p01`
+  - SI-SDRi 9.073, delta -0.025
+  - PESQ 2.511, delta +0.008
+  - STOI 0.931799, delta -0.000426
+  - ESTOI 0.834136, delta -0.000351
+  - LSD 5.954, delta -0.019
+
+Interpretation:
+
+- The trust-region online adapter now passes the full 824-clip strict safety gate.
+- The gain is real but small: PESQ improves by about +0.009 while SI-SDRi drops less than 0.10 dB and STOI/ESTOI are nearly unchanged.
+- Treat this as a valid Layer A v1 online candidate, not the final headline architecture.
+- Next work should improve effect size and novelty using guarded reward / mask-polarization and then the Bark-GTCRN backbone.
+
 External advice made the acceptance criteria stricter:
 
 - Do not claim success from +0.008 PESQ alone.
@@ -199,20 +234,18 @@ External advice made the acceptance criteria stricter:
 
 ## What Happens Next
 
-The next step is full-test validation of the best overnight trust-region candidates.
+Layer A v1 is now a valid but small online-adaptation result.
 
-Suggested full 824-clip validation grid:
+Immediate next steps:
 
-- base model: `attention`
-- adapter: `lowrank`
-- anchors: `0.5,2.0`
-- steps: `1,2`
-- max gain deltas: `0.01,0.02`
-- test clips: full test set, no limit
+1. Add an external-validation runner for the existing MS-SNSD manifest.
+2. Evaluate frozen `neural_attention` and the best trust-region online candidate on MS-SNSD.
+3. Start the next methodology step to increase effect size:
+   - guarded multi-objective reward,
+   - mask-polarization confidence,
+   - then Bark/ERB GTCRN as the stronger backbone.
 
-This creates 8 configs because the current runner cross-products settings. That is acceptable and validates the neighborhood around both the balanced candidate and the strict-safe candidate.
-
-If the full 824-clip result keeps positive PESQ with SI-SDRi drop <= 0.10-0.20 dB and STOI/ESTOI nearly unchanged, use it as the tuned Layer A online candidate. If it fails, move next to guarded multi-objective reward and/or mask-polarization before building Bark-GTCRN.
+Do not present the current +0.009 PESQ as the final thesis result. Present it as evidence that trust-region online adaptation can improve perceptual quality without breaking SI-SDR/STOI on the full VoiceBank test set.
 
 Architecture direction from external model advice:
 
@@ -294,17 +327,13 @@ Next external-validation work: add an evaluation runner that loads a trained Voi
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle if the Kaggle dataset copy is stale.
-3. Run `D:\noise cancellation\sona_kaggle_tune_online.ipynb` with the full 824-clip validation neighborhood:
-   - `LIMIT_TEST = 0`
-   - `SUP_MODELS = "attention"`
-   - `ADAPTERS = "lowrank"`
-   - `ANCHORS = "0.5,2.0"`
-   - `STEPS = "1,2"`
-   - `MAX_GAIN_DELTAS = "0.01,0.02"`
-4. Download the resulting `sona_online_tune_artifacts.zip`.
-5. Use the full-test winner only if PESQ stays positive and SI-SDRi/STOI/ESTOI stay safe.
-6. After that decision, either lock Layer A's tuned online candidate or move to guarded reward / mask-polarization.
+2. Add a script/notebook to evaluate the saved VoiceBank model on `external_data\ms_snsd_sona\test.csv`.
+3. Evaluate:
+   - frozen `neural_attention`
+   - `attention_online_lowrank_s1_a2_d0p02`
+   - `attention_online_lowrank_s1_a2_d0p01`
+4. If external validation is safe, keep the trust-region adapter as Layer A v1.
+5. Then implement guarded reward / mask-polarization to improve effect size before Scenario B.
 
 ## Decision Gate
 
