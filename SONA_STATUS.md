@@ -315,6 +315,42 @@ Smoke test:
 - Checkpoint load, manifest load, frozen eval, and online eval all work.
 - Local Python lacks PESQ, so full metric external validation should run in Kaggle/Python 3.11 or another env where `pesq` installs.
 
+MS-SNSD external validation completed on Kaggle, but the session output zip was lost. Main summary was recovered from the downloaded notebook outputs and stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_external_2026-07-04_recovered\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_external_2026-07-04_recovered\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_external_2026-07-04_recovered\recovered_notebook_output.txt`
+- `D:\noise cancellation\results\kaggle_ms_snsd_external_2026-07-04_recovered\kaggle-benchmark-nc-ipynb.ipynb`
+
+External validation result, MS-SNSD, 1100 clips:
+
+- frozen `neural_attention`:
+  - SI-SDRi 2.586
+  - PESQ 1.323
+  - STOI 0.803545
+  - ESTOI 0.664321
+  - LSD 11.907
+- `attention_online_lowrank_s1_a2_d0p01`:
+  - SI-SDRi 2.600, delta +0.014
+  - PESQ 1.314, delta -0.009
+  - STOI 0.803181, delta -0.000364
+  - ESTOI 0.663548, delta -0.000773
+  - LSD 11.968, delta +0.061
+- `attention_online_lowrank_s1_a2_d0p02`:
+  - SI-SDRi 2.609, delta +0.023
+  - PESQ 1.307, delta -0.016
+  - STOI 0.802818, delta -0.000726
+  - ESTOI 0.662818, delta -0.001503
+  - LSD 12.017, delta +0.110
+
+Interpretation:
+
+- External validation did not reproduce the VoiceBank PESQ gain.
+- Online adaptation is structurally safe on SI-SDR/STOI but hurts PESQ/LSD on MS-SNSD.
+- Do not lock the current trust-region adapter as a final Layer A result.
+- Use this as evidence that the current adapter is dataset-sensitive.
+- Next methodology should add an external-safety gate / guarded reward before claiming online adaptation generalization.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -347,13 +383,10 @@ Smoke test:
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Run `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb` for full MS-SNSD external validation.
-3. Evaluate:
-   - frozen `neural_attention`
-   - `attention_online_lowrank_s1_a2_d0p02`
-   - `attention_online_lowrank_s1_a2_d0p01`
-4. If external validation is safe, keep the trust-region adapter as Layer A v1.
-5. Then implement guarded reward / mask-polarization to improve effect size before Scenario B.
+2. Add a guarded online-update gate so adaptation is skipped or reduced when the reference-free reward predicts PESQ/LSD risk.
+3. Re-run VoiceBank and MS-SNSD with the guarded gate.
+4. If the gate keeps VoiceBank PESQ gain while preventing MS-SNSD PESQ/LSD degradation, keep guarded trust-region adaptation as Layer A v1.
+5. Then implement mask-polarization and Bark/ERB GTCRN to improve effect size before Scenario B.
 
 ## Decision Gate
 
