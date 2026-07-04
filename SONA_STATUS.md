@@ -405,6 +405,24 @@ Interpretation:
 - Do not run full 1100 guarded MS-SNSD with this exact grid.
 - The next step should be a stricter/no-update baseline and/or a better guard signal, then mask-polarization. The current simple output-drift guard alone is not enough.
 
+Strict guarded MS-SNSD pilot notebook added:
+
+- `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
+
+Purpose:
+
+- Run a second 300-clip MS-SNSD pilot before any full 1100 run.
+- Include explicit no-update rows with `STEPS = "0,1"`.
+- Test stricter output-drift guards:
+  - `guard_max_output_delta = "0.0,0.0001,0.00025,0.0005"`
+- Keep:
+  - `max_gain_delta = "0.01,0.02"`
+  - `guard_min_reward_delta = "none"`
+
+Decision rule:
+
+- Only continue to full 1100 if at least one strict guarded setting has PESQ >= frozen and LSD <= frozen on the 300-clip pilot.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -439,11 +457,8 @@ Interpretation:
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Do not run the full 1100 MS-SNSD guarded setting yet.
-4. Add a stronger external-safety mechanism:
-   - include a no-update/frozen fallback row in guarded grids,
-   - test stricter output guard (`0.0,0.0001,0.00025,0.0005`),
-   - add a reward-improvement guard or mask-polarization confidence gate.
-5. Then re-run a 300-clip MS-SNSD pilot.
+4. Run `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`.
+5. If strict guard still cannot beat frozen on PESQ/LSD, stop guard-only tuning and implement mask-polarization confidence gating.
 6. Only after MS-SNSD is non-degrading should VoiceBank be re-run and Layer A v1 locked.
 
 ## Decision Gate
@@ -473,4 +488,5 @@ If not good:
 - Tuning notebook: `D:\noise cancellation\sona_kaggle_tune_online.ipynb`
 - External validation notebook: `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
 - Guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
+- Strict guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
