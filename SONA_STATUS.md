@@ -293,7 +293,27 @@ External validation dataset state:
   - SNRs cycled evenly across `-5,0,5,10` dB
   - generated noisy mixture folder size: 0.391 GB
 
-Next external-validation work: add an evaluation runner that loads a trained VoiceBank model/checkpoint and scores it on `external_data\ms_snsd_sona\test.csv`, rather than retraining on MS-SNSD.
+External-validation tooling added:
+
+- `D:\noise cancellation\scripts\eval_external_ms_snsd.py`
+- `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
+
+Purpose:
+
+- Load the saved VoiceBank `neural_attention` checkpoint from:
+  - `D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\ckpt_attention\last.pt`
+- Score it on:
+  - `D:\noise cancellation\external_data\ms_snsd_sona\test.csv`
+- Compare:
+  - frozen `neural_attention`
+  - `attention_online_lowrank_s1_a2_d0p01`
+  - `attention_online_lowrank_s1_a2_d0p02`
+
+Smoke test:
+
+- Ran 2 MS-SNSD samples locally on CPU.
+- Checkpoint load, manifest load, frozen eval, and online eval all work.
+- Local Python lacks PESQ, so full metric external validation should run in Kaggle/Python 3.11 or another env where `pesq` installs.
 
 ## Done
 
@@ -327,7 +347,7 @@ Next external-validation work: add an evaluation runner that loads a trained Voi
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Add a script/notebook to evaluate the saved VoiceBank model on `external_data\ms_snsd_sona\test.csv`.
+2. Run `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb` for full MS-SNSD external validation.
 3. Evaluate:
    - frozen `neural_attention`
    - `attention_online_lowrank_s1_a2_d0p02`
@@ -360,4 +380,5 @@ If not good:
 - Kaggle repo zip: `D:\noise cancellation\sona.zip`
 - Kaggle notebook: `D:\noise cancellation\sona_kaggle_run_all_online.ipynb`
 - Tuning notebook: `D:\noise cancellation\sona_kaggle_tune_online.ipynb`
+- External validation notebook: `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
