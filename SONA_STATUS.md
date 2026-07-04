@@ -458,6 +458,25 @@ Interpretation:
 - Do not claim it as a major online-adaptation win.
 - Next full MS-SNSD run should test only the two strict pass configs above, not the whole grid.
 
+Overnight strict-guard sweep notebook added:
+
+- `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
+
+Purpose:
+
+- Run a long full-1100 MS-SNSD robustness sweep overnight.
+- No retraining; loads the saved VoiceBank `ckpt_attention\last.pt`.
+- Grid:
+  - `LIMIT = 0`
+  - `ADAPTER = "lowrank"`
+  - `ANCHORS = "2.0"`
+  - `STEPS = "1"`
+  - `MAX_GAIN_DELTAS = "0.005,0.01,0.02,0.03,0.05"`
+  - `GUARD_MAX_OUTPUT_DELTAS = "0.0,0.00005,0.0001,0.00025,0.0005"`
+  - `GUARD_MIN_REWARD_DELTAS = "none"`
+- Total: 1 frozen baseline + 25 online variants.
+- Expected runtime on Kaggle T4: roughly 8-11 hours.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -491,11 +510,9 @@ Interpretation:
 
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Do not run the full 1100 MS-SNSD guarded setting yet.
-4. Run a full 1100 MS-SNSD strict-guard validation with only:
-   - `attention_online_lowrank_s1_a2_d0p01_go0p0001`
-   - `attention_online_lowrank_s1_a2_d0p02_go0p00025`
-5. If those remain non-degrading, re-run VoiceBank with the same strict guards.
+3. Run `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb` if a 10-hour overnight job is desired.
+4. Download `sona_ms_snsd_overnight_strict_guard_sweep.zip`.
+5. If the sweep finds a non-degrading full-MS-SNSD guard, re-run VoiceBank with the same guard.
 6. Only after both datasets are non-degrading should guarded Layer A v1 be locked; otherwise move to mask-polarization confidence gating.
 
 ## Decision Gate
@@ -526,4 +543,5 @@ If not good:
 - External validation notebook: `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
 - Guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
 - Strict guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
+- Overnight strict-guard sweep notebook: `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
