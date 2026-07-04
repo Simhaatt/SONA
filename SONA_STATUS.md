@@ -423,6 +423,41 @@ Decision rule:
 
 - Only continue to full 1100 if at least one strict guarded setting has PESQ >= frozen and LSD <= frozen on the 300-clip pilot.
 
+Strict guarded MS-SNSD pilot completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_strict_guard_2026-07-04_pilot300\sona_ms_snsd_external_eval.zip`
+- `D:\noise cancellation\results\kaggle_ms_snsd_strict_guard_2026-07-04_pilot300\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_strict_guard_2026-07-04_pilot300\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_strict_guard_2026-07-04_pilot300\extracted\per_sample.csv`
+
+Strict guarded pilot result, MS-SNSD, 300 clips:
+
+- frozen `neural_attention`:
+  - SI-SDRi 2.645365
+  - PESQ 1.316965
+  - STOI 0.803395
+  - ESTOI 0.665840
+  - LSD 11.947144
+- best strict guarded config: `attention_online_lowrank_s1_a2_d0p01_go0p0001`
+  - SI-SDRi 2.646190, delta +0.000825
+  - PESQ 1.316994, delta +0.000029
+  - STOI 0.803395, delta -0.00000006
+  - ESTOI 0.665841, delta +0.00000086
+  - LSD 11.946880, delta -0.000264
+- second strict guarded pass: `attention_online_lowrank_s1_a2_d0p02_go0p00025`
+  - SI-SDRi 2.645878, delta +0.000513
+  - PESQ 1.316985, delta +0.000020
+  - STOI 0.803396, delta +0.00000031
+  - ESTOI 0.665841, delta +0.00000116
+  - LSD 11.947130, delta -0.000014
+
+Interpretation:
+
+- Strict output guard can prevent MS-SNSD degradation, but the effect size is essentially zero.
+- This is useful as a safety/fallback mechanism, not a strong enhancement result.
+- Do not claim it as a major online-adaptation win.
+- Next full MS-SNSD run should test only the two strict pass configs above, not the whole grid.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -457,9 +492,11 @@ Decision rule:
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Do not run the full 1100 MS-SNSD guarded setting yet.
-4. Run `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`.
-5. If strict guard still cannot beat frozen on PESQ/LSD, stop guard-only tuning and implement mask-polarization confidence gating.
-6. Only after MS-SNSD is non-degrading should VoiceBank be re-run and Layer A v1 locked.
+4. Run a full 1100 MS-SNSD strict-guard validation with only:
+   - `attention_online_lowrank_s1_a2_d0p01_go0p0001`
+   - `attention_online_lowrank_s1_a2_d0p02_go0p00025`
+5. If those remain non-degrading, re-run VoiceBank with the same strict guards.
+6. Only after both datasets are non-degrading should guarded Layer A v1 be locked; otherwise move to mask-polarization confidence gating.
 
 ## Decision Gate
 
