@@ -1,6 +1,6 @@
 # SONA Status
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Current Goal
 
@@ -158,6 +158,36 @@ Overnight trust-region sweep notebook added:
   - test clips: `300`
 - The notebook ranks configs by a safety-aware score and bundles `overnight_ranked_configs.csv`.
 
+Overnight trust-region sweep completed and ranked output was stored in:
+
+- `D:\noise cancellation\results\kaggle_overnight_trust_region_2026-07-04\overnight_ranked_configs.csv`
+
+Result summary, `attention`, 300 test clips, 200 online configs:
+
+- Best safety-aware config: `attention_online_lowrank_s1_a2_d0p02`
+  - PESQ 2.548, delta +0.015
+  - SI-SDRi 9.009, delta -0.102
+  - STOI 0.932710, delta -0.000193
+  - ESTOI 0.851445, delta -0.000517
+  - LSD 5.990, delta -0.017
+- Best strict-safe config: `attention_online_lowrank_s2_a0p5_d0p01`
+  - PESQ 2.544, delta +0.011
+  - SI-SDRi 9.075, delta -0.036
+  - STOI 0.932821, delta -0.000082
+  - ESTOI 0.851757, delta -0.000205
+  - LSD 5.978, delta -0.029
+- Best raw PESQ config: `attention_online_lowrank_s1_a1_d0p05`
+  - PESQ delta +0.023
+  - SI-SDRi delta -0.360
+  - not safe enough for the next headline candidate
+
+Interpretation:
+
+- Actual trust-region clipping works better than the previous `_dnone` run.
+- `max_gain_delta=0.02` gives the best balanced gain but sits just outside the strict 0.10 dB SI-SDRi drop target.
+- `max_gain_delta=0.01` is much safer, with smaller PESQ gain and almost no STOI/ESTOI movement.
+- Next validation should use the full 824-clip VoiceBank test set on the `lowrank` trust-region neighborhood.
+
 External advice made the acceptance criteria stricter:
 
 - Do not claim success from +0.008 PESQ alone.
@@ -169,19 +199,20 @@ External advice made the acceptance criteria stricter:
 
 ## What Happens Next
 
-The next step is a trust-region tuning pass around the current best scalar adapter.
+The next step is full-test validation of the best overnight trust-region candidates.
 
-Suggested grid:
+Suggested full 824-clip validation grid:
 
 - base model: `attention`
-- adapter: `scalar`
-- anchors: `1.0,2.0`
-- steps: `4,6`
-- max gain deltas: `0.02,0.05,0.1`
-- test clips: `300`
+- adapter: `lowrank`
+- anchors: `0.5,2.0`
+- steps: `1,2`
+- max gain deltas: `0.01,0.02`
+- test clips: full test set, no limit
 
-If this improves the PESQ/SI-SDR/STOI tradeoff, validate the best setting on the full 824-clip test set.
-If it does not, add guarded multi-objective SQUIM reward and/or mask-polarization next.
+This creates 8 configs because the current runner cross-products settings. That is acceptable and validates the neighborhood around both the balanced candidate and the strict-safe candidate.
+
+If the full 824-clip result keeps positive PESQ with SI-SDRi drop <= 0.10-0.20 dB and STOI/ESTOI nearly unchanged, use it as the tuned Layer A online candidate. If it fails, move next to guarded multi-objective reward and/or mask-polarization before building Bark-GTCRN.
 
 Architecture direction from external model advice:
 
@@ -263,11 +294,17 @@ Next external-validation work: add an evaluation runner that loads a trained Voi
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_kaggle_overnight_trust_region.ipynb` overnight.
-4. Download `sona_overnight_trust_region_artifacts.zip`.
-5. Inspect `overnight_ranked_configs.csv`.
-6. Validate the best safe setting on the full 824-clip test set.
+2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle if the Kaggle dataset copy is stale.
+3. Run `D:\noise cancellation\sona_kaggle_tune_online.ipynb` with the full 824-clip validation neighborhood:
+   - `LIMIT_TEST = 0`
+   - `SUP_MODELS = "attention"`
+   - `ADAPTERS = "lowrank"`
+   - `ANCHORS = "0.5,2.0"`
+   - `STEPS = "1,2"`
+   - `MAX_GAIN_DELTAS = "0.01,0.02"`
+4. Download the resulting `sona_online_tune_artifacts.zip`.
+5. Use the full-test winner only if PESQ stays positive and SI-SDRi/STOI/ESTOI stay safe.
+6. After that decision, either lock Layer A's tuned online candidate or move to guarded reward / mask-polarization.
 
 ## Decision Gate
 
