@@ -351,6 +351,31 @@ Interpretation:
 - Use this as evidence that the current adapter is dataset-sensitive.
 - Next methodology should add an external-safety gate / guarded reward before claiming online adaptation generalization.
 
+Guarded online-update methodology added:
+
+- `OnlineAdapter` now supports post-adaptation accept/reject guards:
+  - `guard_min_reward_delta`
+  - `guard_max_output_delta`
+- If the adapted gain fails the guard, the adapter returns the frozen model gain for that clip.
+- `scripts\kaggle_tune_online.py` exposes:
+  - `--guard-min-reward-deltas`
+  - `--guard-max-output-deltas`
+- `scripts\eval_external_ms_snsd.py` exposes the same guard sweep knobs.
+- Added upload-ready guarded external pilot notebook:
+  - `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
+- Verified tests:
+  - full local suite: 40 passed.
+
+Next guarded pilot:
+
+- Dataset: MS-SNSD external validation.
+- Limit: 300 clips first, not full 1100.
+- Candidates:
+  - `max_gain_delta`: `0.01,0.02`
+  - `guard_max_output_delta`: `none,0.0005,0.001,0.002`
+  - `guard_min_reward_delta`: `none`
+- If a guarded setting prevents PESQ/LSD loss on MS-SNSD, rerun the same setting on full MS-SNSD and then VoiceBank.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -383,10 +408,11 @@ Interpretation:
 ## Do Next
 
 1. Do not run full Scenario B yet.
-2. Add a guarded online-update gate so adaptation is skipped or reduced when the reference-free reward predicts PESQ/LSD risk.
-3. Re-run VoiceBank and MS-SNSD with the guarded gate.
-4. If the gate keeps VoiceBank PESQ gain while preventing MS-SNSD PESQ/LSD degradation, keep guarded trust-region adaptation as Layer A v1.
-5. Then implement mask-polarization and Bark/ERB GTCRN to improve effect size before Scenario B.
+2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
+3. Run `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb` as a 300-clip guarded MS-SNSD pilot.
+4. If the guard prevents PESQ/LSD degradation, rerun full MS-SNSD with the winning guard.
+5. Then re-run VoiceBank with the same guard and only lock Layer A v1 if both datasets are safe.
+6. After that, implement mask-polarization and Bark/ERB GTCRN to improve effect size before Scenario B.
 
 ## Decision Gate
 
@@ -414,4 +440,5 @@ If not good:
 - Kaggle notebook: `D:\noise cancellation\sona_kaggle_run_all_online.ipynb`
 - Tuning notebook: `D:\noise cancellation\sona_kaggle_tune_online.ipynb`
 - External validation notebook: `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
+- Guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

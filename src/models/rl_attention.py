@@ -75,6 +75,8 @@ class OnlineAdapter(Enhancer):
         max_gain_delta: float | None = None,
         smooth_time_weight: float = 0.0,
         smooth_band_weight: float = 0.0,
+        guard_min_reward_delta: float | None = None,
+        guard_max_output_delta: float | None = None,
         reward_fn=None,
         adapter=None,
         name: str = "rl_attention_online",
@@ -100,6 +102,11 @@ class OnlineAdapter(Enhancer):
         self.max_gain_delta = max_gain_delta
         self.smooth_time_weight = smooth_time_weight
         self.smooth_band_weight = smooth_band_weight
+        # Optional post-adaptation accept/reject guard. If enabled, the online correction is applied
+        # only when it improves the reference-free reward enough and stays close to the frozen
+        # waveform. This catches dataset-shift cases where adaptation is "active" but risky.
+        self.guard_min_reward_delta = guard_min_reward_delta
+        self.guard_max_output_delta = guard_max_output_delta
         # Optional waveform-domain reference-free reward (e.g. SQUIM). If None, use the built-in
         # band-domain speech-presence heuristic. This is the primary reward for real experiments.
         self.reward_fn = reward_fn
@@ -158,6 +165,7 @@ class OnlineAdapter(Enhancer):
                 opt.step()
         with torch.no_grad():
             adapted = self._bounded_gain(base_gain)
+            adapted = self._guarded_gain(spec, x, base_gain, base_enhanced, adapted, presence, length)
         return spec, adapted.detach(), length
 
     def _bounded_gain(self, base_gain: torch.Tensor) -> torch.Tensor:
@@ -175,6 +183,46 @@ class OnlineAdapter(Enhancer):
         if self.smooth_band_weight > 0.0 and correction.shape[2] > 1:
             loss = loss + self.smooth_band_weight * torch.diff(correction, dim=2).abs().mean()
         return loss
+
+    def _score_gain(
+        self,
+        spec: torch.Tensor,
+        x: torch.Tensor,
+        gain_bt: torch.Tensor,
+        presence: torch.Tensor,
+        length: int,
+    ) -> torch.Tensor:
+        if self.reward_fn is not None:
+            enhanced = self.tf.apply_band_gain(spec, gain_bt, length=length)
+            return self.reward_fn(enhanced, x)
+        return reference_free_reward(gain_bt.permute(0, 2, 1), presence, self.suppress_weight)
+
+    def _guarded_gain(
+        self,
+        spec: torch.Tensor,
+        x: torch.Tensor,
+        base_gain: torch.Tensor,
+        base_enhanced: torch.Tensor,
+        adapted_gain: torch.Tensor,
+        presence: torch.Tensor,
+        length: int,
+    ) -> torch.Tensor:
+        if self.guard_min_reward_delta is None and self.guard_max_output_delta is None:
+            return adapted_gain
+
+        accept = True
+        if self.guard_min_reward_delta is not None:
+            base_reward = self._score_gain(spec, x, base_gain, presence, length)
+            adapted_reward = self._score_gain(spec, x, adapted_gain, presence, length)
+            accept = accept and bool((adapted_reward - base_reward) >= self.guard_min_reward_delta)
+
+        if self.guard_max_output_delta is not None:
+            adapted_enhanced = self.tf.apply_band_gain(spec, adapted_gain, length=length)
+            denom = base_enhanced.pow(2).mean().clamp_min(EPS)
+            output_delta = (adapted_enhanced - base_enhanced).pow(2).mean() / denom
+            accept = accept and bool(output_delta <= self.guard_max_output_delta)
+
+        return adapted_gain if accept else base_gain
 
     def enhance(self, wav: np.ndarray, sr: int | None = None) -> np.ndarray:
         spec, gain, length = self._adapt(wav)

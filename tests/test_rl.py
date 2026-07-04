@@ -89,6 +89,20 @@ def test_online_adapter_trust_region_bounds_gain_delta():
     assert torch.all((gain - base).abs() <= 0.0501)
 
 
+def test_online_adapter_guard_rejects_large_output_drift():
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    model = MaskGRU(n_bands=32, hidden=32, layers=1)
+    adapter = OnlineAdapter(model, tf, steps=1, guard_max_output_delta=0.0)
+    spec = torch.ones(1, 257, 4, dtype=torch.complex64)
+    x = torch.zeros(1, 512)
+    base_gain = torch.full((1, 4, 32), 0.5)
+    adapted_gain = torch.full((1, 4, 32), 0.75)
+    base_enhanced = tf.apply_band_gain(spec, base_gain, length=x.shape[-1])
+    presence = torch.ones(1, 32, 4)
+    guarded = adapter._guarded_gain(spec, x, base_gain, base_enhanced, adapted_gain, presence, x.shape[-1])
+    assert torch.equal(guarded, base_gain)
+
+
 def test_rl_policy_plugs_into_neural_enhancer():
     tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
     pol = RLGainPolicy(n_bands=32, trunk="gru", hidden=64)
