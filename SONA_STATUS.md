@@ -376,6 +376,35 @@ Next guarded pilot:
   - `guard_min_reward_delta`: `none`
 - If a guarded setting prevents PESQ/LSD loss on MS-SNSD, rerun the same setting on full MS-SNSD and then VoiceBank.
 
+Guarded MS-SNSD pilot completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_guarded_2026-07-04_pilot300\sona_ms_snsd_external_eval.zip`
+- `D:\noise cancellation\results\kaggle_ms_snsd_guarded_2026-07-04_pilot300\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_guarded_2026-07-04_pilot300\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_guarded_2026-07-04_pilot300\extracted\per_sample.csv`
+
+Guarded pilot result, MS-SNSD, 300 clips:
+
+- frozen `neural_attention`:
+  - SI-SDRi 2.645
+  - PESQ 1.317
+  - STOI 0.803395
+  - ESTOI 0.665840
+  - LSD 11.947
+- least bad guarded config: `attention_online_lowrank_s1_a2_d0p02_go0p0005`
+  - SI-SDRi 2.656, delta +0.010
+  - PESQ 1.313, delta -0.004
+  - STOI 0.803348, delta -0.000048
+  - ESTOI 0.665662, delta -0.000178
+  - LSD 11.957, delta +0.009
+- no guarded config in this pilot achieved PESQ >= frozen and LSD <= frozen.
+
+Interpretation:
+
+- The output-drift guard reduces external damage but does not solve the external PESQ/LSD failure.
+- Do not run full 1100 guarded MS-SNSD with this exact grid.
+- The next step should be a stricter/no-update baseline and/or a better guard signal, then mask-polarization. The current simple output-drift guard alone is not enough.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -409,10 +438,13 @@ Next guarded pilot:
 
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb` as a 300-clip guarded MS-SNSD pilot.
-4. If the guard prevents PESQ/LSD degradation, rerun full MS-SNSD with the winning guard.
-5. Then re-run VoiceBank with the same guard and only lock Layer A v1 if both datasets are safe.
-6. After that, implement mask-polarization and Bark/ERB GTCRN to improve effect size before Scenario B.
+3. Do not run the full 1100 MS-SNSD guarded setting yet.
+4. Add a stronger external-safety mechanism:
+   - include a no-update/frozen fallback row in guarded grids,
+   - test stricter output guard (`0.0,0.0001,0.00025,0.0005`),
+   - add a reward-improvement guard or mask-polarization confidence gate.
+5. Then re-run a 300-clip MS-SNSD pilot.
+6. Only after MS-SNSD is non-degrading should VoiceBank be re-run and Layer A v1 locked.
 
 ## Decision Gate
 
