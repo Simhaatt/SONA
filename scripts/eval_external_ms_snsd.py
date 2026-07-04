@@ -7,6 +7,7 @@ evaluates selected trust-region online-adaptation configs on the same manifest.
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -43,6 +44,65 @@ def _fmt_float(x: float) -> str:
 
 def _fmt_optional_float(x: float | None) -> str:
     return "none" if x is None else _fmt_float(x)
+
+
+def _resolve_manifest_paths(manifest: Path, out: Path) -> Path:
+    r"""Rewrite Windows absolute paths in a manifest when running from a Kaggle dataset.
+
+    Locally the generated MS-SNSD manifest points at ``D:\noise cancellation\external_data\...``.
+    After uploading the compact dataset zip to Kaggle, the same files live under the dataset root,
+    for example ``/kaggle/input/.../MS-SNSD/...``. If the manifest paths already exist this leaves
+    them untouched; otherwise it writes a fixed manifest beside the outputs.
+    """
+
+    with open(manifest, newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        rows = list(reader)
+
+    if not rows:
+        return manifest
+
+    dataset_root = manifest.parent.parent
+
+    def fix_path(value: str) -> str:
+        p = Path(value)
+        if p.exists():
+            return value
+
+        normalized = value.replace("\\", "/")
+        marker = "external_data/"
+        if marker in normalized:
+            rel = normalized.split(marker, 1)[1]
+            candidate = dataset_root / rel
+            if candidate.exists():
+                return str(candidate)
+
+        for marker in ("MS-SNSD/", "ms_snsd_sona/"):
+            if marker in normalized:
+                rel = normalized[normalized.index(marker):]
+                candidate = dataset_root / rel
+                if candidate.exists():
+                    return str(candidate)
+
+        return value
+
+    changed = False
+    for row in rows:
+        for key in ("clean", "noisy"):
+            if key in row and row[key]:
+                fixed = fix_path(row[key])
+                changed = changed or fixed != row[key]
+                row[key] = fixed
+
+    if not changed:
+        return manifest
+
+    fixed_manifest = out / "test_resolved_paths.csv"
+    with open(fixed_manifest, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    return fixed_manifest
 
 
 def main() -> None:
@@ -93,7 +153,7 @@ def main() -> None:
     model.load_state_dict(checkpoint["model"])
     model.eval()
 
-    manifest = Path(args.manifest)
+    manifest = _resolve_manifest_paths(Path(args.manifest), out)
     samples = list(PairDataset(manifest=manifest, limit=(args.limit or None)))
     if not samples:
         raise SystemExit(f"No samples found in {manifest}")
