@@ -515,6 +515,36 @@ VoiceBank strict-guard full-test notebook added:
   - max gain delta: `0.01`
   - guard max output delta: `0.0001`
 
+VoiceBank strict-guard full-test completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_strict_guard_full824_2026-07-05\sona_voicebank_strict_guard_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_strict_guard_full824_2026-07-05\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_strict_guard_full824_2026-07-05\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_strict_guard_full824_2026-07-05\extracted\per_sample.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_strict_guard_full824_2026-07-05\extracted\ckpt_attention\last.pt`
+
+Full VoiceBank strict-guard result, 824 clips:
+
+- frozen `neural_attention`:
+  - SI-SDRi 9.081744
+  - PESQ 2.501244
+  - STOI 0.932215
+  - ESTOI 0.834390
+  - LSD 5.970064
+- strict guarded online: `attention_online_lowrank_s1_a2_d0p01_go0p0001`
+  - SI-SDRi 9.079047, delta -0.002697
+  - PESQ 2.503420, delta +0.002175
+  - STOI 0.932198, delta -0.000017
+  - ESTOI 0.834362, delta -0.000028
+  - LSD 5.962981, delta -0.007083
+
+Layer A v1 decision:
+
+- Strict guarded Layer A v1 is now locked as the safe fallback foundation.
+- It is non-degrading on full MS-SNSD and positive on full VoiceBank PESQ/LSD.
+- The effect size is still tiny, so this is not the final thesis-strength architecture.
+- Next methodology should move to Layer B: mask-polarization confidence gating, then Bark/ERB GTCRN.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -548,10 +578,10 @@ VoiceBank strict-guard full-test notebook added:
 
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`.
-4. Download `sona_voicebank_strict_guard_full824.zip`.
-5. If VoiceBank is also non-degrading, lock strict guarded Layer A v1 as the safe fallback version.
-6. Then move to mask-polarization confidence gating and Bark/ERB GTCRN for meaningful effect size.
+3. Treat strict guarded Layer A v1 as locked safe fallback.
+4. Begin Layer B with mask-polarization confidence gating.
+5. After mask-polarization, build the Bark/ERB GTCRN backbone.
+6. Then transfer trust-region + strict guard onto GTCRN for the stronger architecture.
 
 ## Decision Gate
 
