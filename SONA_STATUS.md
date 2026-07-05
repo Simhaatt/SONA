@@ -545,6 +545,22 @@ Layer A v1 decision:
 - The effect size is still tiny, so this is not the final thesis-strength architecture.
 - Next methodology should move to Layer B: mask-polarization confidence gating, then Bark/ERB GTCRN.
 
+Layer B mask-polarization confidence gate added:
+
+- `OnlineAdapter` now supports:
+  - `guard_min_mask_polarity`
+- Mask polarity is a reference-free confidence proxy:
+  - `0.0` means an uncertain gain mask near `0.5`
+  - `1.0` means a near-binary/confident mask near `0` or `1`
+- If the adapted mask polarity is below the threshold, the adapter falls back to the frozen gain.
+- `scripts\kaggle_tune_online.py` exposes:
+  - `--guard-min-mask-polarities`
+- `scripts\eval_external_ms_snsd.py` exposes the same knob.
+- Added pilot notebook:
+  - `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`
+- Verified tests:
+  - full local suite: 42 passed.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -579,9 +595,9 @@ Layer A v1 decision:
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Treat strict guarded Layer A v1 as locked safe fallback.
-4. Begin Layer B with mask-polarization confidence gating.
-5. After mask-polarization, build the Bark/ERB GTCRN backbone.
-6. Then transfer trust-region + strict guard onto GTCRN for the stronger architecture.
+4. Run `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`.
+5. If polarity gating improves over the strict safe fallback, validate the best setting on full MS-SNSD and VoiceBank.
+6. After mask-polarization, build the Bark/ERB GTCRN backbone and transfer trust-region + strict guard onto it.
 
 ## Decision Gate
 
@@ -613,4 +629,5 @@ If not good:
 - Strict guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
 - Overnight strict-guard sweep notebook: `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
 - VoiceBank strict-guard full-test notebook: `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`
+- Mask-polarity pilot notebook: `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

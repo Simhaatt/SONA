@@ -67,6 +67,8 @@ def main() -> None:
                     help="comma list; require adapted reward - frozen reward >= value, or none")
     ap.add_argument("--guard-max-output-deltas", default="none",
                     help="comma list; require normalized output drift <= value, or none")
+    ap.add_argument("--guard-min-mask-polarities", default="none",
+                    help="comma list; require adapted mask polarity >= value, or none")
     ap.add_argument("--lr", type=float, default=0.1)
     ap.add_argument("--reward-kind", default="auto",
                     help="'auto' uses SQUIM on Kaggle, spectral fallback locally")
@@ -104,6 +106,8 @@ def main() -> None:
     log.info("guards min_reward_deltas=%s max_output_deltas=%s",
              _csv_optional_floats(args.guard_min_reward_deltas),
              _csv_optional_floats(args.guard_max_output_deltas))
+    log.info("mask polarity guards min_mask_polarities=%s",
+             _csv_optional_floats(args.guard_min_mask_polarities))
 
     vbd = Path(args.vbd_root)
     build_manifest(vbd, "clean_trainset_wav", "noisy_trainset_wav", out / "train.csv")
@@ -140,30 +144,34 @@ def main() -> None:
                     for max_delta in _csv_optional_floats(args.max_gain_deltas):
                         for guard_reward in _csv_optional_floats(args.guard_min_reward_deltas):
                             for guard_output in _csv_optional_floats(args.guard_max_output_deltas):
-                                guard_suffix = ""
-                                if guard_reward is not None:
-                                    guard_suffix += f"_gr{_fmt_float(guard_reward)}"
-                                if guard_output is not None:
-                                    guard_suffix += f"_go{_fmt_float(guard_output)}"
-                                name = (
-                                    f"{kind}_online_{adapter_kind}"
-                                    f"_s{steps}_a{_fmt_float(anchor)}"
-                                    f"_d{_fmt_optional_float(max_delta)}"
-                                    f"{guard_suffix}"
-                                )
-                                log.info("eval %s", name)
-                                rows += evaluate_method(
-                                    OnlineAdapter(
-                                        model, tf, device=device, name=name, steps=steps, lr=args.lr,
-                                        anchor_weight=anchor, max_gain_delta=max_delta,
-                                        smooth_time_weight=args.smooth_time_weight,
-                                        smooth_band_weight=args.smooth_band_weight,
-                                        guard_min_reward_delta=guard_reward,
-                                        guard_max_output_delta=guard_output,
-                                        reward_fn=reward,
-                                        adapter=make_adapter(adapter_kind, tf.n_bands),
-                                    ),
-                                    test_samples, include_metrics=metrics, method_name=name)
+                                for guard_polarity in _csv_optional_floats(args.guard_min_mask_polarities):
+                                    guard_suffix = ""
+                                    if guard_reward is not None:
+                                        guard_suffix += f"_gr{_fmt_float(guard_reward)}"
+                                    if guard_output is not None:
+                                        guard_suffix += f"_go{_fmt_float(guard_output)}"
+                                    if guard_polarity is not None:
+                                        guard_suffix += f"_gp{_fmt_float(guard_polarity)}"
+                                    name = (
+                                        f"{kind}_online_{adapter_kind}"
+                                        f"_s{steps}_a{_fmt_float(anchor)}"
+                                        f"_d{_fmt_optional_float(max_delta)}"
+                                        f"{guard_suffix}"
+                                    )
+                                    log.info("eval %s", name)
+                                    rows += evaluate_method(
+                                        OnlineAdapter(
+                                            model, tf, device=device, name=name, steps=steps, lr=args.lr,
+                                            anchor_weight=anchor, max_gain_delta=max_delta,
+                                            smooth_time_weight=args.smooth_time_weight,
+                                            smooth_band_weight=args.smooth_band_weight,
+                                            guard_min_reward_delta=guard_reward,
+                                            guard_max_output_delta=guard_output,
+                                            guard_min_mask_polarity=guard_polarity,
+                                            reward_fn=reward,
+                                            adapter=make_adapter(adapter_kind, tf.n_bands),
+                                        ),
+                                        test_samples, include_metrics=metrics, method_name=name)
 
         summary = aggregate(rows, group_keys=("method",))
         save_rows_csv(rows, out / "per_sample.csv")

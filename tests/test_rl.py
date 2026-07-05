@@ -103,6 +103,27 @@ def test_online_adapter_guard_rejects_large_output_drift():
     assert torch.equal(guarded, base_gain)
 
 
+def test_mask_polarity_confidence_range():
+    uncertain = torch.full((1, 4, 32), 0.5)
+    binary = torch.cat([torch.zeros(1, 4, 16), torch.ones(1, 4, 16)], dim=2)
+    assert float(OnlineAdapter._mask_polarity(uncertain)) == 0.0
+    assert float(OnlineAdapter._mask_polarity(binary)) == 1.0
+
+
+def test_online_adapter_guard_rejects_low_mask_polarity():
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    model = MaskGRU(n_bands=32, hidden=32, layers=1)
+    adapter = OnlineAdapter(model, tf, steps=1, guard_min_mask_polarity=0.2)
+    spec = torch.ones(1, 257, 4, dtype=torch.complex64)
+    x = torch.zeros(1, 512)
+    base_gain = torch.full((1, 4, 32), 0.5)
+    adapted_gain = torch.full((1, 4, 32), 0.51)
+    base_enhanced = tf.apply_band_gain(spec, base_gain, length=x.shape[-1])
+    presence = torch.ones(1, 32, 4)
+    guarded = adapter._guarded_gain(spec, x, base_gain, base_enhanced, adapted_gain, presence, x.shape[-1])
+    assert torch.equal(guarded, base_gain)
+
+
 def test_rl_policy_plugs_into_neural_enhancer():
     tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
     pol = RLGainPolicy(n_bands=32, trunk="gru", hidden=64)

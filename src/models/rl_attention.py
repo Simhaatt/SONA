@@ -77,6 +77,7 @@ class OnlineAdapter(Enhancer):
         smooth_band_weight: float = 0.0,
         guard_min_reward_delta: float | None = None,
         guard_max_output_delta: float | None = None,
+        guard_min_mask_polarity: float | None = None,
         reward_fn=None,
         adapter=None,
         name: str = "rl_attention_online",
@@ -107,6 +108,7 @@ class OnlineAdapter(Enhancer):
         # waveform. This catches dataset-shift cases where adaptation is "active" but risky.
         self.guard_min_reward_delta = guard_min_reward_delta
         self.guard_max_output_delta = guard_max_output_delta
+        self.guard_min_mask_polarity = guard_min_mask_polarity
         # Optional waveform-domain reference-free reward (e.g. SQUIM). If None, use the built-in
         # band-domain speech-presence heuristic. This is the primary reward for real experiments.
         self.reward_fn = reward_fn
@@ -207,10 +209,17 @@ class OnlineAdapter(Enhancer):
         presence: torch.Tensor,
         length: int,
     ) -> torch.Tensor:
-        if self.guard_min_reward_delta is None and self.guard_max_output_delta is None:
+        if (
+            self.guard_min_reward_delta is None
+            and self.guard_max_output_delta is None
+            and self.guard_min_mask_polarity is None
+        ):
             return adapted_gain
 
         accept = True
+        if self.guard_min_mask_polarity is not None:
+            accept = accept and bool(self._mask_polarity(adapted_gain) >= self.guard_min_mask_polarity)
+
         if self.guard_min_reward_delta is not None:
             base_reward = self._score_gain(spec, x, base_gain, presence, length)
             adapted_reward = self._score_gain(spec, x, adapted_gain, presence, length)
@@ -223,6 +232,11 @@ class OnlineAdapter(Enhancer):
             accept = accept and bool(output_delta <= self.guard_max_output_delta)
 
         return adapted_gain if accept else base_gain
+
+    @staticmethod
+    def _mask_polarity(gain: torch.Tensor) -> torch.Tensor:
+        """Confidence proxy in [0,1]: 0 means uncertain 0.5 mask, 1 means near-binary mask."""
+        return (2.0 * (gain - 0.5).abs()).clamp(0.0, 1.0).mean()
 
     def enhance(self, wav: np.ndarray, sr: int | None = None) -> np.ndarray:
         spec, gain, length = self._adapt(wav)
