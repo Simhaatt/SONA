@@ -1,7 +1,7 @@
 defaults: default.yaml
 
 model:
-  kind: mask_gru      # mask_gru | mask_tcn | attention
+  kind: mask_gru      # mask_gru | mask_tcn | attention | gtcrn
   hidden: 128
   layers: 2
   bidirectional: false

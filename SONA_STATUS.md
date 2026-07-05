@@ -4,7 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Tune trust-region online adaptation before launching the full Scenario B paper run.
+Build and test the Bark-band GTCRN Layer B backbone after locking strict guarded attention Layer A
+as the safe fallback.
 
 ## Current Run State
 
@@ -66,16 +67,26 @@ New trust-region methodology has been added after reviewing external model advic
 
 ## What We Are Doing Right Now
 
-We are testing the improved thesis version, not building new code.
+We are moving from Layer A attention tuning to Layer B architecture improvement.
 
-The current Kaggle run is checking whether online adaptation works better when applied to strong supervised models instead of only the weaker RL policy:
+Added methodology:
 
-- frozen baseline: `neural_attention`
-- online version: `attention_online`
-- frozen baseline: `neural_mask_gru`
-- online version: `mask_gru_online`
+- Bark-band `gtcrn` supervised backbone.
+- Gated causal time-frequency convolution blocks over Bark-band features.
+- Per-band causal GRU decoder.
+- Same output contract as existing models: per-band gain logits.
+- Same strict guarded online adapter path can now be tested on GTCRN.
 
-This is the important retry after the first run showed `rl_online` improved PESQ but hurt SI-SDR/STOI.
+Created upload-ready notebook:
+
+- `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`
+
+Run purpose:
+
+- Train `neural_gtcrn` on VoiceBank.
+- Evaluate frozen GTCRN on 300 VoiceBank test clips.
+- Evaluate strict guarded online GTCRN with the locked Layer A guard.
+- Save checkpoints and result CSV/MD files into the output zip.
 
 ## Latest Results
 
@@ -666,12 +677,12 @@ Interpretation:
 
 ## Do Next
 
-1. Do not run full Scenario B yet.
-2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Treat strict guarded Layer A v1 as locked safe fallback.
-4. Stop over-tuning the attention backbone.
-5. Build the Bark/ERB GTCRN backbone as Layer B.
-6. Transfer strict guard, trust-region adapter, and optional training-time polarity objective onto GTCRN.
+1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
+2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`.
+3. Use VoiceBank for this training pilot.
+4. Compare `neural_gtcrn` against the locked attention Layer A numbers.
+5. If GTCRN wins on VoiceBank, run MS-SNSD external validation next.
+6. If GTCRN does not win, tune GTCRN capacity before adding memory/Mamba/RL governor.
 
 ## Decision Gate
 
@@ -705,4 +716,5 @@ If not good:
 - VoiceBank strict-guard full-test notebook: `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`
 - Mask-polarity pilot notebook: `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`
 - VoiceBank mask-polarity training pilot notebook: `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`
+- VoiceBank GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

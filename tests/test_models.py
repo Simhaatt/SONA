@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from src.utils.config import Config
-from src.models import TorchFrontend, MaskGRU, MaskTCN, AttentionMask, NeuralEnhancer
+from src.models import TorchFrontend, MaskGRU, MaskTCN, AttentionMask, GTCRNMask, NeuralEnhancer
 from src.data import SyntheticNoisyDataset
 from src.train.train_supervised import overfit_batch
 from src.train.losses import mask_polarity_loss
@@ -34,8 +34,13 @@ def test_feature_and_gain_shapes():
     x = torch.randn(3, 8000)
     spec, feats = tf.analyze(x)
     assert feats.shape[0] == 3 and feats.shape[2] == 24 and feats.shape[3] == 3
-    for Model in (MaskGRU, MaskTCN, AttentionMask):
-        model = Model(n_bands=24)
+    models = (
+        MaskGRU(n_bands=24),
+        MaskTCN(n_bands=24),
+        AttentionMask(n_bands=24),
+        GTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2),
+    )
+    for model in models:
         gains = model(feats)
         assert gains.shape == (3, feats.shape[1], 24)
         assert float(gains.min().detach()) >= 0.0 and float(gains.max().detach()) <= 1.0
