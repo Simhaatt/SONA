@@ -1,6 +1,6 @@
 # SONA Status
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 ## Current Goal
 
@@ -477,6 +477,44 @@ Purpose:
 - Total: 1 frozen baseline + 25 online variants.
 - Expected runtime on Kaggle T4: roughly 8-11 hours.
 
+Overnight strict-guard sweep completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_overnight_strict_guard_sweep_2026-07-05\sona_ms_snsd_overnight_strict_guard_sweep.zip`
+- `D:\noise cancellation\results\kaggle_ms_snsd_overnight_strict_guard_sweep_2026-07-05\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_overnight_strict_guard_sweep_2026-07-05\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_overnight_strict_guard_sweep_2026-07-05\extracted\per_sample.csv`
+
+Full MS-SNSD overnight result, 1100 clips:
+
+- frozen `neural_attention`:
+  - SI-SDRi 2.586065
+  - PESQ 1.323213
+  - STOI 0.803545
+  - ESTOI 0.664321
+  - LSD 11.907481
+- best non-trivial passing config: `attention_online_lowrank_s1_a2_d0p01_go0p0001`
+  - SI-SDRi 2.586486, delta +0.000421
+  - PESQ 1.323278, delta +0.000065
+  - STOI 0.803532, delta -0.000013
+  - ESTOI 0.664307, delta -0.000014
+  - LSD 11.907373, delta -0.000108
+
+Interpretation:
+
+- The strict guard is full-MS-SNSD non-degrading.
+- Effect size is essentially zero, so this is a safety/fallback result rather than a strong enhancement result.
+- This guard can be considered externally safe enough to test on full VoiceBank.
+
+VoiceBank strict-guard full-test notebook added:
+
+- `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`
+- Purpose: train `attention` once and evaluate full 824 VoiceBank clips with:
+  - adapter: `lowrank`
+  - steps: `1`
+  - anchor: `2.0`
+  - max gain delta: `0.01`
+  - guard max output delta: `0.0001`
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -510,10 +548,10 @@ Purpose:
 
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb` if a 10-hour overnight job is desired.
-4. Download `sona_ms_snsd_overnight_strict_guard_sweep.zip`.
-5. If the sweep finds a non-degrading full-MS-SNSD guard, re-run VoiceBank with the same guard.
-6. Only after both datasets are non-degrading should guarded Layer A v1 be locked; otherwise move to mask-polarization confidence gating.
+3. Run `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`.
+4. Download `sona_voicebank_strict_guard_full824.zip`.
+5. If VoiceBank is also non-degrading, lock strict guarded Layer A v1 as the safe fallback version.
+6. Then move to mask-polarization confidence gating and Bark/ERB GTCRN for meaningful effect size.
 
 ## Decision Gate
 
@@ -544,4 +582,5 @@ If not good:
 - Guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
 - Strict guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
 - Overnight strict-guard sweep notebook: `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
+- VoiceBank strict-guard full-test notebook: `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
