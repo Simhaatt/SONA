@@ -4,8 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Build and test the Bark-band GTCRN Layer B backbone after locking strict guarded attention Layer A
-as the safe fallback.
+Run a GTCRN Layer B capacity/loss sweep after the first GTCRN pilot showed stronger SI-SDRi/PESQ
+but weaker STOI/ESTOI/LSD than attention.
 
 ## Current Run State
 
@@ -76,16 +76,22 @@ Added methodology:
 - Per-band causal GRU decoder.
 - Same output contract as existing models: per-band gain logits.
 - Same strict guarded online adapter path can now be tested on GTCRN.
+- Kaggle tuner now supports GTCRN architecture/loss sweep controls:
+  - `--gtcrn-chs`
+  - `--gtcrn-hiddens`
+  - `--gtcrn-blocks`
+  - `--mag-weights`
 
 Created upload-ready notebook:
 
 - `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`
+- `D:\noise cancellation\sona_voicebank_gtcrn_sweep.ipynb`
 
 Run purpose:
 
-- Train `neural_gtcrn` on VoiceBank.
-- Evaluate frozen GTCRN on 300 VoiceBank test clips.
-- Evaluate strict guarded online GTCRN with the locked Layer A guard.
+- Train multiple `neural_gtcrn_*` capacity/loss variants on VoiceBank.
+- Evaluate frozen GTCRN variants on 300 VoiceBank test clips.
+- Evaluate strict guarded online GTCRN variants with the locked Layer A guard.
 - Save checkpoints and result CSV/MD files into the output zip.
 
 ## Latest Results
@@ -725,12 +731,12 @@ Interpretation:
 ## Do Next
 
 1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
-2. Add GTCRN architecture hyperparameter controls to the Kaggle tuner.
-3. Run a GTCRN capacity/loss sweep on VoiceBank:
+2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_sweep.ipynb`.
+3. Let the GTCRN capacity/loss sweep finish on VoiceBank:
    - `ch`: 64, 96
    - `hidden`: 96, 128
-   - `n_blocks`: 4, 5 or 6
-   - optional magnitude/loss tuning to recover STOI/ESTOI/LSD
+   - `n_blocks`: 4, 5
+   - `mag_weight`: 0.5, 0.75
 4. Promote GTCRN only if it keeps the SI-SDRi/PESQ gains while recovering intelligibility and LSD.
 5. Then run MS-SNSD external validation.
 6. Only after that add memory/Mamba/RL governor.
@@ -768,4 +774,5 @@ If not good:
 - Mask-polarity pilot notebook: `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`
 - VoiceBank mask-polarity training pilot notebook: `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`
 - VoiceBank GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`
+- VoiceBank GTCRN sweep notebook: `D:\noise cancellation\sona_voicebank_gtcrn_sweep.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

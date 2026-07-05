@@ -8,6 +8,7 @@ full Scenario A run shows the supervised-online path needs tuning.
 from __future__ import annotations
 
 import argparse
+import copy
 import sys
 from pathlib import Path
 
@@ -46,6 +47,33 @@ def _fmt_optional_float(x: float | None) -> str:
     return "none" if x is None else _fmt_float(x)
 
 
+def _model_specs(kind: str, args) -> list[tuple[str, dict, float]]:
+    mag_weights = _csv_floats(args.mag_weights)
+    if kind not in ("gtcrn", "bark_gtcrn"):
+        return [(kind, {"kind": kind}, mag_weight) for mag_weight in mag_weights]
+
+    specs = []
+    for ch in _csv_ints(args.gtcrn_chs):
+        for hidden in _csv_ints(args.gtcrn_hiddens):
+            for n_blocks in _csv_ints(args.gtcrn_blocks):
+                for mag_weight in mag_weights:
+                    suffix = (
+                        f"{kind}_ch{ch}_h{hidden}_b{n_blocks}"
+                        f"_mw{_fmt_float(mag_weight)}"
+                    )
+                    specs.append((
+                        suffix,
+                        {
+                            "kind": kind,
+                            "ch": ch,
+                            "hidden": hidden,
+                            "n_blocks": n_blocks,
+                        },
+                        mag_weight,
+                    ))
+    return specs
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=None, help="repo root")
@@ -56,6 +84,14 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--sup-models", default="attention",
                     help="comma list, usually 'attention' for quick tuning")
+    ap.add_argument("--mag-weights", default="0.5",
+                    help="comma list of training magnitude loss weights")
+    ap.add_argument("--gtcrn-chs", default="64",
+                    help="comma list of GTCRN convolution channel widths")
+    ap.add_argument("--gtcrn-hiddens", default="96",
+                    help="comma list of GTCRN GRU hidden sizes")
+    ap.add_argument("--gtcrn-blocks", default="4",
+                    help="comma list of GTCRN gated time-frequency block counts")
     ap.add_argument("--adapters", default="scalar,lowrank")
     ap.add_argument("--anchors", default="0.2,0.5,1.0")
     ap.add_argument("--steps", default="3,6")
@@ -112,6 +148,9 @@ def main() -> None:
              _csv_optional_floats(args.guard_max_output_deltas))
     log.info("mask polarity guards min_mask_polarities=%s",
              _csv_optional_floats(args.guard_min_mask_polarities))
+    log.info("training mag_weights=%s gtcrn_chs=%s gtcrn_hiddens=%s gtcrn_blocks=%s",
+             _csv_floats(args.mag_weights), _csv_ints(args.gtcrn_chs),
+             _csv_ints(args.gtcrn_hiddens), _csv_ints(args.gtcrn_blocks))
 
     vbd = Path(args.vbd_root)
     build_manifest(vbd, "clean_trainset_wav", "noisy_trainset_wav", out / "train.csv")
@@ -126,64 +165,69 @@ def main() -> None:
     crop = int(16000 * 2.0)
     train_ds = TorchPairDataset(train_samples, crop_len=crop, train=True)
 
-    cfg_sup = load_config(ROOT / "configs/model_supervised.yaml")
-    cfg_sup["train"]["epochs"] = args.epochs
-    cfg_sup["train"]["mask_polarity_weight"] = args.mask_polarity_weight
-    cfg_sup["train"]["mask_polarity_target"] = args.mask_polarity_target
-    tf = build_frontend(cfg_sup).to(device)
+    base_cfg_sup = load_config(ROOT / "configs/model_supervised.yaml")
+    base_cfg_sup["train"]["epochs"] = args.epochs
+    base_cfg_sup["train"]["mask_polarity_weight"] = args.mask_polarity_weight
+    base_cfg_sup["train"]["mask_polarity_target"] = args.mask_polarity_target
+    tf = build_frontend(base_cfg_sup).to(device)
     reward = make_reward(args.reward_kind, device=device, sr=16000)
 
     rows: list[dict] = []
     for kind in _csv_items(args.sup_models):
-        log.info("train supervised %s", kind)
-        cfg_sup["model"] = {"kind": kind}
-        model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / f"ckpt_{kind}")
+        for model_name, model_cfg, mag_weight in _model_specs(kind, args):
+            log.info("train supervised %s config=%s mag_weight=%.4f",
+                     model_name, model_cfg, mag_weight)
+            cfg_sup = copy.deepcopy(base_cfg_sup)
+            cfg_sup["model"] = model_cfg
+            cfg_sup["train"]["mag_weight"] = mag_weight
+            model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / f"ckpt_{model_name}")
 
-        frozen_name = f"neural_{kind}"
-        rows += evaluate_method(
-            NeuralEnhancer(model, tf, device=device, name=frozen_name),
-            test_samples, include_metrics=metrics, method_name=frozen_name)
+            frozen_name = f"neural_{model_name}"
+            rows += evaluate_method(
+                NeuralEnhancer(model, tf, device=device, name=frozen_name),
+                test_samples, include_metrics=metrics, method_name=frozen_name)
 
-        for adapter_kind in _csv_items(args.adapters):
-            for steps in _csv_ints(args.steps):
-                for anchor in _csv_floats(args.anchors):
-                    for max_delta in _csv_optional_floats(args.max_gain_deltas):
-                        for guard_reward in _csv_optional_floats(args.guard_min_reward_deltas):
-                            for guard_output in _csv_optional_floats(args.guard_max_output_deltas):
-                                for guard_polarity in _csv_optional_floats(args.guard_min_mask_polarities):
-                                    guard_suffix = ""
-                                    if guard_reward is not None:
-                                        guard_suffix += f"_gr{_fmt_float(guard_reward)}"
-                                    if guard_output is not None:
-                                        guard_suffix += f"_go{_fmt_float(guard_output)}"
-                                    if guard_polarity is not None:
-                                        guard_suffix += f"_gp{_fmt_float(guard_polarity)}"
-                                    name = (
-                                        f"{kind}_online_{adapter_kind}"
-                                        f"_s{steps}_a{_fmt_float(anchor)}"
-                                        f"_d{_fmt_optional_float(max_delta)}"
-                                        f"{guard_suffix}"
-                                    )
-                                    log.info("eval %s", name)
-                                    rows += evaluate_method(
-                                        OnlineAdapter(
-                                            model, tf, device=device, name=name, steps=steps, lr=args.lr,
-                                            anchor_weight=anchor, max_gain_delta=max_delta,
-                                            smooth_time_weight=args.smooth_time_weight,
-                                            smooth_band_weight=args.smooth_band_weight,
-                                            guard_min_reward_delta=guard_reward,
-                                            guard_max_output_delta=guard_output,
-                                            guard_min_mask_polarity=guard_polarity,
-                                            reward_fn=reward,
-                                            adapter=make_adapter(adapter_kind, tf.n_bands),
-                                        ),
-                                        test_samples, include_metrics=metrics, method_name=name)
+            for adapter_kind in _csv_items(args.adapters):
+                for steps in _csv_ints(args.steps):
+                    for anchor in _csv_floats(args.anchors):
+                        for max_delta in _csv_optional_floats(args.max_gain_deltas):
+                            for guard_reward in _csv_optional_floats(args.guard_min_reward_deltas):
+                                for guard_output in _csv_optional_floats(args.guard_max_output_deltas):
+                                    for guard_polarity in _csv_optional_floats(args.guard_min_mask_polarities):
+                                        guard_suffix = ""
+                                        if guard_reward is not None:
+                                            guard_suffix += f"_gr{_fmt_float(guard_reward)}"
+                                        if guard_output is not None:
+                                            guard_suffix += f"_go{_fmt_float(guard_output)}"
+                                        if guard_polarity is not None:
+                                            guard_suffix += f"_gp{_fmt_float(guard_polarity)}"
+                                        name = (
+                                            f"{model_name}_online_{adapter_kind}"
+                                            f"_s{steps}_a{_fmt_float(anchor)}"
+                                            f"_d{_fmt_optional_float(max_delta)}"
+                                            f"{guard_suffix}"
+                                        )
+                                        log.info("eval %s", name)
+                                        rows += evaluate_method(
+                                            OnlineAdapter(
+                                                model, tf, device=device, name=name,
+                                                steps=steps, lr=args.lr,
+                                                anchor_weight=anchor, max_gain_delta=max_delta,
+                                                smooth_time_weight=args.smooth_time_weight,
+                                                smooth_band_weight=args.smooth_band_weight,
+                                                guard_min_reward_delta=guard_reward,
+                                                guard_max_output_delta=guard_output,
+                                                guard_min_mask_polarity=guard_polarity,
+                                                reward_fn=reward,
+                                                adapter=make_adapter(adapter_kind, tf.n_bands),
+                                            ),
+                                            test_samples, include_metrics=metrics, method_name=name)
 
-        summary = aggregate(rows, group_keys=("method",))
-        save_rows_csv(rows, out / "per_sample.csv")
-        save_rows_csv(summary, out / "summary.csv")
-        (out / "summary.md").write_text(markdown_table(summary), encoding="utf-8")
-        (out / "summary.tex").write_text(latex_table(summary), encoding="utf-8")
+            summary = aggregate(rows, group_keys=("method",))
+            save_rows_csv(rows, out / "per_sample.csv")
+            save_rows_csv(summary, out / "summary.csv")
+            (out / "summary.md").write_text(markdown_table(summary), encoding="utf-8")
+            (out / "summary.tex").write_text(latex_table(summary), encoding="utf-8")
 
     summary = aggregate(rows, group_keys=("method",))
     print("\n=== Online adaptation tuning summary ===\n")
@@ -192,18 +236,19 @@ def main() -> None:
     by = {r["method"]: r for r in summary}
     print("\nDelta vs frozen base:")
     for kind in _csv_items(args.sup_models):
-        base = by.get(f"neural_{kind}")
-        if not base:
-            continue
-        for name, row in by.items():
-            if not name.startswith(f"{kind}_online_"):
+        for model_name, _, _ in _model_specs(kind, args):
+            base = by.get(f"neural_{model_name}")
+            if not base:
                 continue
-            parts = []
-            for key in ("si_sdr_i", "pesq", "stoi", "estoi", "lsd"):
-                b, v = base.get(key), row.get(key)
-                if isinstance(b, (int, float)) and isinstance(v, (int, float)):
-                    parts.append(f"{key} {v - b:+.3f}")
-            print(f"  {name}: " + " | ".join(parts))
+            for name, row in by.items():
+                if not name.startswith(f"{model_name}_online_"):
+                    continue
+                parts = []
+                for key in ("si_sdr_i", "pesq", "stoi", "estoi", "lsd"):
+                    b, v = base.get(key), row.get(key)
+                    if isinstance(b, (int, float)) and isinstance(v, (int, float)):
+                        parts.append(f"{key} {v - b:+.3f}")
+                print(f"  {name}: " + " | ".join(parts))
 
 
 if __name__ == "__main__":
