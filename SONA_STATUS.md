@@ -90,6 +90,53 @@ Run purpose:
 
 ## Latest Results
 
+### VoiceBank GTCRN Layer B Pilot
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_pilot_2026-07-05\sona_voicebank_gtcrn_pilot.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_pilot_2026-07-05\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_pilot_2026-07-05\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_pilot_2026-07-05\extracted\ckpt_gtcrn\last.pt`
+
+Result on 300 VoiceBank test clips:
+
+- `neural_gtcrn`:
+  - SI-SDRi 10.250210
+  - PESQ 2.549814
+  - STOI 0.929735
+  - ESTOI 0.845171
+  - LSD 6.789342
+  - RTF 0.005500
+- `gtcrn_online_lowrank_s1_a2_d0p01_go0p0001`:
+  - identical aggregate metrics to frozen GTCRN
+  - RTF 0.062614
+
+Comparison against the 300-clip attention mask-polarity training pilot:
+
+- GTCRN improves SI-SDRi strongly:
+  - 10.250210 vs 9.145090
+  - delta +1.105120
+- GTCRN improves PESQ slightly:
+  - 2.549814 vs 2.538868
+  - delta +0.010946
+- GTCRN loses STOI:
+  - 0.929735 vs 0.932966
+  - delta -0.003231
+- GTCRN loses ESTOI:
+  - 0.845171 vs 0.852221
+  - delta -0.007050
+- GTCRN has worse LSD:
+  - 6.789342 vs 6.009981
+  - delta +0.779361
+
+Interpretation:
+
+- Bark-band GTCRN is promising because it gives a large SI-SDRi gain and a small PESQ gain.
+- It is not final-best because intelligibility and spectral distortion are worse than attention.
+- Strict online GTCRN did not change aggregate metrics under the current guard.
+- Next gain should come from GTCRN capacity/loss tuning, not online adaptation.
+
 Scenario A retry, VoiceBank-DEMAND, 2000 train clips, 300 test clips, 40 epochs:
 
 - `neural_attention`: SI-SDRi 8.942, PESQ 2.497, STOI 0.932
@@ -678,11 +725,15 @@ Interpretation:
 ## Do Next
 
 1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
-2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`.
-3. Use VoiceBank for this training pilot.
-4. Compare `neural_gtcrn` against the locked attention Layer A numbers.
-5. If GTCRN wins on VoiceBank, run MS-SNSD external validation next.
-6. If GTCRN does not win, tune GTCRN capacity before adding memory/Mamba/RL governor.
+2. Add GTCRN architecture hyperparameter controls to the Kaggle tuner.
+3. Run a GTCRN capacity/loss sweep on VoiceBank:
+   - `ch`: 64, 96
+   - `hidden`: 96, 128
+   - `n_blocks`: 4, 5 or 6
+   - optional magnitude/loss tuning to recover STOI/ESTOI/LSD
+4. Promote GTCRN only if it keeps the SI-SDRi/PESQ gains while recovering intelligibility and LSD.
+5. Then run MS-SNSD external validation.
+6. Only after that add memory/Mamba/RL governor.
 
 ## Decision Gate
 
