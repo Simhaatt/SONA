@@ -561,6 +561,51 @@ Layer B mask-polarization confidence gate added:
 - Verified tests:
   - full local suite: 42 passed.
 
+Mask-polarity confidence pilot completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_mask_polarity_pilot_2026-07-05\sona_ms_snsd_mask_polarity_pilot.zip`
+- `D:\noise cancellation\results\kaggle_ms_snsd_mask_polarity_pilot_2026-07-05\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_mask_polarity_pilot_2026-07-05\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_mask_polarity_pilot_2026-07-05\extracted\per_sample.csv`
+
+Pilot result, MS-SNSD, 300 clips:
+
+- Best passing polarity rows were numerically identical to the strict safe fallback:
+  - `attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p2`
+  - PESQ delta +0.000029
+  - SI-SDRi delta +0.000825
+  - STOI delta approximately 0
+  - ESTOI delta approximately 0
+  - LSD delta -0.000264
+- Polarity thresholds did not create a stronger candidate in this inference-only form.
+
+Interpretation:
+
+- Inference-only mask-polarity gating mostly behaves like the existing strict guard.
+- It is safe, but it does not improve effect size.
+- Next Layer B step should be a training-time mask-polarization loss or confidence objective, not just an inference threshold.
+
+Training-time mask-polarization objective added:
+
+- Added `mask_polarity_loss` in `src\train\losses.py`.
+- Supervised training now accepts:
+  - `mask_polarity_weight`
+  - `mask_polarity_target`
+- `scripts\kaggle_tune_online.py` exposes:
+  - `--mask-polarity-weight`
+  - `--mask-polarity-target`
+- Added pilot notebook:
+  - `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`
+- Pilot settings:
+  - train on VoiceBank only
+  - `LIMIT_TRAIN = 2000`
+  - `LIMIT_TEST = 300`
+  - `MASK_POLARITY_WEIGHT = 0.03`
+  - `MASK_POLARITY_TARGET = 0.30`
+  - strict guard still enabled with `max_gain_delta=0.01`, `guard_max_output_delta=0.0001`
+- Verified tests:
+  - full local suite: 43 passed.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -595,9 +640,9 @@ Layer B mask-polarization confidence gate added:
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Treat strict guarded Layer A v1 as locked safe fallback.
-4. Run `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`.
-5. If polarity gating improves over the strict safe fallback, validate the best setting on full MS-SNSD and VoiceBank.
-6. After mask-polarization, build the Bark/ERB GTCRN backbone and transfer trust-region + strict guard onto it.
+4. Run `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`.
+5. If the polarized VoiceBank pilot improves effect size without breaking safety, validate that checkpoint on MS-SNSD.
+6. If not, move to Bark/ERB GTCRN rather than over-tuning the attention model.
 
 ## Decision Gate
 
@@ -630,4 +675,5 @@ If not good:
 - Overnight strict-guard sweep notebook: `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
 - VoiceBank strict-guard full-test notebook: `D:\noise cancellation\sona_voicebank_strict_guard_full824.ipynb`
 - Mask-polarity pilot notebook: `D:\noise cancellation\sona_ms_snsd_mask_polarity_pilot.ipynb`
+- VoiceBank mask-polarity training pilot notebook: `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

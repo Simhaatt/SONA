@@ -70,6 +70,10 @@ def main() -> None:
     ap.add_argument("--guard-min-mask-polarities", default="none",
                     help="comma list; require adapted mask polarity >= value, or none")
     ap.add_argument("--lr", type=float, default=0.1)
+    ap.add_argument("--mask-polarity-weight", type=float, default=0.0,
+                    help="training-time confidence loss weight for supervised model")
+    ap.add_argument("--mask-polarity-target", type=float, default=0.0,
+                    help="desired mean mask polarity in [0,1] for supervised training")
     ap.add_argument("--reward-kind", default="auto",
                     help="'auto' uses SQUIM on Kaggle, spectral fallback locally")
     ap.add_argument("--device", default=None)
@@ -124,6 +128,8 @@ def main() -> None:
 
     cfg_sup = load_config(ROOT / "configs/model_supervised.yaml")
     cfg_sup["train"]["epochs"] = args.epochs
+    cfg_sup["train"]["mask_polarity_weight"] = args.mask_polarity_weight
+    cfg_sup["train"]["mask_polarity_target"] = args.mask_polarity_target
     tf = build_frontend(cfg_sup).to(device)
     reward = make_reward(args.reward_kind, device=device, sr=16000)
 

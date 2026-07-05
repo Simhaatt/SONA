@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from ..models import MODELS, NeuralEnhancer, TorchFrontend
 from ..models.base import BaseGainModel
 from ..utils.logging import get_logger
-from .losses import combined_loss
+from .losses import combined_loss, mask_polarity_loss
 
 log = get_logger("train")
 
@@ -44,11 +44,15 @@ def build_model(cfg, tf: TorchFrontend) -> BaseGainModel:
     return MODELS[kind](n_bands=tf.n_bands, n_feat_channels=tf.n_feat_channels, **kwargs)
 
 
-def _step(model, tf, noisy, clean, mag_weight, n_fft, hop):
+def _step(model, tf, noisy, clean, mag_weight, n_fft, hop, mask_polarity_weight=0.0,
+          mask_polarity_target=0.0):
     spec, feats = tf.analyze(noisy)
     gains = model(feats)
     est = tf.apply_band_gain(spec, gains, length=noisy.shape[-1])
-    return combined_loss(est, clean, mag_weight=mag_weight, n_fft=n_fft, hop=hop)
+    loss = combined_loss(est, clean, mag_weight=mag_weight, n_fft=n_fft, hop=hop)
+    if mask_polarity_weight > 0.0:
+        loss = loss + mask_polarity_weight * mask_polarity_loss(gains, mask_polarity_target)
+    return loss
 
 
 def train(
@@ -69,6 +73,8 @@ def train(
                             weight_decay=float(t.get("weight_decay", 1e-5)))
     epochs = int(t.get("epochs", 20))
     mag_weight = float(t.get("mag_weight", 0.5))
+    mask_polarity_weight = float(t.get("mask_polarity_weight", 0.0))
+    mask_polarity_target = float(t.get("mask_polarity_target", 0.0))
     n_fft = int(cfg.get_path("stft.n_fft", 512))
     hop = int(cfg.get_path("stft.hop", n_fft // 4))
 
@@ -87,7 +93,11 @@ def train(
         for noisy, clean in loader:
             noisy, clean = noisy.to(device), clean.to(device)
             opt.zero_grad()
-            loss = _step(model, tf, noisy, clean, mag_weight, n_fft, hop)
+            loss = _step(
+                model, tf, noisy, clean, mag_weight, n_fft, hop,
+                mask_polarity_weight=mask_polarity_weight,
+                mask_polarity_target=mask_polarity_target,
+            )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
@@ -95,7 +105,10 @@ def train(
 
         msg = f"epoch {epoch+1}/{epochs} train_loss={np.mean(losses):.4f}"
         if val_loader:
-            val = _validate(model, tf, val_loader, device, mag_weight, n_fft, hop)
+            val = _validate(
+                model, tf, val_loader, device, mag_weight, n_fft, hop,
+                mask_polarity_weight, mask_polarity_target,
+            )
             msg += f" val_loss={val:.4f}"
             if val < best_val:
                 best_val = val
@@ -108,12 +121,17 @@ def train(
 
 
 @torch.no_grad()
-def _validate(model, tf, loader, device, mag_weight, n_fft, hop) -> float:
+def _validate(model, tf, loader, device, mag_weight, n_fft, hop,
+              mask_polarity_weight=0.0, mask_polarity_target=0.0) -> float:
     model.eval()
     losses = []
     for noisy, clean in loader:
         noisy, clean = noisy.to(device), clean.to(device)
-        losses.append(_step(model, tf, noisy, clean, mag_weight, n_fft, hop).item())
+        losses.append(_step(
+            model, tf, noisy, clean, mag_weight, n_fft, hop,
+            mask_polarity_weight=mask_polarity_weight,
+            mask_polarity_target=mask_polarity_target,
+        ).item())
     return float(np.mean(losses)) if losses else float("nan")
 
 

@@ -40,3 +40,16 @@ def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: f
     if mag_weight > 0:
         loss = loss + mag_weight * magnitude_loss(estimate, reference, n_fft, hop)
     return loss
+
+
+def mask_polarity_loss(gain: torch.Tensor, target: float = 0.0) -> torch.Tensor:
+    """Encourage confident masks by penalizing low average distance from 0.5.
+
+    `target` is the desired mean polarity in [0, 1], where polarity is
+    ``2 * abs(gain - 0.5)``. A target of 0 disables the pressure, while larger values encourage
+    gains to move away from the uncertain middle without specifying speech/noise labels.
+    """
+    if target <= 0:
+        return torch.zeros((), device=gain.device)
+    polarity = (2.0 * (gain - 0.5).abs()).clamp(0.0, 1.0).mean()
+    return torch.relu(torch.as_tensor(target, device=gain.device) - polarity)
