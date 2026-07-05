@@ -606,6 +606,35 @@ Training-time mask-polarization objective added:
 - Verified tests:
   - full local suite: 43 passed.
 
+VoiceBank mask-polarity training pilot completed and artifacts were stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_mask_polarity_train_pilot_2026-07-05\sona_voicebank_mask_polarity_train_pilot.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_mask_polarity_train_pilot_2026-07-05\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_mask_polarity_train_pilot_2026-07-05\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_mask_polarity_train_pilot_2026-07-05\extracted\per_sample.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_mask_polarity_train_pilot_2026-07-05\extracted\ckpt_attention\last.pt`
+
+Pilot result, VoiceBank, 300 clips:
+
+- polarized frozen `neural_attention`:
+  - SI-SDRi 9.145090
+  - PESQ 2.538868
+  - STOI 0.932966
+  - ESTOI 0.852221
+  - LSD 6.009981
+- best guarded online: `attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p2`
+  - SI-SDRi 9.141361, delta -0.003729
+  - PESQ 2.540431, delta +0.001563
+  - STOI 0.932942, delta -0.000023
+  - ESTOI 0.852209, delta -0.000012
+  - LSD 6.006973, delta -0.003008
+
+Interpretation:
+
+- Training-time mask-polarization is safe on the VoiceBank pilot.
+- It does not materially improve effect size over the locked strict guarded Layer A fallback.
+- Do not over-tune the attention backbone further; move to Bark/ERB GTCRN for the stronger Layer B backbone.
+
 ## Done
 
 - Built the SONA repo in `D:\noise cancellation`.
@@ -640,9 +669,9 @@ Training-time mask-polarization objective added:
 1. Do not run full Scenario B yet.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
 3. Treat strict guarded Layer A v1 as locked safe fallback.
-4. Run `D:\noise cancellation\sona_voicebank_mask_polarity_train_pilot.ipynb`.
-5. If the polarized VoiceBank pilot improves effect size without breaking safety, validate that checkpoint on MS-SNSD.
-6. If not, move to Bark/ERB GTCRN rather than over-tuning the attention model.
+4. Stop over-tuning the attention backbone.
+5. Build the Bark/ERB GTCRN backbone as Layer B.
+6. Transfer strict guard, trust-region adapter, and optional training-time polarity objective onto GTCRN.
 
 ## Decision Gate
 
