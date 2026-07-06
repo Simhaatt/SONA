@@ -47,30 +47,39 @@ def _fmt_optional_float(x: float | None) -> str:
     return "none" if x is None else _fmt_float(x)
 
 
-def _model_specs(kind: str, args) -> list[tuple[str, dict, float]]:
+def _model_specs(kind: str, args) -> list[tuple[str, dict, float, float]]:
     mag_weights = _csv_floats(args.mag_weights)
+    mr_mag_weights = _csv_floats(args.mr_mag_weights)
     if kind not in ("gtcrn", "bark_gtcrn"):
-        return [(kind, {"kind": kind}, mag_weight) for mag_weight in mag_weights]
+        return [
+            (kind, {"kind": kind}, mag_weight, mr_mag_weight)
+            for mag_weight in mag_weights
+            for mr_mag_weight in mr_mag_weights
+        ]
 
     specs = []
     for ch in _csv_ints(args.gtcrn_chs):
         for hidden in _csv_ints(args.gtcrn_hiddens):
             for n_blocks in _csv_ints(args.gtcrn_blocks):
                 for mag_weight in mag_weights:
-                    suffix = (
-                        f"{kind}_ch{ch}_h{hidden}_b{n_blocks}"
-                        f"_mw{_fmt_float(mag_weight)}"
-                    )
-                    specs.append((
-                        suffix,
-                        {
-                            "kind": kind,
-                            "ch": ch,
-                            "hidden": hidden,
-                            "n_blocks": n_blocks,
-                        },
-                        mag_weight,
-                    ))
+                    for mr_mag_weight in mr_mag_weights:
+                        suffix = (
+                            f"{kind}_ch{ch}_h{hidden}_b{n_blocks}"
+                            f"_mw{_fmt_float(mag_weight)}"
+                        )
+                        if mr_mag_weight > 0:
+                            suffix += f"_mr{_fmt_float(mr_mag_weight)}"
+                        specs.append((
+                            suffix,
+                            {
+                                "kind": kind,
+                                "ch": ch,
+                                "hidden": hidden,
+                                "n_blocks": n_blocks,
+                            },
+                            mag_weight,
+                            mr_mag_weight,
+                        ))
     return specs
 
 
@@ -86,6 +95,8 @@ def main() -> None:
                     help="comma list, usually 'attention' for quick tuning")
     ap.add_argument("--mag-weights", default="0.5",
                     help="comma list of training magnitude loss weights")
+    ap.add_argument("--mr-mag-weights", default="0.0",
+                    help="comma list of multi-resolution magnitude loss weights")
     ap.add_argument("--gtcrn-chs", default="64",
                     help="comma list of GTCRN convolution channel widths")
     ap.add_argument("--gtcrn-hiddens", default="96",
@@ -148,8 +159,8 @@ def main() -> None:
              _csv_optional_floats(args.guard_max_output_deltas))
     log.info("mask polarity guards min_mask_polarities=%s",
              _csv_optional_floats(args.guard_min_mask_polarities))
-    log.info("training mag_weights=%s gtcrn_chs=%s gtcrn_hiddens=%s gtcrn_blocks=%s",
-             _csv_floats(args.mag_weights), _csv_ints(args.gtcrn_chs),
+    log.info("training mag_weights=%s mr_mag_weights=%s gtcrn_chs=%s gtcrn_hiddens=%s gtcrn_blocks=%s",
+             _csv_floats(args.mag_weights), _csv_floats(args.mr_mag_weights), _csv_ints(args.gtcrn_chs),
              _csv_ints(args.gtcrn_hiddens), _csv_ints(args.gtcrn_blocks))
 
     vbd = Path(args.vbd_root)
@@ -174,12 +185,13 @@ def main() -> None:
 
     rows: list[dict] = []
     for kind in _csv_items(args.sup_models):
-        for model_name, model_cfg, mag_weight in _model_specs(kind, args):
-            log.info("train supervised %s config=%s mag_weight=%.4f",
-                     model_name, model_cfg, mag_weight)
+        for model_name, model_cfg, mag_weight, mr_mag_weight in _model_specs(kind, args):
+            log.info("train supervised %s config=%s mag_weight=%.4f mr_mag_weight=%.4f",
+                     model_name, model_cfg, mag_weight, mr_mag_weight)
             cfg_sup = copy.deepcopy(base_cfg_sup)
             cfg_sup["model"] = model_cfg
             cfg_sup["train"]["mag_weight"] = mag_weight
+            cfg_sup["train"]["mr_mag_weight"] = mr_mag_weight
             model = train(cfg_sup, train_ds, device=device, ckpt_dir=out / f"ckpt_{model_name}")
 
             frozen_name = f"neural_{model_name}"
@@ -236,7 +248,7 @@ def main() -> None:
     by = {r["method"]: r for r in summary}
     print("\nDelta vs frozen base:")
     for kind in _csv_items(args.sup_models):
-        for model_name, _, _ in _model_specs(kind, args):
+        for model_name, _, _, _ in _model_specs(kind, args):
             base = by.get(f"neural_{model_name}")
             if not base:
                 continue

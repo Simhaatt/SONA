@@ -4,8 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Validate the selected GTCRN Layer B winner on the full 824-clip VoiceBank test set before MS-SNSD
-external validation.
+Run a loss-focused GTCRN Layer B round on full VoiceBank after the selected GTCRN winner improved
+SI-SDRi but lost PESQ/STOI/ESTOI/LSD on the full 824-clip test set.
 
 ## Current Run State
 
@@ -95,6 +95,64 @@ Run purpose:
 - Save checkpoints and result CSV/MD files into the output zip.
 
 ## Latest Results
+
+### VoiceBank GTCRN Winner Full-824 Validation
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_winner_full824_2026-07-06\sona_voicebank_gtcrn_winner_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_winner_full824_2026-07-06\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_winner_full824_2026-07-06\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_winner_full824_2026-07-06\GTCRN_WINNER_FULL824_RESULT.md`
+
+Config:
+
+- `gtcrn_ch96_h96_b4_mw0p75`
+- `ch`: 96
+- `hidden`: 96
+- `n_blocks`: 4
+- `mag_weight`: 0.75
+
+Frozen full-824 result:
+
+- SI-SDRi 9.959830
+- PESQ 2.473765
+- STOI 0.929189
+- ESTOI 0.829959
+- LSD 6.692406
+- RTF 0.006482
+
+Strict online full-824 result:
+
+- SI-SDRi 9.959632
+- PESQ 2.473744
+- STOI 0.929190
+- ESTOI 0.829948
+- LSD 6.692643
+- RTF 0.057075
+
+Delta against locked full-824 attention Layer A:
+
+- SI-SDRi +0.877830
+- PESQ -0.027235
+- STOI -0.002811
+- ESTOI -0.004041
+- LSD +0.722406
+
+Interpretation:
+
+- GTCRN clearly improves SI-SDRi.
+- GTCRN does not beat locked attention on PESQ, STOI, ESTOI, or LSD on the full 824 test set.
+- Strict guarded online still changes almost nothing.
+- Do not move to MS-SNSD yet.
+- Next methodology is loss-focused GTCRN tuning with stronger spectral pressure.
+
+New methodology added:
+
+- Multi-resolution log-magnitude loss for supervised training.
+- Kaggle tuner exposes `--mr-mag-weights`.
+- New notebook:
+  - `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`
 
 ### VoiceBank GTCRN Capacity/Loss Sweep
 
@@ -781,10 +839,15 @@ Interpretation:
 ## Do Next
 
 1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
-2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_winner_full824.ipynb`.
-3. Validate `gtcrn_ch96_h96_b4_mw0p75` on the full 824-clip VoiceBank test set.
-4. If the full-test result holds, run MS-SNSD external validation with the same checkpoint/config.
-5. If full-test STOI/ESTOI/LSD collapses, do a loss-focused GTCRN tuning round.
+2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`.
+3. Let the full-824 loss-focused GTCRN sweep finish:
+   - `ch`: 96
+   - `hidden`: 96
+   - `n_blocks`: 4
+   - `mag_weight`: 0.75, 1.0, 1.25
+   - `mr_mag_weight`: 0.0, 0.25
+4. Promote GTCRN only if PESQ/STOI/ESTOI/LSD recover while SI-SDRi remains above attention.
+5. Then run MS-SNSD external validation.
 6. Only after full VoiceBank plus MS-SNSD validation add memory/Mamba/RL governor.
 
 ## Decision Gate
@@ -822,4 +885,5 @@ If not good:
 - VoiceBank GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_gtcrn_pilot.ipynb`
 - VoiceBank GTCRN sweep notebook: `D:\noise cancellation\sona_voicebank_gtcrn_sweep.ipynb`
 - VoiceBank GTCRN winner full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_winner_full824.ipynb`
+- VoiceBank GTCRN loss-focused full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

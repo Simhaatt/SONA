@@ -34,11 +34,27 @@ def magnitude_loss(estimate: torch.Tensor, reference: torch.Tensor, n_fft: int =
     return torch.log1p(est_mag).sub(torch.log1p(ref_mag)).abs().mean()
 
 
+def multi_resolution_magnitude_loss(
+    estimate: torch.Tensor,
+    reference: torch.Tensor,
+    resolutions: tuple[tuple[int, int], ...] = ((256, 64), (512, 128), (1024, 256)),
+) -> torch.Tensor:
+    """Average log-magnitude loss across several STFT resolutions."""
+    losses = [
+        magnitude_loss(estimate, reference, n_fft=n_fft, hop=hop)
+        for n_fft, hop in resolutions
+    ]
+    return torch.stack(losses).mean()
+
+
 def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: float = 0.5,
-                  n_fft: int = 512, hop: int = 128) -> torch.Tensor:
+                  n_fft: int = 512, hop: int = 128,
+                  mr_mag_weight: float = 0.0) -> torch.Tensor:
     loss = si_sdr_loss(estimate, reference)
     if mag_weight > 0:
         loss = loss + mag_weight * magnitude_loss(estimate, reference, n_fft, hop)
+    if mr_mag_weight > 0:
+        loss = loss + mr_mag_weight * multi_resolution_magnitude_loss(estimate, reference)
     return loss
 
 

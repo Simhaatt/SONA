@@ -7,7 +7,7 @@ from src.utils.config import Config
 from src.models import TorchFrontend, MaskGRU, MaskTCN, AttentionMask, GTCRNMask, NeuralEnhancer
 from src.data import SyntheticNoisyDataset
 from src.train.train_supervised import overfit_batch
-from src.train.losses import mask_polarity_loss
+from src.train.losses import mask_polarity_loss, multi_resolution_magnitude_loss
 
 
 def _cfg(kind, **model_kw):
@@ -51,6 +51,14 @@ def test_mask_polarity_loss_prefers_confident_masks():
     confident = torch.cat([torch.zeros(2, 5, 4), torch.ones(2, 5, 4)], dim=2)
     assert float(mask_polarity_loss(uncertain, target=0.5)) > 0.0
     assert float(mask_polarity_loss(confident, target=0.5)) == 0.0
+
+
+def test_multi_resolution_magnitude_loss_is_finite():
+    x = torch.randn(2, 2048)
+    y = x + 0.01 * torch.randn_like(x)
+    loss = multi_resolution_magnitude_loss(x, y, resolutions=((128, 32), (256, 64)))
+    assert torch.isfinite(loss)
+    assert float(loss) >= 0.0
 
 
 def test_gru_overfits_single_batch():

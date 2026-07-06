@@ -44,12 +44,15 @@ def build_model(cfg, tf: TorchFrontend) -> BaseGainModel:
     return MODELS[kind](n_bands=tf.n_bands, n_feat_channels=tf.n_feat_channels, **kwargs)
 
 
-def _step(model, tf, noisy, clean, mag_weight, n_fft, hop, mask_polarity_weight=0.0,
-          mask_polarity_target=0.0):
+def _step(model, tf, noisy, clean, mag_weight, n_fft, hop, mr_mag_weight=0.0,
+          mask_polarity_weight=0.0, mask_polarity_target=0.0):
     spec, feats = tf.analyze(noisy)
     gains = model(feats)
     est = tf.apply_band_gain(spec, gains, length=noisy.shape[-1])
-    loss = combined_loss(est, clean, mag_weight=mag_weight, n_fft=n_fft, hop=hop)
+    loss = combined_loss(
+        est, clean, mag_weight=mag_weight, n_fft=n_fft, hop=hop,
+        mr_mag_weight=mr_mag_weight,
+    )
     if mask_polarity_weight > 0.0:
         loss = loss + mask_polarity_weight * mask_polarity_loss(gains, mask_polarity_target)
     return loss
@@ -73,6 +76,7 @@ def train(
                             weight_decay=float(t.get("weight_decay", 1e-5)))
     epochs = int(t.get("epochs", 20))
     mag_weight = float(t.get("mag_weight", 0.5))
+    mr_mag_weight = float(t.get("mr_mag_weight", 0.0))
     mask_polarity_weight = float(t.get("mask_polarity_weight", 0.0))
     mask_polarity_target = float(t.get("mask_polarity_target", 0.0))
     n_fft = int(cfg.get_path("stft.n_fft", 512))
@@ -95,6 +99,7 @@ def train(
             opt.zero_grad()
             loss = _step(
                 model, tf, noisy, clean, mag_weight, n_fft, hop,
+                mr_mag_weight=mr_mag_weight,
                 mask_polarity_weight=mask_polarity_weight,
                 mask_polarity_target=mask_polarity_target,
             )
@@ -107,7 +112,7 @@ def train(
         if val_loader:
             val = _validate(
                 model, tf, val_loader, device, mag_weight, n_fft, hop,
-                mask_polarity_weight, mask_polarity_target,
+                mr_mag_weight, mask_polarity_weight, mask_polarity_target,
             )
             msg += f" val_loss={val:.4f}"
             if val < best_val:
@@ -121,7 +126,7 @@ def train(
 
 
 @torch.no_grad()
-def _validate(model, tf, loader, device, mag_weight, n_fft, hop,
+def _validate(model, tf, loader, device, mag_weight, n_fft, hop, mr_mag_weight=0.0,
               mask_polarity_weight=0.0, mask_polarity_target=0.0) -> float:
     model.eval()
     losses = []
@@ -129,6 +134,7 @@ def _validate(model, tf, loader, device, mag_weight, n_fft, hop,
         noisy, clean = noisy.to(device), clean.to(device)
         losses.append(_step(
             model, tf, noisy, clean, mag_weight, n_fft, hop,
+            mr_mag_weight=mr_mag_weight,
             mask_polarity_weight=mask_polarity_weight,
             mask_polarity_target=mask_polarity_target,
         ).item())
