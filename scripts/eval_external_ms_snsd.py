@@ -46,6 +46,23 @@ def _fmt_optional_float(x: float | None) -> str:
     return "none" if x is None else _fmt_float(x)
 
 
+def _default_method_name(cfg) -> str:
+    model_cfg = cfg.get_path("model", {})
+    kind = model_cfg.get("kind", "model")
+    if kind in ("gtcrn", "bark_gtcrn"):
+        parts = [kind]
+        for key, prefix in (("ch", "ch"), ("hidden", "h"), ("n_blocks", "b")):
+            if key in model_cfg:
+                parts.append(f"{prefix}{model_cfg[key]}")
+        train_cfg = cfg.get_path("train", {})
+        if "mag_weight" in train_cfg:
+            parts.append(f"mw{_fmt_float(float(train_cfg['mag_weight']))}")
+        if float(train_cfg.get("mr_mag_weight", 0.0)) > 0:
+            parts.append(f"mr{_fmt_float(float(train_cfg['mr_mag_weight']))}")
+        return "_".join(parts)
+    return str(kind)
+
+
 def _resolve_manifest_paths(manifest: Path, out: Path) -> Path:
     r"""Rewrite Windows absolute paths in a manifest when running from a Kaggle dataset.
 
@@ -111,6 +128,8 @@ def main() -> None:
     ap.add_argument("--manifest", required=True, help="MS-SNSD SONA manifest CSV")
     ap.add_argument("--checkpoint", required=True, help="supervised model checkpoint .pt")
     ap.add_argument("--out", default="results_ms_snsd_external")
+    ap.add_argument("--method-name", default=None,
+                    help="base method name; defaults to model config from checkpoint")
     ap.add_argument("--limit", type=int, default=0, help="0 means full manifest")
     ap.add_argument("--adapter", default="lowrank")
     ap.add_argument("--anchors", default="2.0")
@@ -151,6 +170,7 @@ def main() -> None:
     ckpt_path = Path(args.checkpoint)
     checkpoint = torch.load(ckpt_path, map_location=device)
     cfg = Config(checkpoint["cfg"])
+    base_name = args.method_name or _default_method_name(cfg)
     tf = build_frontend(cfg).to(device)
     model = build_model(cfg, tf).to(device)
     model.load_state_dict(checkpoint["model"])
@@ -168,11 +188,12 @@ def main() -> None:
     log.info("checkpoint=%s | manifest=%s | samples=%d", ckpt_path, manifest, len(samples))
 
     rows: list[dict] = []
+    frozen_name = f"neural_{base_name}"
     rows += evaluate_method(
-        NeuralEnhancer(model, tf, device=device, name="neural_attention"),
+        NeuralEnhancer(model, tf, device=device, name=frozen_name),
         samples,
         include_metrics=metrics,
-        method_name="neural_attention",
+        method_name=frozen_name,
     )
 
     for adapter_kind in _csv_items(args.adapter):
@@ -190,7 +211,7 @@ def main() -> None:
                                 if guard_polarity is not None:
                                     guard_suffix += f"_gp{_fmt_float(guard_polarity)}"
                                 name = (
-                                    f"attention_online_{adapter_kind}"
+                                    f"{base_name}_online_{adapter_kind}"
                                     f"_s{steps}_a{_fmt_float(anchor)}"
                                     f"_d{_fmt_optional_float(max_delta)}"
                                     f"{guard_suffix}"
@@ -229,11 +250,11 @@ def main() -> None:
     print(markdown_table(summary))
 
     by = {r["method"]: r for r in summary}
-    base = by.get("neural_attention")
+    base = by.get(frozen_name)
     if base:
         print("\nDelta vs frozen base:")
         for name, row in by.items():
-            if not name.startswith("attention_online_"):
+            if not name.startswith(f"{base_name}_online_"):
                 continue
             parts = []
             for key in ("si_sdr_i", "pesq", "stoi", "estoi", "lsd"):

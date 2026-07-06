@@ -4,8 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Run a loss-focused GTCRN Layer B round on full VoiceBank after the selected GTCRN winner improved
-SI-SDRi but lost PESQ/STOI/ESTOI/LSD on the full 824-clip test set.
+Externally validate the best loss-focused GTCRN Layer B candidate on MS-SNSD while keeping locked
+strict guarded attention as the safe main baseline.
 
 ## Current Run State
 
@@ -95,6 +95,62 @@ Run purpose:
 - Save checkpoints and result CSV/MD files into the output zip.
 
 ## Latest Results
+
+### VoiceBank GTCRN Loss-Focused Full-824 Sweep
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\sona_voicebank_gtcrn_loss_focus_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\ranking_frozen_loss_focus.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\GTCRN_LOSS_FOCUS_FULL824_RESULT.md`
+
+Result:
+
+- All 6 loss-focused GTCRN configs completed on full 824-clip VoiceBank.
+- Multi-resolution spectral loss helped PESQ/LSD versus the previous GTCRN full-824 winner.
+
+Best balanced config:
+
+- `neural_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- SI-SDRi 9.916320
+- PESQ 2.520302
+- STOI 0.929926
+- ESTOI 0.832056
+- LSD 6.480913
+- RTF 0.006147
+
+Delta against locked full-824 attention Layer A:
+
+- SI-SDRi +0.834320
+- PESQ +0.019302
+- STOI -0.002074
+- ESTOI -0.001944
+- LSD +0.510913
+
+Delta against previous full-824 GTCRN winner:
+
+- SI-SDRi -0.043510
+- PESQ +0.046537
+- STOI +0.000737
+- ESTOI +0.002097
+- LSD -0.211493
+
+Interpretation:
+
+- GTCRN now beats locked attention on full VoiceBank SI-SDRi and PESQ.
+- GTCRN still does not fully beat attention on STOI, ESTOI, or LSD.
+- This is strong enough to external-validate as a branch result, but not enough to replace the safe attention baseline yet.
+- Strict guarded online adaptation still changes metrics only at tiny numerical scale.
+
+External validation tooling added:
+
+- `scripts\eval_external_ms_snsd.py` now names methods from checkpoint config or `--method-name`.
+- GTCRN external notebook:
+  - `D:\noise cancellation\sona_ms_snsd_gtcrn_external_eval.ipynb`
+- Kaggle-safe GTCRN checkpoint zip:
+  - `D:\noise cancellation\sona_gtcrn_loss_focus_checkpoint.zip`
 
 ### VoiceBank GTCRN Winner Full-824 Validation
 
@@ -839,16 +895,11 @@ Interpretation:
 ## Do Next
 
 1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
-2. Upload/run `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`.
-3. Let the full-824 loss-focused GTCRN sweep finish:
-   - `ch`: 96
-   - `hidden`: 96
-   - `n_blocks`: 4
-   - `mag_weight`: 0.75, 1.0, 1.25
-   - `mr_mag_weight`: 0.0, 0.25
-4. Promote GTCRN only if PESQ/STOI/ESTOI/LSD recover while SI-SDRi remains above attention.
-5. Then run MS-SNSD external validation.
-6. Only after full VoiceBank plus MS-SNSD validation add memory/Mamba/RL governor.
+2. Upload `D:\noise cancellation\sona_gtcrn_loss_focus_checkpoint.zip` to Kaggle.
+3. Add the existing MS-SNSD external dataset to the Kaggle notebook.
+4. Upload/run `D:\noise cancellation\sona_ms_snsd_gtcrn_external_eval.ipynb`.
+5. Compare GTCRN external validation against locked attention external validation.
+6. Keep attention as the main baseline unless GTCRN external validation is clearly better.
 
 ## Decision Gate
 
@@ -876,6 +927,8 @@ If not good:
 - Kaggle notebook: `D:\noise cancellation\sona_kaggle_run_all_online.ipynb`
 - Tuning notebook: `D:\noise cancellation\sona_kaggle_tune_online.ipynb`
 - External validation notebook: `D:\noise cancellation\sona_ms_snsd_external_eval.ipynb`
+- GTCRN external validation notebook: `D:\noise cancellation\sona_ms_snsd_gtcrn_external_eval.ipynb`
+- GTCRN loss-focused checkpoint zip: `D:\noise cancellation\sona_gtcrn_loss_focus_checkpoint.zip`
 - Guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_guarded_eval.ipynb`
 - Strict guarded external pilot notebook: `D:\noise cancellation\sona_ms_snsd_strict_guard_eval.ipynb`
 - Overnight strict-guard sweep notebook: `D:\noise cancellation\sona_ms_snsd_overnight_strict_guard_sweep.ipynb`
