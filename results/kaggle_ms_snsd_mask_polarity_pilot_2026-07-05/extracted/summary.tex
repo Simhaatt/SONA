@@ -1,0 +1,42 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+neural_attention & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & \textbf{0.001} \\
+attention_online_lowrank_s1_a2_d0p005_go0p0001 & 300 & 2.650 & 5.152 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.975 & 0.042 \\
+attention_online_lowrank_s1_a2_d0p005_go0p0001_gp0p05 & 300 & 2.650 & 5.152 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.975 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p0001_gp0p1 & 300 & 2.650 & 5.152 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.975 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p0001_gp0p2 & 300 & 2.650 & 5.152 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.975 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p0001_gp0p3 & 300 & 2.650 & 5.152 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.975 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p00025 & 300 & 2.649 & 5.151 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.983 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p00025_gp0p05 & 300 & 2.649 & 5.151 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.983 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p00025_gp0p1 & 300 & 2.649 & 5.151 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.983 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p00025_gp0p2 & 300 & 2.649 & 5.151 & \textbf{3.605} & \textbf{6.619} & 1.311 & 0.803 & 0.665 & 11.983 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p005_go0p00025_gp0p3 & 300 & 2.649 & 5.151 & 3.605 & 6.619 & 1.311 & 0.803 & 0.665 & 11.983 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001 & 300 & 2.646 & 5.148 & 3.605 & 6.619 & 1.317 & 0.803 & 0.666 & \textbf{11.947} & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p05 & 300 & 2.646 & 5.148 & 3.605 & 6.619 & 1.317 & 0.803 & 0.666 & \textbf{11.947} & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p1 & 300 & 2.646 & 5.148 & 3.605 & 6.619 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p2 & 300 & 2.646 & 5.148 & 3.605 & 6.619 & \textbf{1.317} & 0.803 & 0.666 & \textbf{11.947} & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001_gp0p3 & 300 & 2.646 & 5.148 & 3.605 & 6.619 & 1.317 & 0.803 & 0.666 & \textbf{11.947} & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p00025 & 300 & 2.653 & 5.155 & 3.602 & 6.616 & 1.307 & 0.803 & 0.665 & 11.986 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p00025_gp0p05 & 300 & 2.653 & 5.155 & 3.602 & 6.616 & 1.307 & 0.803 & 0.665 & 11.986 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p00025_gp0p1 & 300 & \textbf{2.653} & \textbf{5.155} & 3.602 & 6.616 & 1.307 & 0.803 & 0.665 & 11.986 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p00025_gp0p2 & 300 & 2.653 & 5.155 & 3.602 & 6.616 & 1.307 & 0.803 & 0.665 & 11.986 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p01_go0p00025_gp0p3 & 300 & 2.653 & 5.155 & 3.602 & 6.616 & 1.307 & 0.803 & 0.665 & 11.986 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p0001 & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p0001_gp0p05 & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p0001_gp0p1 & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p0001_gp0p2 & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p0001_gp0p3 & 300 & 2.645 & 5.147 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p00025 & 300 & 2.646 & 5.148 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p00025_gp0p05 & 300 & 2.646 & 5.148 & 3.604 & 6.618 & 1.317 & \textbf{0.803} & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p00025_gp0p1 & 300 & 2.646 & 5.148 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p00025_gp0p2 & 300 & 2.646 & 5.148 & 3.604 & 6.618 & 1.317 & 0.803 & 0.666 & 11.947 & 0.040 \\
+attention_online_lowrank_s1_a2_d0p02_go0p00025_gp0p3 & 300 & 2.646 & 5.148 & 3.604 & 6.618 & 1.317 & 0.803 & \textbf{0.666} & 11.947 & 0.040 \\
+\bottomrule
+\end{tabular}
+\end{table}

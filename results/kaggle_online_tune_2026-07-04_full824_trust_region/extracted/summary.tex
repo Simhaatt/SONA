@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+neural_attention & 824 & \textbf{9.098} & \textbf{17.547} & 8.430 & 16.880 & 2.503 & \textbf{0.932} & \textbf{0.834} & 5.973 & \textbf{0.002} \\
+attention_online_lowrank_s1_a0p5_d0p01 & 824 & 9.073 & 17.522 & 8.465 & 16.915 & 2.511 & 0.932 & 0.834 & 5.954 & 0.053 \\
+attention_online_lowrank_s1_a0p5_d0p02 & 824 & 9.018 & 17.468 & 8.440 & 16.890 & 2.513 & 0.932 & 0.834 & 5.960 & 0.053 \\
+attention_online_lowrank_s1_a2_d0p01 & 824 & 9.073 & 17.522 & 8.465 & 16.915 & 2.511 & 0.932 & 0.834 & 5.954 & 0.054 \\
+attention_online_lowrank_s1_a2_d0p02 & 824 & 9.018 & 17.468 & 8.440 & 16.890 & \textbf{2.513} & 0.932 & 0.834 & 5.960 & 0.054 \\
+attention_online_lowrank_s2_a0p5_d0p01 & 824 & 9.070 & 17.519 & 8.468 & 16.918 & 2.511 & 0.932 & 0.834 & 5.950 & 0.095 \\
+attention_online_lowrank_s2_a0p5_d0p02 & 824 & 9.008 & 17.458 & 8.442 & 16.892 & 2.512 & 0.931 & 0.834 & 5.958 & 0.095 \\
+attention_online_lowrank_s2_a2_d0p01 & 824 & 9.070 & 17.519 & \textbf{8.468} & \textbf{16.918} & 2.511 & 0.932 & 0.834 & \textbf{5.950} & 0.095 \\
+attention_online_lowrank_s2_a2_d0p02 & 824 & 9.007 & 17.457 & 8.440 & 16.890 & 2.512 & 0.931 & 0.834 & 5.958 & 0.095 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+neural_attention & 120 & \textbf{8.889} & \textbf{17.388} & \textbf{8.135} & \textbf{16.639} & 2.514 & \textbf{0.931} & \textbf{0.852} & \textbf{6.007} & \textbf{0.003} \\
+attention_online_scalar_s3_a0p2 & 120 & 8.214 & 16.714 & 7.112 & 15.616 & 2.503 & 0.928 & 0.845 & 6.918 & 0.139 \\
+attention_online_scalar_s3_a0p5 & 120 & 8.283 & 16.783 & 7.385 & 15.889 & 2.507 & 0.929 & 0.846 & 6.751 & 0.137 \\
+attention_online_scalar_s3_a1 & 120 & 8.366 & 16.866 & 7.598 & 16.103 & 2.516 & 0.929 & 0.847 & 6.616 & 0.136 \\
+attention_online_scalar_s6_a0p2 & 120 & 8.527 & 17.027 & 7.469 & 15.974 & 2.508 & 0.929 & 0.847 & 6.630 & 0.256 \\
+attention_online_scalar_s6_a0p5 & 120 & 8.568 & 17.068 & 7.692 & 16.197 & 2.510 & 0.929 & 0.848 & 6.474 & 0.258 \\
+attention_online_scalar_s6_a1 & 120 & 8.589 & 17.089 & 7.916 & 16.421 & 2.526 & 0.929 & 0.849 & 6.374 & 0.255 \\
+attention_online_lowrank_s3_a0p2 & 120 & 4.657 & 13.156 & 3.959 & 12.463 & 2.520 & 0.927 & 0.842 & 7.072 & 0.135 \\
+attention_online_lowrank_s3_a0p5 & 120 & 5.788 & 14.287 & 5.232 & 13.736 & 2.527 & 0.927 & 0.844 & 6.830 & 0.135 \\
+attention_online_lowrank_s3_a1 & 120 & 6.619 & 15.119 & 6.118 & 14.623 & \textbf{2.529} & 0.928 & 0.846 & 6.674 & 0.134 \\
+attention_online_lowrank_s6_a0p2 & 120 & 5.790 & 14.290 & 4.938 & 13.442 & 2.514 & 0.925 & 0.842 & 7.147 & 0.254 \\
+attention_online_lowrank_s6_a0p5 & 120 & 6.766 & 15.266 & 6.023 & 14.527 & 2.518 & 0.926 & 0.845 & 6.879 & 0.254 \\
+attention_online_lowrank_s6_a1 & 120 & 6.940 & 15.440 & 6.100 & 14.605 & 2.513 & 0.926 & 0.846 & 6.771 & 0.254 \\
+\bottomrule
+\end{tabular}
+\end{table}

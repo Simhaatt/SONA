@@ -1,0 +1,13 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+neural_governed_gtcrn_ch96_h96_b4_mw1p25_mr0p25 & 824 & \textbf{9.888} & \textbf{18.337} & \textbf{3.231} & \textbf{11.681} & \textbf{2.455} & 0.930 & 0.831 & \textbf{6.641} & \textbf{0.007} \\
+governed_gtcrn_ch96_h96_b4_mw1p25_mr0p25_online_lowrank_s1_a2_d0p01_go0p0001 & 824 & 9.888 & 18.337 & 3.231 & 11.681 & 2.455 & \textbf{0.930} & \textbf{0.831} & 6.641 & 0.057 \\
+\bottomrule
+\end{tabular}
+\end{table}

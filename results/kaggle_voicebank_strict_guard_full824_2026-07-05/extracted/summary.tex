@@ -1,0 +1,13 @@
+\begin{table}[t]
+\centering
+\caption{Benchmark results.}
+\label{tab:bench}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Method & N & si\_sdr\_i & si\_sdr & snr\_i & snr & pesq & stoi & estoi & lsd & rtf \\
+\midrule
+neural_attention & 824 & \textbf{9.082} & \textbf{17.531} & 8.423 & 16.873 & 2.501 & \textbf{0.932} & \textbf{0.834} & 5.970 & \textbf{0.002} \\
+attention_online_lowrank_s1_a2_d0p01_go0p0001 & 824 & 9.079 & 17.528 & \textbf{8.441} & \textbf{16.891} & \textbf{2.503} & 0.932 & 0.834 & \textbf{5.963} & 0.054 \\
+\bottomrule
+\end{tabular}
+\end{table}

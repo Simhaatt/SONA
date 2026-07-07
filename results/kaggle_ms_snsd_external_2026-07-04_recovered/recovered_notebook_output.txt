@@ -1,0 +1,356 @@
+notebook: C:\Users\hp\Downloads\kaggle-benchmark-nc-ipynb (1).ipynb
+cells: 7
+
+===== CELL 1 =====
+SOURCE:
+%pip install -q pystoi pesq ptflops
+
+import glob
+import os
+import sys
+from pathlib import Path
+
+IN_KAGGLE = Path('/kaggle/working').exists()
+print('IN_KAGGLE =', IN_KAGGLE)
+OUTPUT:
+Note: you may need to restart the kernel to use updated packages.
+IN_KAGGLE = True
+
+
+===== CELL 2 =====
+SOURCE:
+def first_existing(candidates):
+    for c in candidates:
+        if c and Path(c).exists():
+            return str(Path(c))
+    return None
+
+def find_repo():
+    here = Path.cwd()
+    if (here / 'scripts' / 'eval_external_ms_snsd.py').exists():
+        return str(here)
+    hits = glob.glob('/kaggle/input/**/scripts/eval_external_ms_snsd.py', recursive=True)
+    return str(Path(sorted(hits, key=len)[0]).parents[1]) if hits else None
+
+def find_manifest():
+    local = r'D:\noise cancellation\external_data\ms_snsd_sona\test.csv'
+    if Path(local).exists():
+        return local
+    hits = [p for p in glob.glob('/kaggle/input/**/test.csv', recursive=True) if 'ms' in p.lower() and 'snsd' in p.lower()]
+    return sorted(hits, key=len)[0] if hits else None
+
+def find_checkpoint():
+    local = r'D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\ckpt_attention\last.pt'
+    if Path(local).exists():
+        return local
+    hits = glob.glob('/kaggle/input/**/ckpt_attention/last.pt', recursive=True)
+    return sorted(hits, key=len)[0] if hits else None
+
+REPO_DIR = find_repo()
+MANIFEST = find_manifest()
+CHECKPOINT = find_checkpoint()
+OUT_DIR = '/kaggle/working/ms_snsd_external_eval' if IN_KAGGLE else r'D:\noise cancellation\results\ms_snsd_external_eval'
+
+# If auto-detect fails, set these manually:
+# REPO_DIR = r'D:\noise cancellation'
+# MANIFEST = r'D:\noise cancellation\external_data\ms_snsd_sona\test.csv'
+# CHECKPOINT = r'D:\noise cancellation\results\kaggle_online_tune_2026-07-04_full824_trust_region\extracted\ckpt_attention\last.pt'
+
+assert REPO_DIR, 'Repo with scripts/eval_external_ms_snsd.py not found.'
+assert MANIFEST, 'MS-SNSD manifest test.csv not found.'
+assert CHECKPOINT, 'ckpt_attention/last.pt not found.'
+
+print('REPO_DIR   =', REPO_DIR)
+print('MANIFEST   =', MANIFEST)
+print('CHECKPOINT =', CHECKPOINT)
+print('OUT_DIR    =', OUT_DIR)
+OUTPUT:
+REPO_DIR   = /kaggle/input/datasets/ttbheeshmaa/sona-repo
+MANIFEST   = /kaggle/input/datasets/ttbheeshmaa/sona-ms-snsd-external-dataset/ms_snsd_sona/test.csv
+CHECKPOINT = /kaggle/input/datasets/ttbheeshmaa/sona-attention-checkpoint/ckpt_attention/last.pt
+OUT_DIR    = /kaggle/working/ms_snsd_external_eval
+
+
+===== CELL 3 =====
+SOURCE:
+# 0 = full 1100-clip MS-SNSD external test set.
+LIMIT = 0
+ADAPTER = 'lowrank'
+ANCHORS = '2.0'
+STEPS = '1'
+MAX_GAIN_DELTAS = '0.01,0.02'
+REWARD_KIND = 'auto'
+
+print(dict(
+    LIMIT=LIMIT,
+    ADAPTER=ADAPTER,
+    ANCHORS=ANCHORS,
+    STEPS=STEPS,
+    MAX_GAIN_DELTAS=MAX_GAIN_DELTAS,
+    REWARD_KIND=REWARD_KIND,
+))
+OUTPUT:
+{'LIMIT': 0, 'ADAPTER': 'lowrank', 'ANCHORS': '2.0', 'STEPS': '1', 'MAX_GAIN_DELTAS': '0.01,0.02', 'REWARD_KIND': 'auto'}
+
+
+===== CELL 4 =====
+SOURCE:
+import subprocess
+
+cmd = [
+    sys.executable, str(Path(REPO_DIR) / 'scripts' / 'eval_external_ms_snsd.py'),
+    '--repo', REPO_DIR,
+    '--manifest', MANIFEST,
+    '--checkpoint', CHECKPOINT,
+    '--out', OUT_DIR,
+    '--limit', str(LIMIT),
+    '--adapter', ADAPTER,
+    '--anchors', ANCHORS,
+    '--steps', STEPS,
+    '--max-gain-deltas', MAX_GAIN_DELTAS,
+    '--reward-kind', REWARD_KIND,
+]
+
+print(' '.join(cmd), '\n')
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+for line in proc.stdout:
+    print(line, end='')
+proc.wait()
+assert proc.returncode == 0, f'eval_external_ms_snsd.py exited {proc.returncode}'
+OUTPUT:
+/usr/bin/python3 /kaggle/input/datasets/ttbheeshmaa/sona-repo/scripts/eval_external_ms_snsd.py --repo /kaggle/input/datasets/ttbheeshmaa/sona-repo --manifest /kaggle/input/datasets/ttbheeshmaa/sona-ms-snsd-external-dataset/ms_snsd_sona/test.csv --checkpoint /kaggle/input/datasets/ttbheeshmaa/sona-attention-checkpoint/ckpt_attention/last.pt --out /kaggle/working/ms_snsd_external_eval --limit 0 --adapter lowrank --anchors 2.0 --steps 1 --max-gain-deltas 0.01,0.02 --reward-kind auto 
+
+11:06:29 | INFO    | torchaudio.utils.download | Downloading models/squim_objective_dns2020.pth to /root/.cache/torch/hub/torchaudio/models/squim_objective_dns2020.pth
+
+  0%|          | 0.00/28.2M [00:00<?, ?B/s]
+ 20%|█▉        | 5.62M/28.2M [00:00<00:00, 58.8MB/s]
+ 46%|████▌     | 13.0M/28.2M [00:00<00:00, 69.6MB/s]
+100%|██████████| 28.2M/28.2M [00:00<00:00, 122MB/s] 
+11:06:29 | INFO    | external_ms_snsd | device=cuda | metric backends={'pystoi': True, 'pesq': True, 'dnsmos(onnxruntime)': False} | SQUIM=True
+11:06:29 | INFO    | external_ms_snsd | checkpoint=/kaggle/input/datasets/ttbheeshmaa/sona-attention-checkpoint/ckpt_attention/last.pt | manifest=/kaggle/working/ms_snsd_external_eval/test_resolved_paths.csv | samples=1100
+11:20:02 | INFO    | external_ms_snsd | eval attention_online_lowrank_s1_a2_d0p01
+11:42:04 | INFO    | external_ms_snsd | eval attention_online_lowrank_s1_a2_d0p02
+
+=== MS-SNSD external validation summary ===
+
+| method | n | si_sdr_i | si_sdr | snr_i | snr | pesq | stoi | estoi | lsd | rtf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| neural_attention | 1100 | 2.586 | 5.086 | 3.582 | 6.564 | **1.323** | **0.804** | **0.664** | **11.907** | **0.001** |
+| attention_online_lowrank_s1_a2_d0p01 | 1100 | 2.600 | 5.100 | **3.586** | **6.568** | 1.314 | 0.803 | 0.664 | 11.968 | 0.039 |
+| attention_online_lowrank_s1_a2_d0p02 | 1100 | **2.609** | **5.109** | 3.584 | 6.565 | 1.307 | 0.803 | 0.663 | 12.017 | 0.038 |
+
+Delta vs frozen base:
+  attention_online_lowrank_s1_a2_d0p01: si_sdr_i +0.014 | pesq -0.009 | stoi -0.000 | estoi -0.001 | lsd +0.061
+  attention_online_lowrank_s1_a2_d0p02: si_sdr_i +0.023 | pesq -0.016 | stoi -0.001 | estoi -0.002 | lsd +0.110
+
+
+===== CELL 5 =====
+SOURCE:
+import pandas as pd
+
+summary_md = Path(OUT_DIR) / 'summary.md'
+summary_csv = Path(OUT_DIR) / 'summary.csv'
+print(summary_md.read_text(encoding='utf-8'))
+df = pd.read_csv(summary_csv)
+display(df.sort_values(['pesq', 'si_sdr_i'], ascending=[False, False]))
+
+base = df[df.method == 'neural_attention'].iloc[0]
+online = df[df.method.str.startswith('attention_online_')].copy()
+for col in ['si_sdr_i', 'pesq', 'stoi', 'estoi', 'lsd']:
+    if col in online and col in base:
+        online['delta_' + col] = online[col] - base[col]
+display(online.sort_values(['delta_pesq', 'delta_si_sdr_i'], ascending=[False, False]))
+OUTPUT:
+| method | n | si_sdr_i | si_sdr | snr_i | snr | pesq | stoi | estoi | lsd | rtf |
+|---|---|---|---|---|---|---|---|---|---|---|
+| neural_attention | 1100 | 2.586 | 5.086 | 3.582 | 6.564 | **1.323** | **0.804** | **0.664** | **11.907** | **0.001** |
+| attention_online_lowrank_s1_a2_d0p01 | 1100 | 2.600 | 5.100 | **3.586** | **6.568** | 1.314 | 0.803 | 0.664 | 11.968 | 0.039 |
+| attention_online_lowrank_s1_a2_d0p02 | 1100 | **2.609** | **5.109** | 3.584 | 6.565 | 1.307 | 0.803 | 0.663 | 12.017 | 0.038 |
+
+                                 method  si_sdr_i    si_sdr     snr_i  \
+0                      neural_attention  2.586065  5.085864  3.582037   
+1  attention_online_lowrank_s1_a2_d0p01  2.600287  5.100086  3.586267   
+2  attention_online_lowrank_s1_a2_d0p02  2.609185  5.108984  3.583622   
+
+        snr      pesq      stoi     estoi        lsd       rtf     n  
+0  6.563603  1.323213  0.803545  0.664321  11.907481  0.001115  1100  
+1  6.567833  1.313793  0.803181  0.663548  11.968066  0.038625  1100  
+2  6.565188  1.307366  0.802818  0.662818  12.017323  0.038394  1100  <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>method</th>
+      <th>si_sdr_i</th>
+      <th>si_sdr</th>
+      <th>snr_i</th>
+      <th>snr</th>
+      <th>pesq</th>
+      <th>stoi</th>
+      <th>estoi</th>
+      <th>lsd</th>
+      <th>rtf</th>
+      <th>n</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>neural_attention</td>
+      <td>2.586065</td>
+      <td>5.085864</td>
+      <td>3.582037</td>
+      <td>6.563603</td>
+      <td>1.323213</td>
+      <td>0.803545</td>
+      <td>0.664321</td>
+      <td>11.907481</td>
+      <td>0.001115</td>
+      <td>1100</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>attention_online_lowrank_s1_a2_d0p01</td>
+      <td>2.600287</td>
+      <td>5.100086</td>
+      <td>3.586267</td>
+      <td>6.567833</td>
+      <td>1.313793</td>
+      <td>0.803181</td>
+      <td>0.663548</td>
+      <td>11.968066</td>
+      <td>0.038625</td>
+      <td>1100</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>attention_online_lowrank_s1_a2_d0p02</td>
+      <td>2.609185</td>
+      <td>5.108984</td>
+      <td>3.583622</td>
+      <td>6.565188</td>
+      <td>1.307366</td>
+      <td>0.802818</td>
+      <td>0.662818</td>
+      <td>12.017323</td>
+      <td>0.038394</td>
+      <td>1100</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+                                 method  si_sdr_i    si_sdr     snr_i  \
+1  attention_online_lowrank_s1_a2_d0p01  2.600287  5.100086  3.586267   
+2  attention_online_lowrank_s1_a2_d0p02  2.609185  5.108984  3.583622   
+
+        snr      pesq      stoi     estoi        lsd       rtf     n  \
+1  6.567833  1.313793  0.803181  0.663548  11.968066  0.038625  1100   
+2  6.565188  1.307366  0.802818  0.662818  12.017323  0.038394  1100   
+
+   delta_si_sdr_i  delta_pesq  delta_stoi  delta_estoi  delta_lsd  
+1        0.014222   -0.009420   -0.000364    -0.000773   0.060585  
+2        0.023120   -0.015847   -0.000726    -0.001503   0.109843  <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>method</th>
+      <th>si_sdr_i</th>
+      <th>si_sdr</th>
+      <th>snr_i</th>
+      <th>snr</th>
+      <th>pesq</th>
+      <th>stoi</th>
+      <th>estoi</th>
+      <th>lsd</th>
+      <th>rtf</th>
+      <th>n</th>
+      <th>delta_si_sdr_i</th>
+      <th>delta_pesq</th>
+      <th>delta_stoi</th>
+      <th>delta_estoi</th>
+      <th>delta_lsd</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>attention_online_lowrank_s1_a2_d0p01</td>
+      <td>2.600287</td>
+      <td>5.100086</td>
+      <td>3.586267</td>
+      <td>6.567833</td>
+      <td>1.313793</td>
+      <td>0.803181</td>
+      <td>0.663548</td>
+      <td>11.968066</td>
+      <td>0.038625</td>
+      <td>1100</td>
+      <td>0.014222</td>
+      <td>-0.009420</td>
+      <td>-0.000364</td>
+      <td>-0.000773</td>
+      <td>0.060585</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>attention_online_lowrank_s1_a2_d0p02</td>
+      <td>2.609185</td>
+      <td>5.108984</td>
+      <td>3.583622</td>
+      <td>6.565188</td>
+      <td>1.307366</td>
+      <td>0.802818</td>
+      <td>0.662818</td>
+      <td>12.017323</td>
+      <td>0.038394</td>
+      <td>1100</td>
+      <td>0.023120</td>
+      <td>-0.015847</td>
+      <td>-0.000726</td>
+      <td>-0.001503</td>
+      <td>0.109843</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+===== CELL 6 =====
+SOURCE:
+import shutil
+from IPython.display import FileLink, display
+
+ART = '/kaggle/working/sona_ms_snsd_external_eval' if IN_KAGGLE else r'D:\noise cancellation\results\sona_ms_snsd_external_eval'
+shutil.make_archive(ART, 'zip', OUT_DIR)
+print(f'Wrote {ART}.zip ({os.path.getsize(ART + ".zip") / 1e6:.1f} MB)')
+display(FileLink(ART + '.zip'))
+OUTPUT:
+Wrote /kaggle/working/sona_ms_snsd_external_eval.zip (0.3 MB)
+
+/kaggle/working/sona_ms_snsd_external_eval.zip<a href='/kaggle/working/sona_ms_snsd_external_eval.zip' target='_blank'>/kaggle/working/sona_ms_snsd_external_eval.zip</a><br>
