@@ -4,8 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Build the Mamba/state-space memory step on top of the externally validated GTCRN + multi-resolution
-spectral-loss backbone.
+Build the dual-mask reference-free governor on top of the externally validated GTCRN +
+multi-resolution spectral-loss backbone.
 
 ## Current Run State
 
@@ -138,6 +138,26 @@ Interpretation:
 - It is worse than the validated GTCRN branch on all main metrics.
 - Do not run MS-SNSD external validation for this Mamba-lite checkpoint.
 - Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
+- Architecture decision after reviewing external recommendations:
+  - Do not switch to RWKV now.
+  - Do not jump directly to the RL governor yet.
+  - Pause the failed pre-GRU Mamba-lite path.
+  - Next SONA architecture should keep GTCRN stable and add a dual-mask reference-free governor.
+
+Next proposed architecture:
+
+- `SONA-G`: Governed GTCRN.
+- GTCRN encoder and GRU remain the validated backbone.
+- Add two mask heads:
+  - conservative speech-preserving mask
+  - aggressive noise-suppressing mask
+- Add a tiny reference-free governor that predicts blend weight `alpha(t,b)`.
+- Final mask:
+  - `M_final = alpha * M_aggressive + (1 - alpha) * M_conservative`
+  - optional adaptive safety floor to prevent speech over-suppression.
+- This directly targets the current weakness:
+  - keep SI-SDRi/PESQ gains
+  - recover STOI/ESTOI/LSD.
 
 ### VoiceBank Mamba-GTCRN Pilot
 
@@ -1043,15 +1063,19 @@ Interpretation:
 ## Do Next
 
 1. Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
-2. Do not promote the first Mamba-lite checkpoint.
-3. Either tune/redesign Mamba:
-   - state size/layers,
-   - placement before/after GRU,
-   - residual scale,
-   - loss weighting,
-   or move to the RL governor on top of the validated GTCRN branch.
-4. If Mamba is tuned, rerun full-824 VoiceBank before any MS-SNSD external validation.
-5. If prioritizing paper momentum, start RL governor with GTCRN as the backbone.
+2. Implement `governed_gtcrn` / `SONA-G`:
+   - dual conservative/aggressive mask heads
+   - tiny alpha governor
+   - optional safe mask floor
+3. Train/evaluate on full 824 VoiceBank first.
+4. Success gate:
+   - SI-SDRi >= 9.85
+   - PESQ >= 2.52
+   - STOI >= 0.932
+   - ESTOI >= 0.835
+   - LSD <= 6.35
+5. If SONA-G passes full VoiceBank, run MS-SNSD external validation.
+6. After SONA-G is validated, revisit Mamba as post-GRU refinement or add the RL governor.
 
 ## Decision Gate
 
