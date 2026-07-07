@@ -13,6 +13,7 @@ from ..utils.audio_io import DEFAULT_SR, load_audio, save_audio
 from ..utils.config import Config
 from .memory import PreferenceMemory
 from .modes import ControllerSettings, SonaController
+from .scene import SceneClassifier
 
 
 def load_neural_enhancer(
@@ -93,9 +94,16 @@ def enhance_file(
     memory_path: str | Path | None = None,
     remember: bool = False,
     use_memory: bool = True,
+    auto_scene: bool = False,
     device: str | None = None,
 ) -> dict[str, str | float | bool]:
     """Enhance one WAV file with Layer A GTCRN plus Layer B mode controls."""
+
+    noisy, sr = load_audio(input_path, sr=DEFAULT_SR, mono=True)
+    scene_prediction = None
+    if auto_scene and not scene:
+        scene_prediction = SceneClassifier(sr=sr).predict(noisy, sr=sr)
+        scene = scene_prediction.label
 
     memory = PreferenceMemory(memory_path) if memory_path else None
     controller = SonaController(memory=memory)
@@ -109,7 +117,6 @@ def enhance_file(
         safety_floor=safety_floor,
         use_memory=use_memory,
     )
-    noisy, sr = load_audio(input_path, sr=DEFAULT_SR, mono=True)
     enhancer = load_neural_enhancer(checkpoint_path, device=device)
     enhanced = enhancer.enhance(noisy, sr=sr)
 
@@ -131,6 +138,8 @@ def enhance_file(
         "output": str(output_path),
         "mode": actual_mode,
         "scene": scene or "",
+        "scene_confidence": scene_prediction.confidence if scene_prediction else 0.0,
+        "auto_scene": bool(scene_prediction),
         "memory_used": bool(memory_record),
         "remembered": bool(remember and memory and scene),
         "mask_strength": settings.mask_strength,

@@ -2,7 +2,13 @@
 
 import numpy as np
 
-from src.controller import ControllerSettings, PreferenceMemory, SonaController, apply_post_processing
+from src.controller import (
+    ControllerSettings,
+    PreferenceMemory,
+    SceneClassifier,
+    SonaController,
+    apply_post_processing,
+)
 
 
 def test_controller_modes_and_scene_routing():
@@ -50,6 +56,21 @@ def test_explicit_mode_beats_memory(tmp_path):
     explicit = controller.settings(scene="fan", mode="speech")
     assert remembered.mask_strength != explicit.mask_strength
     assert explicit == controller.settings(mode="speech", use_memory=False)
+
+
+def test_scene_classifier_handles_silence_and_tones():
+    sr = 16000
+    classifier = SceneClassifier(sr=sr)
+    silence = np.zeros(sr, dtype=np.float32)
+    pred_silence = classifier.predict(silence, sr=sr)
+    assert pred_silence.label == "unknown"
+
+    t = np.arange(sr, dtype=np.float32) / sr
+    tone = 0.2 * np.sin(2 * np.pi * 220.0 * t).astype(np.float32)
+    pred_tone = classifier.predict(tone, sr=sr)
+    assert pred_tone.label in classifier.labels
+    assert 0.0 <= pred_tone.confidence <= 1.0
+    assert pred_tone.features["rms"] > 0.0
 
 
 def test_post_processing_neutral_keeps_shape_and_bounds():

@@ -25,6 +25,8 @@ def main() -> None:
                     help="speech | music | podcast | gaming | hearing | studio")
     ap.add_argument("--scene", default=None,
                     help="speech | music | traffic | fan | crowd | mixed | unknown")
+    ap.add_argument("--auto-scene", action="store_true",
+                    help="infer scene from input audio when --scene is not provided")
     ap.add_argument("--denoise-strength", type=float, default=None,
                     help="override mode denoise blend, usually 0.0..1.0")
     ap.add_argument("--safety-floor", type=float, default=None,
@@ -52,6 +54,7 @@ def main() -> None:
         memory_path=args.memory,
         remember=args.remember,
         use_memory=not args.ignore_memory,
+        auto_scene=args.auto_scene,
         device=args.device,
     )
     print(json.dumps(info, indent=2))

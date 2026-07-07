@@ -102,6 +102,13 @@ python scripts/manage_preferences.py --memory "results/preferences.json" list
 python scripts/enhance_controlled.py --memory "results/preferences.json" --scene traffic --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_traffic.wav"
 ```
 
+Scene classification is available as a lightweight local heuristic:
+
+```bash
+python scripts/classify_scene.py --input "path/to/noisy.wav"
+python scripts/enhance_controlled.py --auto-scene --memory "results/preferences.json" --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_auto.wav"
+```
+
 ## Layout
 
 ```
