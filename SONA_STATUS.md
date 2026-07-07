@@ -106,6 +106,14 @@ Artifact stored in:
 - `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\ranking_frozen_loss_focus.csv`
 - `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_2026-07-06\GTCRN_LOSS_FOCUS_FULL824_RESULT.md`
 
+Rerun artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\sona_voicebank_gtcrn_loss_focus_full824_1.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\ranking_frozen_loss_focus_1.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\GTCRN_LOSS_FOCUS_FULL824_RERUN_RESULT.md`
+
 Result:
 
 - All 6 loss-focused GTCRN configs completed on full 824-clip VoiceBank.
@@ -143,6 +151,24 @@ Interpretation:
 - GTCRN still does not fully beat attention on STOI, ESTOI, or LSD.
 - This is strong enough to external-validate as a branch result, but not enough to replace the safe attention baseline yet.
 - Strict guarded online adaptation still changes metrics only at tiny numerical scale.
+
+Rerun confirmation:
+
+- Same best family won again:
+  - `neural_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- Rerun metrics:
+  - SI-SDRi 9.927043
+  - PESQ 2.520714
+  - STOI 0.929916
+  - ESTOI 0.832254
+  - LSD 6.469693
+- Rerun delta against locked full-824 attention:
+  - SI-SDRi +0.845043
+  - PESQ +0.019714
+  - STOI -0.002084
+  - ESTOI -0.001746
+  - LSD +0.499693
+- This strengthens the conclusion that GTCRN + multi-resolution spectral loss consistently improves SI-SDRi/PESQ but still trails attention on intelligibility/spectral distortion.
 
 External validation tooling added:
 
