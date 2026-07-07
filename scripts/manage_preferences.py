@@ -28,6 +28,8 @@ def main() -> None:
     set_ap.add_argument("--mode", required=True)
     set_ap.add_argument("--denoise-strength", type=float, default=None)
     set_ap.add_argument("--safety-floor", type=float, default=None)
+    set_ap.add_argument("--bypass-eq", action="store_true")
+    set_ap.add_argument("--bypass-compressor", action="store_true")
 
     del_ap = sub.add_parser("delete", help="delete one remembered scene")
     del_ap.add_argument("--scene", required=True)
@@ -51,6 +53,8 @@ def main() -> None:
             mode=args.mode,
             denoise_strength=args.denoise_strength,
             safety_floor=args.safety_floor,
+            bypass_eq=args.bypass_eq if args.bypass_eq else None,
+            bypass_compressor=args.bypass_compressor if args.bypass_compressor else None,
             use_memory=False,
         )
         record = memory.set(args.scene, args.mode, settings)

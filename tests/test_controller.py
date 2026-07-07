@@ -14,11 +14,17 @@ from src.controller import (
 def test_controller_modes_and_scene_routing():
     controller = SonaController()
     assert "speech" in controller.preset_names()
-    assert controller.mode_for_scene("traffic") == "hearing"
+    assert "aggressive_speech" in controller.preset_names()
+    assert controller.mode_for_scene("traffic") == "aggressive_speech"
+    assert controller.mode_for_scene("fan") == "aggressive_speech"
 
     speech = controller.settings(mode="speech")
+    aggressive = controller.settings(mode="aggressive_speech")
     music = controller.settings(mode="music")
     assert speech.mask_strength > music.mask_strength
+    assert aggressive.mask_strength > speech.mask_strength
+    assert aggressive.safety_floor < speech.safety_floor
+    assert speech.compressor_makeup_db <= 0.2
     assert len(speech.eq_gains_db) == 8
 
 
@@ -27,6 +33,10 @@ def test_controller_overrides_are_clamped():
     settings = controller.settings(mode="speech", denoise_strength=2.0, safety_floor=-1.0)
     assert settings.mask_strength == 1.25
     assert settings.safety_floor == 0.0
+
+    bypassed = controller.settings(mode="speech", bypass_eq=True, bypass_compressor=True)
+    assert bypassed.bypass_eq is True
+    assert bypassed.bypass_compressor is True
 
 
 def test_preference_memory_roundtrip(tmp_path):

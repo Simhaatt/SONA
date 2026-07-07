@@ -20,6 +20,8 @@ class ControllerSettings:
     compressor_ratio: float
     compressor_makeup_db: float = 0.0
     limiter_ceiling: float = 0.98
+    bypass_eq: bool = False
+    bypass_compressor: bool = False
 
 
 @dataclass(frozen=True)
@@ -38,12 +40,25 @@ MODE_PRESETS: dict[str, ModePreset] = {
         name="speech",
         description="Speech clarity with moderate denoising and presence lift.",
         settings=ControllerSettings(
-            mask_strength=1.0,
-            safety_floor=0.08,
-            eq_gains_db=(-2.0, -1.5, -1.0, 0.0, 1.0, 2.0, 1.5, 0.5),
+            mask_strength=1.05,
+            safety_floor=0.06,
+            eq_gains_db=(-2.0, -1.5, -1.0, 0.0, 0.8, 1.5, 1.0, 0.3),
             compressor_threshold_db=-26.0,
             compressor_ratio=2.2,
-            compressor_makeup_db=1.0,
+            compressor_makeup_db=0.2,
+        ),
+    ),
+    "aggressive_speech": ModePreset(
+        name="aggressive_speech",
+        description="Stronger speech denoising for obvious fan, traffic, or room noise.",
+        settings=ControllerSettings(
+            mask_strength=1.25,
+            safety_floor=0.03,
+            eq_gains_db=(-3.0, -2.2, -1.2, 0.0, 0.7, 1.2, 0.8, 0.0),
+            compressor_threshold_db=-24.0,
+            compressor_ratio=1.6,
+            compressor_makeup_db=0.0,
+            limiter_ceiling=0.96,
         ),
     ),
     "music": ModePreset(
@@ -55,7 +70,7 @@ MODE_PRESETS: dict[str, ModePreset] = {
             eq_gains_db=(1.5, 1.2, 0.8, 0.0, 0.0, 0.4, 0.8, 0.6),
             compressor_threshold_db=-20.0,
             compressor_ratio=1.4,
-            compressor_makeup_db=0.5,
+            compressor_makeup_db=0.0,
         ),
     ),
     "podcast": ModePreset(
@@ -67,7 +82,7 @@ MODE_PRESETS: dict[str, ModePreset] = {
             eq_gains_db=(-2.5, -2.0, -0.5, 0.8, 1.2, 1.8, 1.0, 0.0),
             compressor_threshold_db=-28.0,
             compressor_ratio=2.8,
-            compressor_makeup_db=1.5,
+            compressor_makeup_db=0.4,
         ),
     ),
     "gaming": ModePreset(
@@ -79,7 +94,7 @@ MODE_PRESETS: dict[str, ModePreset] = {
             eq_gains_db=(-1.0, -0.5, 0.0, 0.4, 0.6, 1.2, 1.6, 1.2),
             compressor_threshold_db=-22.0,
             compressor_ratio=1.8,
-            compressor_makeup_db=0.5,
+            compressor_makeup_db=0.0,
         ),
     ),
     "hearing": ModePreset(
@@ -91,7 +106,7 @@ MODE_PRESETS: dict[str, ModePreset] = {
             eq_gains_db=(-3.0, -2.0, -1.0, 0.6, 1.8, 3.0, 3.0, 2.0),
             compressor_threshold_db=-32.0,
             compressor_ratio=3.2,
-            compressor_makeup_db=2.0,
+            compressor_makeup_db=0.6,
             limiter_ceiling=0.94,
         ),
     ),
@@ -112,8 +127,8 @@ MODE_PRESETS: dict[str, ModePreset] = {
 SCENE_TO_MODE: dict[str, str] = {
     "speech": "speech",
     "music": "music",
-    "traffic": "hearing",
-    "fan": "speech",
+    "traffic": "aggressive_speech",
+    "fan": "aggressive_speech",
     "crowd": "hearing",
     "mixed": "podcast",
     "unknown": "speech",
@@ -147,6 +162,8 @@ class SonaController:
         scene: str | None = None,
         denoise_strength: float | None = None,
         safety_floor: float | None = None,
+        bypass_eq: bool | None = None,
+        bypass_compressor: bool | None = None,
         use_memory: bool = True,
     ) -> ControllerSettings:
         memory_record = self.memory.get(scene) if use_memory and self.memory and not mode else None
@@ -158,6 +175,10 @@ class SonaController:
             settings = replace(settings, mask_strength=_clamp(denoise_strength, 0.0, 1.25))
         if safety_floor is not None:
             settings = replace(settings, safety_floor=_clamp(safety_floor, 0.0, 0.5))
+        if bypass_eq is not None:
+            settings = replace(settings, bypass_eq=bool(bypass_eq))
+        if bypass_compressor is not None:
+            settings = replace(settings, bypass_compressor=bool(bypass_compressor))
         return settings
 
 

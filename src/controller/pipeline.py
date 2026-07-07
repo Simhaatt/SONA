@@ -58,17 +58,19 @@ def apply_post_processing(
     phase = torch.exp(1j * torch.angle(spec))
     mag = spec.abs()
 
-    eq = ParametricEQ(sr=sr, n_fft=n_fft).to(device)
-    eq_gains = _match_eq_bands(settings.eq_gains_db, eq.n_bands).to(device)
-    mag = eq(mag, eq_gains)
+    if not settings.bypass_eq:
+        eq = ParametricEQ(sr=sr, n_fft=n_fft).to(device)
+        eq_gains = _match_eq_bands(settings.eq_gains_db, eq.n_bands).to(device)
+        mag = eq(mag, eq_gains)
 
-    compressor = Compressor(
-        threshold_db=settings.compressor_threshold_db,
-        ratio=settings.compressor_ratio,
-        makeup_db=settings.compressor_makeup_db,
-        ceiling_db=None,
-    ).to(device)
-    mag = compressor(mag)
+    if not settings.bypass_compressor:
+        compressor = Compressor(
+            threshold_db=settings.compressor_threshold_db,
+            ratio=settings.compressor_ratio,
+            makeup_db=settings.compressor_makeup_db,
+            ceiling_db=None,
+        ).to(device)
+        mag = compressor(mag)
 
     y = torch.istft(
         mag * phase,
@@ -91,6 +93,8 @@ def enhance_file(
     scene: str | None = None,
     denoise_strength: float | None = None,
     safety_floor: float | None = None,
+    bypass_eq: bool | None = None,
+    bypass_compressor: bool | None = None,
     memory_path: str | Path | None = None,
     remember: bool = False,
     use_memory: bool = True,
@@ -115,6 +119,8 @@ def enhance_file(
         scene=scene,
         denoise_strength=denoise_strength,
         safety_floor=safety_floor,
+        bypass_eq=bypass_eq,
+        bypass_compressor=bypass_compressor,
         use_memory=use_memory,
     )
     enhancer = load_neural_enhancer(checkpoint_path, device=device)
@@ -146,6 +152,9 @@ def enhance_file(
         "safety_floor": settings.safety_floor,
         "compressor_threshold_db": settings.compressor_threshold_db,
         "compressor_ratio": settings.compressor_ratio,
+        "compressor_makeup_db": settings.compressor_makeup_db,
+        "bypass_eq": settings.bypass_eq,
+        "bypass_compressor": settings.bypass_compressor,
     }
 
 

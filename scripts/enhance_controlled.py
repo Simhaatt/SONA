@@ -22,7 +22,7 @@ def main() -> None:
     ap.add_argument("--input", required=True, help="input WAV/audio file")
     ap.add_argument("--output", required=True, help="output WAV file")
     ap.add_argument("--mode", default=None,
-                    help="speech | music | podcast | gaming | hearing | studio")
+                    help="speech | aggressive_speech | music | podcast | gaming | hearing | studio")
     ap.add_argument("--scene", default=None,
                     help="speech | music | traffic | fan | crowd | mixed | unknown")
     ap.add_argument("--auto-scene", action="store_true",
@@ -31,6 +31,9 @@ def main() -> None:
                     help="override mode denoise blend, usually 0.0..1.0")
     ap.add_argument("--safety-floor", type=float, default=None,
                     help="recorded controller value for future mask-floor control")
+    ap.add_argument("--bypass-eq", action="store_true", help="skip EQ post-processing")
+    ap.add_argument("--bypass-compressor", action="store_true",
+                    help="skip compressor post-processing")
     ap.add_argument("--memory", default=None,
                     help="preference JSON path; enables scene preference lookup")
     ap.add_argument("--remember", action="store_true",
@@ -51,6 +54,8 @@ def main() -> None:
         scene=args.scene,
         denoise_strength=args.denoise_strength,
         safety_floor=args.safety_floor,
+        bypass_eq=args.bypass_eq if args.bypass_eq else None,
+        bypass_compressor=args.bypass_compressor if args.bypass_compressor else None,
         memory_path=args.memory,
         remember=args.remember,
         use_memory=not args.ignore_memory,

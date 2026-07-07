@@ -110,6 +110,8 @@ def _record_from_dict(raw: dict[str, Any]) -> PreferenceRecord:
             compressor_ratio=float(settings_raw["compressor_ratio"]),
             compressor_makeup_db=float(settings_raw.get("compressor_makeup_db", 0.0)),
             limiter_ceiling=float(settings_raw.get("limiter_ceiling", 0.98)),
+            bypass_eq=bool(settings_raw.get("bypass_eq", False)),
+            bypass_compressor=bool(settings_raw.get("bypass_compressor", False)),
         ),
         updated_at=str(raw["updated_at"]),
     )
