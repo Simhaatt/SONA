@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SONA — Neural Audio Engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0f16'/><path d='M6 16 Q9 8 12 16 T18 16 T24 16' stroke='%2338e1c6' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<!-- ══════════ LOADING SCREEN ══════════ -->
+<div id="loader" class="loader">
+  <div class="loader-inner">
+    <div class="loader-mark">
+      <svg viewBox="0 0 64 64" class="loader-glyph" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#38e1c6"/><stop offset="1" stop-color="#7c5cff"/>
+          </linearGradient>
+        </defs>
+        <rect x="6" y="26" width="5" height="12" rx="2.5" class="lb lb1" fill="url(#lg)"/>
+        <rect x="15" y="18" width="5" height="28" rx="2.5" class="lb lb2" fill="url(#lg)"/>
+        <rect x="24" y="10" width="5" height="44" rx="2.5" class="lb lb3" fill="url(#lg)"/>
+        <rect x="33" y="16" width="5" height="32" rx="2.5" class="lb lb4" fill="url(#lg)"/>
+        <rect x="42" y="22" width="5" height="20" rx="2.5" class="lb lb5" fill="url(#lg)"/>
+        <rect x="51" y="28" width="5" height="8"  rx="2.5" class="lb lb6" fill="url(#lg)"/>
+      </svg>
+    </div>
+    <h1 class="loader-word">SONA</h1>
+    <p class="loader-sub">NEURAL AUDIO ENGINE</p>
+    <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
+    <p id="loader-status" class="loader-status">Initializing runtime…</p>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" class="app" hidden>
+
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" class="brand-glyph" aria-hidden="true">
+      <path d="M8 32 Q14 14 20 32 T32 32 T44 32 T56 32" stroke="url(#lg2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#38e1c6"/><stop offset="1" stop-color="#7c5cff"/>
+      </linearGradient></defs>
+    </svg>
+    <div>
+      <div class="brand-name">SONA</div>
+      <div class="brand-sub">Neural Audio Engine</div>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <span class="chip chip-model" title="Locked Layer A checkpoint">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      GTCRN · ch96 · multi-res loss
+    </span>
+  </div>
+  <div class="topbar-right">
+    <span id="engine-pill" class="pill pill-loading"><span class="dot"></span><span id="engine-pill-text">Engine warming…</span></span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ── LEFT COLUMN ── -->
+  <section class="col-main">
+
+    <!-- input -->
+    <div class="panel" id="panel-input">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12m0-12L8 7m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg> Input</h2>
+        <button id="btn-sample" class="btn btn-ghost btn-sm">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+          Use sample noisy audio
+        </button>
+      </div>
+      <div id="dropzone" class="dropzone">
+        <input type="file" id="file-input" accept=".wav,.flac,.ogg,.mp3,.aiff,.aif" hidden>
+        <svg class="dz-icon" viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16"/></svg>
+        <p class="dz-title">Drop audio here or <span class="dz-browse">browse files</span></p>
+        <p class="dz-hint">WAV · FLAC · OGG · MP3 — resampled to 16 kHz mono</p>
+      </div>
+      <div id="low-noise-note" class="notice notice-amber" hidden>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        Low-noise input detected; enhancement may be subtle.
+      </div>
+      <div id="file-card" class="file-card" hidden>
+        <div class="file-card-icon">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+        </div>
+        <div class="file-card-meta">
+          <div id="file-name" class="file-name">—</div>
+          <div id="file-detail" class="file-detail">—</div>
+        </div>
+        <button id="btn-clear-file" class="btn btn-ghost btn-sm" title="Remove file">✕</button>
+      </div>
+    </div>
+
+    <!-- visualizations -->
+    <div class="panel" id="panel-viz">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg> Signal</h2>
+        <div class="viz-head-right">
+          <label class="switch-wrap" title="Scale each waveform to its own peak instead of the shared absolute scale">
+            <span class="switch-label">normalized view</span>
+            <span class="switch"><input type="checkbox" id="norm-view"><span class="knob"></span></span>
+          </label>
+          <div class="seg" id="viz-tabs">
+            <button class="seg-btn active" data-viz="wave">Waveform</button>
+            <button class="seg-btn" data-viz="res">Removed noise</button>
+            <button class="seg-btn" data-viz="spec">Spectrum</button>
+            <button class="seg-btn" data-viz="ab">Before / After</button>
+          </div>
+        </div>
+      </div>
+      <div id="viz-wave" class="viz-page">
+        <div class="wave-row">
+          <span class="wave-tag tag-in">IN · NOISY</span>
+          <canvas id="wave-in" class="wave-canvas" height="110"></canvas>
+        </div>
+        <div class="wave-row">
+          <span class="wave-tag tag-out">OUT · ENHANCED</span>
+          <canvas id="wave-out" class="wave-canvas" height="110"></canvas>
+          <div id="wave-out-empty" class="wave-empty">awaiting enhancement</div>
+        </div>
+      </div>
+      <div id="viz-res" class="viz-page" hidden>
+        <div class="wave-row">
+          <span class="wave-tag tag-res">REMOVED NOISE · IN − OUT</span>
+          <canvas id="wave-res" class="wave-canvas" height="150"></canvas>
+          <div id="wave-res-empty" class="wave-empty">awaiting enhancement</div>
+        </div>
+        <div class="legend">
+          <span><i class="sw sw-res"></i> residual (what SONA subtracted)</span>
+          <span id="res-summary" class="legend-note"></span>
+        </div>
+      </div>
+      <div id="viz-spec" class="viz-page" hidden>
+        <canvas id="spec-canvas" class="spec-canvas" height="240"></canvas>
+        <div class="legend">
+          <span><i class="sw sw-in"></i> input</span>
+          <span><i class="sw sw-out"></i> enhanced</span>
+          <span><i class="sw sw-res"></i> removed</span>
+          <span id="hf-note" class="legend-note">avg magnitude · 50 Hz – 8 kHz · log</span>
+        </div>
+      </div>
+      <div id="viz-ab" class="viz-page" hidden>
+        <canvas id="ab-canvas" class="spec-canvas" height="240"></canvas>
+        <div class="legend"><span class="legend-note">drag the divider — left: noisy, right: enhanced</span></div>
+      </div>
+    </div>
+
+    <!-- enhance + players -->
+    <div class="panel" id="panel-run">
+      <div class="pipeline" id="pipeline">
+        <div class="stage" data-stage="scene_analysis"><span class="stage-dot"></span>Scene analysis</div>
+        <div class="stage" data-stage="gtcrn_enhancement"><span class="stage-dot"></span>GTCRN enhancement</div>
+        <div class="stage" data-stage="mode_controller"><span class="stage-dot"></span>Mode controller</div>
+        <div class="stage" data-stage="eq_compressor"><span class="stage-dot"></span>EQ / Compressor</div>
+        <div class="stage" data-stage="export_wav"><span class="stage-dot"></span>Export WAV</div>
+      </div>
+
+      <button id="btn-enhance" class="btn btn-primary btn-xl" disabled>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4m8-1 1.9 4.6L21.5 10 17 12l-1.9 4.6L13 12 8.5 10 13 8.1 15 4zM7 15v4m-2-2h4"/></svg>
+        <span id="btn-enhance-text">Enhance Audio</span>
+      </button>
+
+      <div class="players" id="players" hidden>
+        <div class="ab-bar">
+          <div class="seg seg-ab" id="ab-toggle">
+            <button class="seg-btn active" data-ab="a">A · Original</button>
+            <button class="seg-btn" data-ab="b">B · Enhanced</button>
+            <button class="seg-btn" data-ab="n">N · Noise</button>
+          </div>
+          <a id="btn-download" class="btn btn-accent btn-sm" download>
+            <svg class="ic" viewBox="0 0 24 24"><path d="M12 4v12m0 0-5-5m5 5 5-5M4 20h16"/></svg>
+            Download WAV
+          </a>
+        </div>
+        <div class="player-row">
+          <button id="btn-play" class="btn-play" aria-label="play/pause">
+            <svg id="play-icon" class="ic" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
+            <svg id="pause-icon" class="ic" viewBox="0 0 24 24" hidden><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>
+          </button>
+          <div class="transport">
+            <div class="transport-track" id="transport-track"><div class="transport-fill" id="transport-fill"></div></div>
+            <div class="transport-time"><span id="time-cur">0:00</span><span id="ab-label" class="ab-label">A · ORIGINAL</span><span id="time-total">0:00</span></div>
+          </div>
+        </div>
+        <audio id="audio-a" preload="auto"></audio>
+        <audio id="audio-b" preload="auto"></audio>
+        <audio id="audio-n" preload="auto"></audio>
+      </div>
+    </div>
+
+    <!-- analytics -->
+    <div class="panel" id="panel-analytics">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg> Analytics</h2>
+        <span id="analytics-empty" class="muted-note">run an enhancement to populate</span>
+      </div>
+      <div id="stats-grid" class="stats-grid"></div>
+      <div id="stage-times" class="stage-times"></div>
+      <div id="output-path" class="output-path" hidden>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+        <code id="output-path-text"></code>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── RIGHT COLUMN ── -->
+  <aside class="col-side">
+
+    <!-- scene -->
+    <div class="panel" id="panel-scene">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 5a7 7 0 0 1 7 7m-14 0a7 7 0 0 1 7-7m0 14a7 7 0 0 1-7-7m14 0a7 7 0 0 1-7 7"/></svg> Scene</h2>
+        <label class="switch-wrap" title="Detect scene automatically during enhancement">
+          <span class="switch-label">auto</span>
+          <span class="switch"><input type="checkbox" id="auto-scene" checked><span class="knob"></span></span>
+        </label>
+      </div>
+      <div class="scene-display">
+        <div class="scene-ring" id="scene-ring">
+          <svg viewBox="0 0 80 80">
+            <circle class="ring-bg" cx="40" cy="40" r="34"/>
+            <circle class="ring-val" id="ring-val" cx="40" cy="40" r="34"/>
+          </svg>
+          <div class="scene-ring-center">
+            <div id="scene-label" class="scene-label">—</div>
+            <div id="scene-conf" class="scene-conf">no scan</div>
+          </div>
+        </div>
+        <div class="scene-side">
+          <button id="btn-classify" class="btn btn-ghost btn-block" disabled>
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Classify scene
+          </button>
+          <p class="muted-note" id="scene-note">select input first</p>
+        </div>
+      </div>
+      <div class="scene-chips" id="scene-chips"></div>
+    </div>
+
+    <!-- modes -->
+    <div class="panel" id="panel-modes">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-9V3z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15V3.5z"/></svg> Mode</h2>
+        <span id="mode-source" class="muted-note">auto · scene-routed</span>
+      </div>
+      <div class="mode-grid" id="mode-grid"></div>
+    </div>
+
+    <!-- controls -->
+    <div class="panel" id="panel-controls">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h13M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="19" cy="18" r="2"/></svg> Controls</h2>
+        <button id="btn-reset-controls" class="btn btn-ghost btn-sm" title="Reset to mode preset">reset</button>
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-head"><label for="sl-denoise">Denoise strength</label><span id="val-denoise" class="ctl-val">1.00</span></div>
+        <input type="range" id="sl-denoise" min="0" max="1.25" step="0.01" value="1.0">
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="sl-floor">Safety floor</label><span id="val-floor" class="ctl-val">0.08</span></div>
+        <input type="range" id="sl-floor" min="0" max="0.5" step="0.01" value="0.08">
+      </div>
+
+      <div class="ctl-sect">Equalizer <span class="ctl-sect-sub">dB · 8 band</span></div>
+      <div class="eq" id="eq"></div>
+
+      <div class="ctl-sect">Compressor</div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="sl-thresh">Threshold</label><span id="val-thresh" class="ctl-val">-26 dB</span></div>
+        <input type="range" id="sl-thresh" min="-60" max="0" step="1" value="-26">
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="sl-ratio">Ratio</label><span id="val-ratio" class="ctl-val">2.2 : 1</span></div>
+        <input type="range" id="sl-ratio" min="1" max="12" step="0.1" value="2.2">
+      </div>
+
+      <div class="limiter-row">
+        <span class="limiter-led" id="limiter-led"></span>
+        <span>Limiter <b id="limiter-ceiling">0.98</b> ceiling</span>
+        <span id="limiter-state" class="limiter-state">armed</span>
+      </div>
+
+      <label class="switch-wrap switch-row" title="Skip the EQ stage — hear the raw neural denoiser tone">
+        <span class="switch"><input type="checkbox" id="bypass-eq"><span class="knob"></span></span>
+        <span class="switch-label">Bypass EQ</span>
+      </label>
+      <label class="switch-wrap switch-row" title="Skip the compressor stage — no leveling or makeup gain">
+        <span class="switch"><input type="checkbox" id="bypass-comp"><span class="knob"></span></span>
+        <span class="switch-label">Bypass compressor</span>
+      </label>
+      <label class="switch-wrap switch-row" title="Scale output peak back to input level for fair A/B listening">
+        <span class="switch"><input type="checkbox" id="normalize-out" checked><span class="knob"></span></span>
+        <span class="switch-label">Normalize output loudness</span>
+      </label>
+    </div>
+
+    <!-- memory -->
+    <div class="panel" id="panel-memory">
+      <div class="panel-head">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4 4 4 0 0 0-3 6.9V15a4 4 0 0 0 4 4h1m2-16a4 4 0 0 1 4 4 4 4 0 0 1 3 6.9V15a4 4 0 0 1-4 4h-1m-2-16v16"/></svg> Scene memory</h2>
+        <label class="switch-wrap" title="Apply remembered settings for the detected scene">
+          <span class="switch-label">use</span>
+          <span class="switch"><input type="checkbox" id="use-memory" checked><span class="knob"></span></span>
+        </label>
+      </div>
+      <div class="mem-actions">
+        <button id="btn-remember" class="btn btn-ghost btn-sm" disabled>Remember for scene</button>
+        <button id="btn-restore" class="btn btn-ghost btn-sm" disabled>Restore</button>
+        <button id="btn-forget" class="btn btn-ghost btn-sm btn-danger" disabled>Reset scene</button>
+      </div>
+      <div id="mem-list" class="mem-list"><span class="muted-note">no scenes remembered yet</span></div>
+    </div>
+
+  </aside>
+</main>
+
+<footer class="foot">
+  SONA · Layer A locked (GTCRN + multi-resolution spectral loss) · Layer B controller · local demo — nothing leaves this machine
+</footer>
+
+</div>
+
+<div id="toast-holder" class="toast-holder"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

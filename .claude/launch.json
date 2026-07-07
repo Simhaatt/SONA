@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sona-web-demo",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["app.py"],
+      "cwd": "web_demo",
+      "port": 7860
+    }
+  ]
+}

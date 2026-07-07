@@ -1,6 +1,6 @@
 # SONA Status
 
-Last updated: 2026-07-05
+Last updated: 2026-07-07
 
 ## Current Goal
 
@@ -347,6 +347,51 @@ Note:
 
 - The current safety floor is a controller setting recorded for the action space.
 - True per-frame mask-floor enforcement should be wired into model inference later if needed.
+
+### SONA Web Demo v1 (2026-07-07)
+
+First product-style local web demo built around the locked Layer A checkpoint
+and the Layer B controller. No training code touched, no results modified.
+
+Built:
+
+- Flask backend + engine wrapper (checkpoint loaded once, reused across requests):
+  - `D:\noise cancellation\web_demo\app.py`
+  - `D:\noise cancellation\web_demo\engine.py`
+- Dark studio single-page frontend (vanilla JS/canvas, no build step):
+  - `D:\noise cancellation\web_demo\static\` (`index.html`, `styles.css`, `app.js`)
+  - loading screen, drag/drop + sample input, pipeline stage progress,
+    A/B players, scene panel with confidence ring, 6 mode presets,
+    denoise/safety/EQ/compressor controls, limiter status, preference memory,
+    analytics grid, waveform/spectrum/before-after visualizations.
+- Bundled demo sample (real pre-mixed MS-SNSD noisy clip, AirConditioner @ 0 dB SNR):
+  - `D:\noise cancellation\web_demo\samples\sample_noisy.wav`
+  - regenerator: `D:\noise cancellation\web_demo\tools\make_sample.py`
+- Backend endpoints: health, modes, sample, upload (validated), classify,
+  enhance, audio stream/download, preferences CRUD.
+- Uses:
+  - checkpoint `results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\extracted\ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25\last.pt`
+  - `src.controller` (`SceneClassifier`, `SonaController`, `PreferenceMemory`,
+    `load_neural_enhancer`, `apply_post_processing`)
+- Outputs: `D:\noise cancellation\results\web_demo_outputs`
+- Uploads: `D:\noise cancellation\results\web_demo_uploads`
+- Preferences: `D:\noise cancellation\results\web_demo_preferences.json`
+
+Verified:
+
+- 17 pytest tests pass (`web_demo\tests`): health, sample, upload validation,
+  classification, end-to-end enhancement producing a WAV, download-path
+  safety, preference round trip.
+- Manual browser smoke test: sample → auto-scene (speech) → enhance
+  (~0.06× realtime on CPU) → play/download output WAV.
+
+Run: `cd "D:\noise cancellation\web_demo" && python app.py` → http://localhost:7860
+Docs: `D:\noise cancellation\web_demo\README.md`
+
+Next step recommendation: point the demo at real recordings to sanity-check
+the scene classifier thresholds (Do Next item 7), then start the realtime
+mic/speaker streaming pipeline reusing `web_demo\engine.py` as the session
+wrapper.
 
 ### VoiceBank Mamba-GTCRN Pilot
 
@@ -1258,7 +1303,7 @@ Interpretation:
 5. Treat GTCRN + multi-resolution spectral loss as the locked Layer A winner.
 6. Use GTCRN VoiceBank + MS-SNSD external results as the main publishable Layer A evidence.
 7. Test the scene classifier on real speech/music/noise clips and tune thresholds if needed.
-8. Build the first GUI/web demo around the offline pipeline.
+8. ~~Build the first GUI/web demo around the offline pipeline.~~ Done 2026-07-07: `web_demo\` (see "SONA Web Demo v1").
 9. Then move to realtime mic/speaker streaming.
 10. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 

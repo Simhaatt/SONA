@@ -23,6 +23,15 @@ runs/
 *.onnx
 *.ckpt
 
+# Web demo: ship the bundled sample, ignore runtime state
+!web_demo/samples/sample_noisy.wav
+results/web_demo_uploads/
+results/web_demo_outputs/
+results/web_demo_preferences.json
+
+# Local Claude Code settings
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db
