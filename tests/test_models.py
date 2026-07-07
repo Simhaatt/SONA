@@ -4,7 +4,15 @@ import numpy as np
 import torch
 
 from src.utils.config import Config
-from src.models import TorchFrontend, MaskGRU, MaskTCN, AttentionMask, GTCRNMask, NeuralEnhancer
+from src.models import (
+    TorchFrontend,
+    MaskGRU,
+    MaskTCN,
+    AttentionMask,
+    GTCRNMask,
+    MambaGTCRNMask,
+    NeuralEnhancer,
+)
 from src.data import SyntheticNoisyDataset
 from src.train.train_supervised import overfit_batch
 from src.train.losses import mask_polarity_loss, multi_resolution_magnitude_loss
@@ -39,6 +47,7 @@ def test_feature_and_gain_shapes():
         MaskTCN(n_bands=24),
         AttentionMask(n_bands=24),
         GTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2),
+        MambaGTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2, ssm_state=8),
     )
     for model in models:
         gains = model(feats)

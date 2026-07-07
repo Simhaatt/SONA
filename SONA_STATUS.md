@@ -140,6 +140,14 @@ Interpretation:
 - Locked attention remains a useful safe fallback and ablation baseline.
 - Stop spending time on strict online adaptation for now; the next meaningful step is Mamba/state-space memory.
 
+Mamba/state-space methodology added:
+
+- `mamba_gtcrn` model registered.
+- Uses GTCRN gated TF encoder plus a causal Mamba-lite selective state-space memory block.
+- Avoids custom CUDA dependency so Kaggle can run reliably.
+- First pilot notebook:
+  - `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`
+
 ### VoiceBank GTCRN Loss-Focused Full-824 Sweep
 
 Artifact stored in:
@@ -965,8 +973,8 @@ Interpretation:
 ## Do Next
 
 1. Treat `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the main backbone candidate.
-2. Build the Mamba/state-space temporal memory block on top of GTCRN.
-3. Run a VoiceBank pilot for GTCRN+Mamba.
+2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
+3. Run `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`.
 4. If the pilot holds, run full 824 VoiceBank.
 5. Then run MS-SNSD external validation for GTCRN+Mamba.
 6. After Mamba is validated, add the RL governor.
@@ -1009,4 +1017,5 @@ If not good:
 - VoiceBank GTCRN sweep notebook: `D:\noise cancellation\sona_voicebank_gtcrn_sweep.ipynb`
 - VoiceBank GTCRN winner full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_winner_full824.ipynb`
 - VoiceBank GTCRN loss-focused full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`
+- VoiceBank Mamba-GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

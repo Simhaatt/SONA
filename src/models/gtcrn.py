@@ -95,3 +95,86 @@ class GTCRNMask(BaseGainModel):
         h, _ = self.band_gru(x)
         logits = self.head(h).reshape(b, k, t).transpose(1, 2)
         return logits
+
+
+class _MambaLiteBlock(nn.Module):
+    """Small causal selective state-space block.
+
+    This is an implementation-friendly Mamba-style memory block: input-dependent gates modulate a
+    diagonal stable state update over time. It avoids custom CUDA dependencies while preserving the
+    key behavior we need to test next: long causal temporal memory beyond the GRU baseline.
+    """
+
+    def __init__(self, dim: int, state: int = 16, expand: int = 2, dropout: float = 0.1) -> None:
+        super().__init__()
+        inner = dim * expand
+        self.in_proj = nn.Linear(dim, 2 * inner)
+        self.x_proj = nn.Linear(inner, state)
+        self.dt_proj = nn.Linear(inner, state)
+        self.out_proj = nn.Linear(inner, dim)
+        self.skip = nn.Linear(dim, dim)
+        self.norm = nn.LayerNorm(dim)
+        self.drop = nn.Dropout(dropout)
+        self.log_decay = nn.Parameter(torch.linspace(-3.0, -1.0, state))
+        self.readout = nn.Parameter(torch.randn(inner, state) * 0.02)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x
+        x = self.norm(x)
+        value, gate = self.in_proj(x).chunk(2, dim=-1)
+        value = torch.nn.functional.silu(value)
+        gate = torch.sigmoid(gate)
+
+        drive = self.x_proj(value)
+        dt = torch.sigmoid(self.dt_proj(value))
+        decay = torch.exp(-torch.exp(self.log_decay)).view(1, -1)
+        state = torch.zeros(x.size(0), decay.size(1), device=x.device, dtype=x.dtype)
+        outs = []
+        for step in range(x.size(1)):
+            state = decay * state + dt[:, step, :] * drive[:, step, :]
+            outs.append(state)
+        memory = torch.stack(outs, dim=1)
+        y = value + torch.einsum("bts,hs->bth", memory, self.readout)
+        y = self.out_proj(y * gate)
+        return residual + self.drop(y) + 0.1 * self.skip(residual)
+
+
+class MambaGTCRNMask(BaseGainModel):
+    """GTCRN encoder with Mamba-style causal state-space memory before mask decoding."""
+
+    def __init__(
+        self,
+        n_bands: int,
+        n_feat_channels: int = 3,
+        ch: int = 96,
+        hidden: int = 96,
+        n_blocks: int = 4,
+        ssm_state: int = 16,
+        ssm_layers: int = 1,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__(n_bands, n_feat_channels)
+        self.stem = nn.Sequential(
+            nn.Conv2d(n_feat_channels, ch, kernel_size=(1, 3), padding=(0, 1)),
+            nn.GroupNorm(1, ch),
+            nn.GELU(),
+        )
+        self.blocks = nn.ModuleList(
+            [_GatedTFBlock(ch, dilation=2**i, dropout=dropout) for i in range(n_blocks)]
+        )
+        self.memory = nn.Sequential(
+            *[_MambaLiteBlock(ch, state=ssm_state, dropout=dropout) for _ in range(ssm_layers)]
+        )
+        self.band_gru = nn.GRU(ch, hidden, num_layers=1, batch_first=True)
+        self.head = nn.Linear(hidden, 1)
+
+    def predict_gain(self, feats: torch.Tensor) -> torch.Tensor:
+        b, t, k, _ = feats.shape
+        x = feats.permute(0, 3, 1, 2)
+        x = self.stem(x)
+        for block in self.blocks:
+            x = block(x)
+        x = x.permute(0, 3, 2, 1).reshape(b * k, t, -1)
+        x = self.memory(x)
+        h, _ = self.band_gru(x)
+        return self.head(h).reshape(b, k, t).transpose(1, 2)
