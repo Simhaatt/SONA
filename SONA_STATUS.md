@@ -4,8 +4,8 @@ Last updated: 2026-07-05
 
 ## Current Goal
 
-Externally validate the best loss-focused GTCRN Layer B candidate on MS-SNSD while keeping locked
-strict guarded attention as the safe main baseline.
+Build the Mamba/state-space memory step on top of the externally validated GTCRN + multi-resolution
+spectral-loss backbone.
 
 ## Current Run State
 
@@ -95,6 +95,50 @@ Run purpose:
 - Save checkpoints and result CSV/MD files into the output zip.
 
 ## Latest Results
+
+### MS-SNSD GTCRN External Validation
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_ms_snsd_gtcrn_external_eval_2026-07-07\sona_ms_snsd_gtcrn_external_eval.zip`
+- `D:\noise cancellation\results\kaggle_ms_snsd_gtcrn_external_eval_2026-07-07\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_ms_snsd_gtcrn_external_eval_2026-07-07\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_ms_snsd_gtcrn_external_eval_2026-07-07\GTCRN_EXTERNAL_MS_SNSD_RESULT.md`
+
+Full 1100-clip MS-SNSD external result for:
+
+- `gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+
+Frozen GTCRN:
+
+- SI-SDRi 3.153363
+- PESQ 1.402709
+- STOI 0.816160
+- ESTOI 0.690363
+- LSD 11.643679
+- RTF 0.005767
+
+Delta against full MS-SNSD locked attention baseline:
+
+- SI-SDRi +0.567298
+- PESQ +0.079496
+- STOI +0.012615
+- ESTOI +0.026042
+- LSD -0.263802
+- RTF +0.004652
+
+Strict online GTCRN:
+
+- identical aggregate quality metrics to frozen GTCRN
+- RTF 0.043299
+
+Interpretation:
+
+- This is the strongest GTCRN result so far.
+- GTCRN + multi-resolution spectral loss beats attention on all main MS-SNSD external metrics.
+- GTCRN is now externally validated as the main backbone candidate.
+- Locked attention remains a useful safe fallback and ablation baseline.
+- Stop spending time on strict online adaptation for now; the next meaningful step is Mamba/state-space memory.
 
 ### VoiceBank GTCRN Loss-Focused Full-824 Sweep
 
@@ -920,12 +964,12 @@ Interpretation:
 
 ## Do Next
 
-1. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle as the updated `sona-repository`.
-2. Upload `D:\noise cancellation\sona_gtcrn_loss_focus_checkpoint.zip` to Kaggle.
-3. Add the existing MS-SNSD external dataset to the Kaggle notebook.
-4. Upload/run `D:\noise cancellation\sona_ms_snsd_gtcrn_external_eval.ipynb`.
-5. Compare GTCRN external validation against locked attention external validation.
-6. Keep attention as the main baseline unless GTCRN external validation is clearly better.
+1. Treat `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the main backbone candidate.
+2. Build the Mamba/state-space temporal memory block on top of GTCRN.
+3. Run a VoiceBank pilot for GTCRN+Mamba.
+4. If the pilot holds, run full 824 VoiceBank.
+5. Then run MS-SNSD external validation for GTCRN+Mamba.
+6. After Mamba is validated, add the RL governor.
 
 ## Decision Gate
 
