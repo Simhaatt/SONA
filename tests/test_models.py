@@ -11,6 +11,7 @@ from src.models import (
     AttentionMask,
     GTCRNMask,
     MambaGTCRNMask,
+    GovernedGTCRNMask,
     NeuralEnhancer,
 )
 from src.data import SyntheticNoisyDataset
@@ -48,6 +49,7 @@ def test_feature_and_gain_shapes():
         AttentionMask(n_bands=24),
         GTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2),
         MambaGTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2, ssm_state=8),
+        GovernedGTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2),
     )
     for model in models:
         gains = model(feats)

@@ -158,6 +158,9 @@ Next proposed architecture:
 - This directly targets the current weakness:
   - keep SI-SDRi/PESQ gains
   - recover STOI/ESTOI/LSD.
+- Implementation added:
+  - model kind `governed_gtcrn`
+  - notebook `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`
 
 ### VoiceBank Mamba-GTCRN Pilot
 
@@ -1067,15 +1070,16 @@ Interpretation:
    - dual conservative/aggressive mask heads
    - tiny alpha governor
    - optional safe mask floor
-3. Train/evaluate on full 824 VoiceBank first.
-4. Success gate:
+3. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
+4. Run `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`.
+5. Success gate:
    - SI-SDRi >= 9.85
    - PESQ >= 2.52
    - STOI >= 0.932
    - ESTOI >= 0.835
    - LSD <= 6.35
-5. If SONA-G passes full VoiceBank, run MS-SNSD external validation.
-6. After SONA-G is validated, revisit Mamba as post-GRU refinement or add the RL governor.
+6. If SONA-G passes full VoiceBank, run MS-SNSD external validation.
+7. After SONA-G is validated, revisit Mamba as post-GRU refinement or add the RL governor.
 
 ## Decision Gate
 
@@ -1117,4 +1121,5 @@ If not good:
 - VoiceBank GTCRN loss-focused full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`
 - VoiceBank Mamba-GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`
 - VoiceBank Mamba-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`
+- VoiceBank SONA-G governed-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

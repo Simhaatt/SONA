@@ -50,7 +50,7 @@ def _fmt_optional_float(x: float | None) -> str:
 def _model_specs(kind: str, args) -> list[tuple[str, dict, float, float]]:
     mag_weights = _csv_floats(args.mag_weights)
     mr_mag_weights = _csv_floats(args.mr_mag_weights)
-    if kind not in ("gtcrn", "bark_gtcrn", "mamba_gtcrn"):
+    if kind not in ("gtcrn", "bark_gtcrn", "mamba_gtcrn", "governed_gtcrn"):
         return [
             (kind, {"kind": kind}, mag_weight, mr_mag_weight)
             for mag_weight in mag_weights
