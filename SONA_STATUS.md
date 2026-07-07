@@ -96,6 +96,49 @@ Run purpose:
 
 ## Latest Results
 
+### VoiceBank Mamba-GTCRN Full-824 Validation
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_full824_2026-07-07\sona_voicebank_mamba_gtcrn_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_full824_2026-07-07\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_full824_2026-07-07\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_full824_2026-07-07\MAMBA_GTCRN_FULL824_RESULT.md`
+
+Full 824-clip VoiceBank result:
+
+- `neural_mamba_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- SI-SDRi 9.844146
+- PESQ 2.504768
+- STOI 0.927906
+- ESTOI 0.830768
+- LSD 6.617599
+- RTF 0.012139
+
+Delta against locked attention full-824:
+
+- SI-SDRi +0.762146
+- PESQ +0.003768
+- STOI -0.004094
+- ESTOI -0.003232
+- LSD +0.647599
+
+Delta against best GTCRN full-824 rerun:
+
+- SI-SDRi -0.082897
+- PESQ -0.015946
+- STOI -0.002010
+- ESTOI -0.001486
+- LSD +0.147906
+
+Interpretation:
+
+- First Mamba-lite GTCRN did not pass the full-824 gate.
+- It still beats locked attention on SI-SDRi and slightly on PESQ.
+- It is worse than the validated GTCRN branch on all main metrics.
+- Do not run MS-SNSD external validation for this Mamba-lite checkpoint.
+- Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
@@ -999,12 +1042,16 @@ Interpretation:
 
 ## Do Next
 
-1. Treat `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the main backbone candidate.
-2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`.
-4. If the full-824 result holds, run MS-SNSD external validation for GTCRN+Mamba.
-5. If STOI/LSD remain weak, tune Mamba state/layers/loss before external validation.
-6. After Mamba is validated, add the RL governor.
+1. Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
+2. Do not promote the first Mamba-lite checkpoint.
+3. Either tune/redesign Mamba:
+   - state size/layers,
+   - placement before/after GRU,
+   - residual scale,
+   - loss weighting,
+   or move to the RL governor on top of the validated GTCRN branch.
+4. If Mamba is tuned, rerun full-824 VoiceBank before any MS-SNSD external validation.
+5. If prioritizing paper momentum, start RL governor with GTCRN as the backbone.
 
 ## Decision Gate
 
