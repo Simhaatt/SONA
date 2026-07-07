@@ -211,6 +211,21 @@ Interpretation:
 - Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main architecture.
 - The dual-mask governor idea is not dead, but this naive independent-head version is not the winning implementation.
 
+Next controlled architecture:
+
+- `SONA-R`: Residual GTCRN.
+- Keep the externally validated GTCRN encoder + GRU backbone unchanged.
+- Add a small bounded post-GRU logit refiner:
+  - `logits = base_logits + 0.25 * tanh(refine(hidden))`
+- This is intentionally smaller than Mamba or independent dual heads.
+- Goal:
+  - preserve GTCRN SI-SDRi/PESQ
+  - reduce LSD
+  - recover STOI/ESTOI without destabilizing the mask.
+- Implementation added:
+  - model kind `residual_gtcrn`
+  - notebook `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
@@ -1118,11 +1133,17 @@ Interpretation:
 2. Do not promote the current `governed_gtcrn` checkpoint.
 3. Do not run MS-SNSD external validation for this SONA-G version.
 4. Keep the external GTCRN result as the main publishable Layer A evidence.
-5. Next architecture work should be a smaller controlled change on top of GTCRN, not another large backbone swap:
-   - either post-GRU residual refinement,
-   - or constrained dual-mask sharing where conservative/aggressive heads are tied to one base mask,
-   - or Layer B real-time/product pipeline work while Layer A remains GTCRN.
-6. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
+5. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
+6. Run `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`.
+7. SONA-R success gate:
+   - SI-SDRi >= 9.90
+   - PESQ >= 2.52
+   - STOI >= 0.930
+   - ESTOI >= 0.833
+   - LSD <= 6.45
+8. If SONA-R passes VoiceBank, run MS-SNSD external validation.
+9. If SONA-R fails, stop architecture churn and move Layer A writing + Layer B product/real-time work around the validated GTCRN.
+10. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 
 ## Decision Gate
 
@@ -1165,4 +1186,5 @@ If not good:
 - VoiceBank Mamba-GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`
 - VoiceBank Mamba-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`
 - VoiceBank SONA-G governed-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`
+- VoiceBank SONA-R residual-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

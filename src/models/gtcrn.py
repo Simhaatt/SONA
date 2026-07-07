@@ -246,3 +246,54 @@ class GovernedGTCRNMask(BaseGainModel):
         final = alpha * aggressive + (1.0 - alpha) * conservative
         final = torch.maximum(final, floor)
         return self._to_logits(final)
+
+
+class ResidualGTCRNMask(BaseGainModel):
+    """GTCRN with a bounded post-GRU residual logit refiner.
+
+    This keeps the validated GTCRN path as the main prediction and adds a small learned correction
+    after recurrent decoding. The correction is bounded so the experiment tests refinement rather
+    than another large architecture change.
+    """
+
+    def __init__(
+        self,
+        n_bands: int,
+        n_feat_channels: int = 3,
+        ch: int = 96,
+        hidden: int = 96,
+        n_blocks: int = 4,
+        residual_scale: float = 0.25,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__(n_bands, n_feat_channels)
+        self.residual_scale = residual_scale
+        self.stem = nn.Sequential(
+            nn.Conv2d(n_feat_channels, ch, kernel_size=(1, 3), padding=(0, 1)),
+            nn.GroupNorm(1, ch),
+            nn.GELU(),
+        )
+        self.blocks = nn.ModuleList(
+            [_GatedTFBlock(ch, dilation=2**i, dropout=dropout) for i in range(n_blocks)]
+        )
+        self.band_gru = nn.GRU(ch, hidden, num_layers=1, batch_first=True)
+        self.head = nn.Linear(hidden, 1)
+        self.refine = nn.Sequential(
+            nn.LayerNorm(hidden),
+            nn.Linear(hidden, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, 1),
+        )
+
+    def predict_gain(self, feats: torch.Tensor) -> torch.Tensor:
+        b, t, k, _ = feats.shape
+        x = feats.permute(0, 3, 1, 2)
+        x = self.stem(x)
+        for block in self.blocks:
+            x = block(x)
+        x = x.permute(0, 3, 2, 1).reshape(b * k, t, -1)
+        h, _ = self.band_gru(x)
+        base = self.head(h)
+        residual = self.residual_scale * torch.tanh(self.refine(h))
+        return (base + residual).reshape(b, k, t).transpose(1, 2)

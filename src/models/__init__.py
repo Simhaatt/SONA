@@ -4,7 +4,7 @@ from .torch_frontend import TorchFrontend
 from .base import BaseGainModel, NeuralEnhancer
 from .mask_net import MaskGRU, MaskTCN
 from .attention import AttentionMask
-from .gtcrn import GTCRNMask, MambaGTCRNMask, GovernedGTCRNMask
+from .gtcrn import GTCRNMask, MambaGTCRNMask, GovernedGTCRNMask, ResidualGTCRNMask
 from .rl_agent import RLGainPolicy
 from .rl_attention import RLAttentionPolicy, OnlineAdapter
 from .eq import ParametricEQ, Compressor, hum_notch_curve, GRAPHIC_EQ_FREQS
@@ -18,6 +18,7 @@ MODELS = {
     "bark_gtcrn": GTCRNMask,
     "mamba_gtcrn": MambaGTCRNMask,
     "governed_gtcrn": GovernedGTCRNMask,
+    "residual_gtcrn": ResidualGTCRNMask,
 }
 
 # RL policies use a separate training loop (train_rl) but reuse NeuralEnhancer for deterministic eval.
@@ -36,6 +37,7 @@ __all__ = [
     "GTCRNMask",
     "MambaGTCRNMask",
     "GovernedGTCRNMask",
+    "ResidualGTCRNMask",
     "RLGainPolicy",
     "RLAttentionPolicy",
     "OnlineAdapter",
