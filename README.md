@@ -91,7 +91,7 @@ Layer A checkpoint.
 python scripts/enhance_controlled.py --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_speech.wav" --mode speech
 ```
 
-Available modes: `speech`, `music`, `podcast`, `gaming`, `hearing`, `studio`.
+Available modes: `speech`, `aggressive_speech`, `music`, `podcast`, `gaming`, `hearing`, `studio`.
 Available scenes for auto-routing: `speech`, `music`, `traffic`, `fan`, `crowd`, `mixed`, `unknown`.
 
 Preference memory stores scene-specific choices in JSON:
@@ -108,6 +108,9 @@ Scene classification is available as a lightweight local heuristic:
 python scripts/classify_scene.py --input "path/to/noisy.wav"
 python scripts/enhance_controlled.py --auto-scene --memory "results/preferences.json" --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_auto.wav"
 ```
+
+For audibly noisy clips, try `--mode aggressive_speech`, or use `--bypass-eq` /
+`--bypass-compressor` to hear the neural denoiser without post-processing.
 
 ## Layout
 

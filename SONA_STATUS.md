@@ -393,6 +393,42 @@ the scene classifier thresholds (Do Next item 7), then start the realtime
 mic/speaker streaming pipeline reusing `web_demo\engine.py` as the session
 wrapper.
 
+### Controller Tuning v1
+
+Logic-only Layer B tuning after listening/debugging the web demo:
+
+- Added mode:
+  - `aggressive_speech`
+- Changed scene routing:
+  - `traffic -> aggressive_speech`
+  - `fan -> aggressive_speech`
+- Reduced compressor makeup on denoising-sensitive modes so remaining noise is not boosted:
+  - `speech`: 1.0 dB -> 0.2 dB
+  - `music`: 0.5 dB -> 0.0 dB
+  - `podcast`: 1.5 dB -> 0.4 dB
+  - `gaming`: 0.5 dB -> 0.0 dB
+  - `hearing`: 2.0 dB -> 0.6 dB
+- Tuned `speech` defaults:
+  - denoise strength 1.0 -> 1.05
+  - safety floor 0.08 -> 0.06
+  - slightly reduced high/presence EQ lift
+- `aggressive_speech` defaults:
+  - denoise strength 1.25
+  - safety floor 0.03
+  - low makeup, milder compression
+  - restrained EQ so residual noise is not exaggerated
+- Added controller flags:
+  - `bypass_eq`
+  - `bypass_compressor`
+- Added CLI flags:
+  - `scripts\enhance_controlled.py --bypass-eq --bypass-compressor`
+  - `scripts\manage_preferences.py set --bypass-eq --bypass-compressor`
+
+Note:
+
+- This changes core controller logic only.
+- The web demo UI can expose the new mode/toggles later; backend/web engine may also need a small adapter patch if it keeps its own mode list.
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
