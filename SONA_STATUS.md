@@ -286,6 +286,8 @@ Implemented after locking GTCRN:
   - `D:\noise cancellation\src\controller\pipeline.py`
 - Offline controlled enhancement CLI:
   - `D:\noise cancellation\scripts\enhance_controlled.py`
+- Preference memory CLI:
+  - `D:\noise cancellation\scripts\manage_preferences.py`
 - Controller tests:
   - `D:\noise cancellation\tests\test_controller.py`
 
@@ -322,6 +324,11 @@ Layer B starter capabilities:
   - apply compressor
   - apply peak limiter
   - save output WAV
+- preference memory:
+  - JSON-backed scene preference store
+  - remembers selected mode and controller settings per scene
+  - optional memory lookup in `enhance_controlled.py`
+  - optional `--remember` path to save the chosen scene settings
 
 Note:
 
@@ -1237,12 +1244,11 @@ Interpretation:
 4. Do not run MS-SNSD external validation for SONA-G or SONA-R.
 5. Treat GTCRN + multi-resolution spectral loss as the locked Layer A winner.
 6. Use GTCRN VoiceBank + MS-SNSD external results as the main publishable Layer A evidence.
-7. Test the offline controlled enhancement CLI on one local WAV using the GTCRN checkpoint.
-8. Add preference memory so scene/mode/EQ choices persist across sessions.
-9. Add a simple scene classifier and route its labels into the controller.
-10. Build the first GUI/web demo around the offline pipeline.
-11. Then move to realtime mic/speaker streaming.
-12. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
+7. Test preference memory with several scene/mode choices and real noisy audio.
+8. Add a simple scene classifier and route its labels into the controller.
+9. Build the first GUI/web demo around the offline pipeline.
+10. Then move to realtime mic/speaker streaming.
+11. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 
 ## Decision Gate
 
@@ -1289,4 +1295,5 @@ If not good:
 - Layer A results package: `D:\noise cancellation\LAYER_A_RESULTS.md`
 - Layer B controller package: `D:\noise cancellation\src\controller`
 - Offline controlled enhancement CLI: `D:\noise cancellation\scripts\enhance_controlled.py`
+- Preference memory CLI: `D:\noise cancellation\scripts\manage_preferences.py`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from src.controller import ControllerSettings, SonaController, apply_post_processing
+from src.controller import ControllerSettings, PreferenceMemory, SonaController, apply_post_processing
 
 
 def test_controller_modes_and_scene_routing():
@@ -21,6 +21,35 @@ def test_controller_overrides_are_clamped():
     settings = controller.settings(mode="speech", denoise_strength=2.0, safety_floor=-1.0)
     assert settings.mask_strength == 1.25
     assert settings.safety_floor == 0.0
+
+
+def test_preference_memory_roundtrip(tmp_path):
+    memory = PreferenceMemory(tmp_path / "prefs.json")
+    controller = SonaController(memory=memory)
+    settings = controller.settings(mode="music", denoise_strength=0.33, use_memory=False)
+
+    record = memory.set("Traffic", "music", settings)
+    assert record.scene == "traffic"
+    loaded = memory.get("traffic")
+    assert loaded is not None
+    assert loaded.mode == "music"
+    assert loaded.settings.mask_strength == 0.33
+
+    controller2 = SonaController(memory=PreferenceMemory(tmp_path / "prefs.json"))
+    remembered = controller2.settings(scene="traffic")
+    assert remembered.mask_strength == 0.33
+    assert remembered.eq_gains_db == settings.eq_gains_db
+
+
+def test_explicit_mode_beats_memory(tmp_path):
+    memory = PreferenceMemory(tmp_path / "prefs.json")
+    controller = SonaController(memory=memory)
+    memory.set("fan", "music", controller.settings(mode="music", use_memory=False))
+
+    remembered = controller.settings(scene="fan")
+    explicit = controller.settings(scene="fan", mode="speech")
+    assert remembered.mask_strength != explicit.mask_strength
+    assert explicit == controller.settings(mode="speech", use_memory=False)
 
 
 def test_post_processing_neutral_keeps_shape_and_bounds():

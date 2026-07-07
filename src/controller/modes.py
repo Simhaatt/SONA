@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .memory import PreferenceMemory
 
 
 @dataclass(frozen=True)
@@ -123,9 +127,11 @@ class SonaController:
         self,
         presets: dict[str, ModePreset] | None = None,
         scene_to_mode: dict[str, str] | None = None,
+        memory: PreferenceMemory | None = None,
     ) -> None:
         self.presets = presets or MODE_PRESETS
         self.scene_to_mode = scene_to_mode or SCENE_TO_MODE
+        self.memory = memory
 
     def preset_names(self) -> tuple[str, ...]:
         return tuple(self.presets)
@@ -141,11 +147,13 @@ class SonaController:
         scene: str | None = None,
         denoise_strength: float | None = None,
         safety_floor: float | None = None,
+        use_memory: bool = True,
     ) -> ControllerSettings:
-        mode_name = (mode or self.mode_for_scene(scene)).lower()
+        memory_record = self.memory.get(scene) if use_memory and self.memory and not mode else None
+        mode_name = (mode or (memory_record.mode if memory_record else None) or self.mode_for_scene(scene)).lower()
         if mode_name not in self.presets:
             raise ValueError(f"unknown mode '{mode_name}'. options: {list(self.presets)}")
-        settings = self.presets[mode_name].settings
+        settings = memory_record.settings if memory_record else self.presets[mode_name].settings
         if denoise_strength is not None:
             settings = replace(settings, mask_strength=_clamp(denoise_strength, 0.0, 1.25))
         if safety_floor is not None:

@@ -29,6 +29,12 @@ def main() -> None:
                     help="override mode denoise blend, usually 0.0..1.0")
     ap.add_argument("--safety-floor", type=float, default=None,
                     help="recorded controller value for future mask-floor control")
+    ap.add_argument("--memory", default=None,
+                    help="preference JSON path; enables scene preference lookup")
+    ap.add_argument("--remember", action="store_true",
+                    help="save the chosen mode/settings for --scene after enhancement")
+    ap.add_argument("--ignore-memory", action="store_true",
+                    help="do not apply stored scene preferences")
     ap.add_argument("--device", default=None, help="cpu | cuda; default auto")
     args = ap.parse_args()
 
@@ -43,6 +49,9 @@ def main() -> None:
         scene=args.scene,
         denoise_strength=args.denoise_strength,
         safety_floor=args.safety_floor,
+        memory_path=args.memory,
+        remember=args.remember,
+        use_memory=not args.ignore_memory,
         device=args.device,
     )
     print(json.dumps(info, indent=2))

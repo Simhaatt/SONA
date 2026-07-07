@@ -94,6 +94,14 @@ python scripts/enhance_controlled.py --checkpoint "results/kaggle_voicebank_gtcr
 Available modes: `speech`, `music`, `podcast`, `gaming`, `hearing`, `studio`.
 Available scenes for auto-routing: `speech`, `music`, `traffic`, `fan`, `crowd`, `mixed`, `unknown`.
 
+Preference memory stores scene-specific choices in JSON:
+
+```bash
+python scripts/manage_preferences.py --memory "results/preferences.json" set --scene traffic --mode hearing --denoise-strength 0.9
+python scripts/manage_preferences.py --memory "results/preferences.json" list
+python scripts/enhance_controlled.py --memory "results/preferences.json" --scene traffic --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_traffic.wav"
+```
+
 ## Layout
 
 ```

@@ -11,6 +11,7 @@ from ..models import Compressor, NeuralEnhancer, ParametricEQ
 from ..train.train_supervised import build_frontend, build_model
 from ..utils.audio_io import DEFAULT_SR, load_audio, save_audio
 from ..utils.config import Config
+from .memory import PreferenceMemory
 from .modes import ControllerSettings, SonaController
 
 
@@ -89,16 +90,24 @@ def enhance_file(
     scene: str | None = None,
     denoise_strength: float | None = None,
     safety_floor: float | None = None,
+    memory_path: str | Path | None = None,
+    remember: bool = False,
+    use_memory: bool = True,
     device: str | None = None,
-) -> dict[str, str | float]:
+) -> dict[str, str | float | bool]:
     """Enhance one WAV file with Layer A GTCRN plus Layer B mode controls."""
 
-    controller = SonaController()
+    memory = PreferenceMemory(memory_path) if memory_path else None
+    controller = SonaController(memory=memory)
+    chosen_mode = mode or controller.mode_for_scene(scene)
+    memory_record = memory.get(scene) if memory and scene and use_memory and not mode else None
+    actual_mode = mode or (memory_record.mode if memory_record else chosen_mode)
     settings = controller.settings(
         mode=mode,
         scene=scene,
         denoise_strength=denoise_strength,
         safety_floor=safety_floor,
+        use_memory=use_memory,
     )
     noisy, sr = load_audio(input_path, sr=DEFAULT_SR, mono=True)
     enhancer = load_neural_enhancer(checkpoint_path, device=device)
@@ -115,11 +124,15 @@ def enhance_file(
         device=enhancer.device,
     )
     save_audio(output_path, processed, sr)
+    if remember and memory and scene:
+        memory.set(scene, actual_mode, settings)
     return {
         "input": str(input_path),
         "output": str(output_path),
-        "mode": mode or controller.mode_for_scene(scene),
+        "mode": actual_mode,
         "scene": scene or "",
+        "memory_used": bool(memory_record),
+        "remembered": bool(remember and memory and scene),
         "mask_strength": settings.mask_strength,
         "safety_floor": settings.safety_floor,
         "compressor_threshold_db": settings.compressor_threshold_db,
