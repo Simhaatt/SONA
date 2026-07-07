@@ -76,11 +76,23 @@ reward**, and anchored supervised-online variants such as `attention_online`) on
 DEMAND test set (whose noises are unseen in training → a built-in distribution-shift benchmark),
 with the full metric suite.
 
-Latest checked artifacts are recorded under `results/`. The full Scenario A retry did **not** pass
-the thesis gate yet: `rl_online` gives the best PESQ, but loses SI-SDR/STOI, and anchored
-`attention_online` / `mask_gru_online` do not beat their frozen supervised bases. Use
-`sona_kaggle_tune_online.ipynb` next to tune anchor strength, adapter dimensionality, and adaptation
-steps before launching a full Scenario B run.
+Latest checked artifacts are recorded under `results/`. Layer A is now locked on
+`gtcrn_ch96_h96_b4_mw1p25_mr0p25`: a compact GTCRN with multi-resolution spectral loss. Mamba-GTCRN,
+SONA-G governed GTCRN, and SONA-R residual GTCRN were tested and not promoted. See
+`LAYER_A_RESULTS.md` and `SONA_STATUS.md` for the final table and external-validation story.
+
+## Layer B controlled enhancement
+
+The first product/controller layer lives in `src/controller/`. It adds mode presets, scene-to-mode
+routing, EQ, compressor settings, denoise-strength blending, and peak limiting around a trained
+Layer A checkpoint.
+
+```bash
+python scripts/enhance_controlled.py --checkpoint "results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt" --input "path/to/noisy.wav" --output "results/audio/noisy__sona_speech.wav" --mode speech
+```
+
+Available modes: `speech`, `music`, `podcast`, `gaming`, `hearing`, `studio`.
+Available scenes for auto-routing: `speech`, `music`, `traffic`, `fan`, `crowd`, `mixed`, `unknown`.
 
 ## Layout
 
@@ -92,6 +104,7 @@ src/data/         datasets, noise mixing, burst aug, noise-type splits
 src/eval/         metrics, evaluate, report, reward_squim   (SQUIM reward + fallback)
 src/models/       torch front-end, mask/attention/RL models, OnlineAdapter,
                   adapt.py (adaptation modules), eq.py (differentiable EQ/DRC)
+src/controller/   Layer B mode presets, scene routing, controlled enhancement pipeline
 src/train/        supervised + RL training loops, losses
 scripts/          prepare_data, run_benchmark, eval_shift, kaggle_run
 notebooks/        kaggle_benchmark.ipynb (real-data run on the T4)

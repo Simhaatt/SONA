@@ -274,6 +274,60 @@ Interpretation:
 - Do not promote this SONA-R checkpoint.
 - Stop architecture hopping for now; lock GTCRN as the Layer A winner.
 
+### Layer A Packaging and Layer B Controller Starter
+
+Implemented after locking GTCRN:
+
+- Layer A result package:
+  - `D:\noise cancellation\LAYER_A_RESULTS.md`
+- Layer B controller package:
+  - `D:\noise cancellation\src\controller\__init__.py`
+  - `D:\noise cancellation\src\controller\modes.py`
+  - `D:\noise cancellation\src\controller\pipeline.py`
+- Offline controlled enhancement CLI:
+  - `D:\noise cancellation\scripts\enhance_controlled.py`
+- Controller tests:
+  - `D:\noise cancellation\tests\test_controller.py`
+
+Layer B starter capabilities:
+
+- mode presets:
+  - Speech
+  - Music
+  - Podcast
+  - Gaming
+  - Hearing
+  - Studio
+- scene-to-mode routing:
+  - speech
+  - music
+  - traffic
+  - fan
+  - crowd
+  - mixed
+  - unknown
+- controller outputs:
+  - mask/denoise strength
+  - speech-preservation safety floor value
+  - 8-band EQ gains
+  - compressor threshold
+  - compressor ratio
+  - compressor makeup
+  - limiter ceiling
+- offline pipeline:
+  - load Layer A checkpoint
+  - enhance WAV
+  - blend denoise strength
+  - apply EQ
+  - apply compressor
+  - apply peak limiter
+  - save output WAV
+
+Note:
+
+- The current safety floor is a controller setting recorded for the action space.
+- True per-frame mask-floor enforcement should be wired into model inference later if needed.
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
@@ -1183,8 +1237,12 @@ Interpretation:
 4. Do not run MS-SNSD external validation for SONA-G or SONA-R.
 5. Treat GTCRN + multi-resolution spectral loss as the locked Layer A winner.
 6. Use GTCRN VoiceBank + MS-SNSD external results as the main publishable Layer A evidence.
-7. Move next to Layer A write-up/ablation packaging and Layer B real-time/product pipeline around the validated GTCRN.
-8. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
+7. Test the offline controlled enhancement CLI on one local WAV using the GTCRN checkpoint.
+8. Add preference memory so scene/mode/EQ choices persist across sessions.
+9. Add a simple scene classifier and route its labels into the controller.
+10. Build the first GUI/web demo around the offline pipeline.
+11. Then move to realtime mic/speaker streaming.
+12. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 
 ## Decision Gate
 
@@ -1228,4 +1286,7 @@ If not good:
 - VoiceBank Mamba-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`
 - VoiceBank SONA-G governed-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`
 - VoiceBank SONA-R residual-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`
+- Layer A results package: `D:\noise cancellation\LAYER_A_RESULTS.md`
+- Layer B controller package: `D:\noise cancellation\src\controller`
+- Offline controlled enhancement CLI: `D:\noise cancellation\scripts\enhance_controlled.py`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
