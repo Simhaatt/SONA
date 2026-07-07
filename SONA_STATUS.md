@@ -162,6 +162,55 @@ Next proposed architecture:
   - model kind `governed_gtcrn`
   - notebook `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`
 
+### VoiceBank SONA-G Governed-GTCRN Full-824 Validation
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_governed_gtcrn_full824_2026-07-07\sona_voicebank_governed_gtcrn_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_governed_gtcrn_full824_2026-07-07\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_governed_gtcrn_full824_2026-07-07\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_governed_gtcrn_full824_2026-07-07\per_sample.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_governed_gtcrn_full824_2026-07-07\ckpt_governed_gtcrn_ch96_h96_b4_mw1p25_mr0p25\last.pt`
+
+Full-824 VoiceBank result:
+
+- `neural_governed_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- SI-SDRi 9.887606
+- PESQ 2.454897
+- STOI 0.930346
+- ESTOI 0.830752
+- LSD 6.641260
+- RTF 0.006678
+
+Strict online result:
+
+- `governed_gtcrn_ch96_h96_b4_mw1p25_mr0p25_online_lowrank_s1_a2_d0p01_go0p0001`
+- SI-SDRi 9.887574
+- PESQ 2.454831
+- STOI 0.930347
+- ESTOI 0.830757
+- LSD 6.641396
+- RTF 0.056753
+
+Delta vs current best GTCRN VoiceBank full-824:
+
+- SI-SDRi -0.039437
+- PESQ -0.065817
+- STOI +0.000430
+- ESTOI -0.001502
+- LSD +0.171567
+
+Interpretation:
+
+- SONA-G ran successfully and produced a checkpoint.
+- It fails the full-824 success gate.
+- It only improves STOI by a negligible amount.
+- It hurts PESQ and LSD compared with the current best GTCRN.
+- Strict online adaptation again changes almost nothing while increasing RTF.
+- Do not run MS-SNSD external validation for this governed checkpoint.
+- Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main architecture.
+- The dual-mask governor idea is not dead, but this naive independent-head version is not the winning implementation.
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
@@ -1066,20 +1115,14 @@ Interpretation:
 ## Do Next
 
 1. Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
-2. Implement `governed_gtcrn` / `SONA-G`:
-   - dual conservative/aggressive mask heads
-   - tiny alpha governor
-   - optional safe mask floor
-3. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-4. Run `D:\noise cancellation\sona_voicebank_governed_gtcrn_full824.ipynb`.
-5. Success gate:
-   - SI-SDRi >= 9.85
-   - PESQ >= 2.52
-   - STOI >= 0.932
-   - ESTOI >= 0.835
-   - LSD <= 6.35
-6. If SONA-G passes full VoiceBank, run MS-SNSD external validation.
-7. After SONA-G is validated, revisit Mamba as post-GRU refinement or add the RL governor.
+2. Do not promote the current `governed_gtcrn` checkpoint.
+3. Do not run MS-SNSD external validation for this SONA-G version.
+4. Keep the external GTCRN result as the main publishable Layer A evidence.
+5. Next architecture work should be a smaller controlled change on top of GTCRN, not another large backbone swap:
+   - either post-GRU residual refinement,
+   - or constrained dual-mask sharing where conservative/aggressive heads are tied to one base mask,
+   - or Layer B real-time/product pipeline work while Layer A remains GTCRN.
+6. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 
 ## Decision Gate
 
