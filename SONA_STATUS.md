@@ -96,6 +96,33 @@ Run purpose:
 
 ## Latest Results
 
+### VoiceBank Mamba-GTCRN Pilot
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_pilot_2026-07-07\sona_voicebank_mamba_gtcrn_pilot.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_pilot_2026-07-07\extracted\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_pilot_2026-07-07\extracted\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_mamba_gtcrn_pilot_2026-07-07\MAMBA_GTCRN_PILOT_RESULT.md`
+
+300-clip VoiceBank result:
+
+- `neural_mamba_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- SI-SDRi 10.468651
+- PESQ 2.567920
+- STOI 0.927073
+- ESTOI 0.845595
+- LSD 6.807549
+- RTF 0.011878
+
+Interpretation:
+
+- Mamba-GTCRN improves SI-SDRi and PESQ strongly.
+- Mamba-GTCRN improves ESTOI versus the full-824 GTCRN loss-focused reference.
+- Mamba-GTCRN still hurts STOI and LSD.
+- This is a promising Mamba signal but not clean enough to promote before full-824 validation.
+- Strict online still changes no aggregate metrics.
+
 ### MS-SNSD GTCRN External Validation
 
 Artifact stored in:
@@ -974,9 +1001,9 @@ Interpretation:
 
 1. Treat `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the main backbone candidate.
 2. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-3. Run `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`.
-4. If the pilot holds, run full 824 VoiceBank.
-5. Then run MS-SNSD external validation for GTCRN+Mamba.
+3. Run `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`.
+4. If the full-824 result holds, run MS-SNSD external validation for GTCRN+Mamba.
+5. If STOI/LSD remain weak, tune Mamba state/layers/loss before external validation.
 6. After Mamba is validated, add the RL governor.
 
 ## Decision Gate
@@ -1018,4 +1045,5 @@ If not good:
 - VoiceBank GTCRN winner full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_winner_full824.ipynb`
 - VoiceBank GTCRN loss-focused full-test notebook: `D:\noise cancellation\sona_voicebank_gtcrn_loss_focus_full824.ipynb`
 - VoiceBank Mamba-GTCRN pilot notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_pilot.ipynb`
+- VoiceBank Mamba-GTCRN full-824 notebook: `D:\noise cancellation\sona_voicebank_mamba_gtcrn_full824.ipynb`
 - Living status file: `D:\noise cancellation\SONA_STATUS.md`
