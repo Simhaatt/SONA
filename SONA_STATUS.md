@@ -226,6 +226,54 @@ Next controlled architecture:
   - model kind `residual_gtcrn`
   - notebook `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`
 
+### VoiceBank SONA-R Residual-GTCRN Full-824 Validation
+
+Artifact stored in:
+
+- `D:\noise cancellation\results\kaggle_voicebank_residual_gtcrn_full824_2026-07-07\sona_voicebank_residual_gtcrn_full824.zip`
+- `D:\noise cancellation\results\kaggle_voicebank_residual_gtcrn_full824_2026-07-07\summary.md`
+- `D:\noise cancellation\results\kaggle_voicebank_residual_gtcrn_full824_2026-07-07\summary.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_residual_gtcrn_full824_2026-07-07\per_sample.csv`
+- `D:\noise cancellation\results\kaggle_voicebank_residual_gtcrn_full824_2026-07-07\ckpt_residual_gtcrn_ch96_h96_b4_mw1p25_mr0p25\last.pt`
+
+Full-824 VoiceBank result:
+
+- `neural_residual_gtcrn_ch96_h96_b4_mw1p25_mr0p25`
+- SI-SDRi 9.868019
+- PESQ 2.519997
+- STOI 0.929206
+- ESTOI 0.830742
+- LSD 6.507774
+- RTF 0.006820
+
+Strict online result:
+
+- `residual_gtcrn_ch96_h96_b4_mw1p25_mr0p25_online_lowrank_s1_a2_d0p01_go0p0001`
+- SI-SDRi 9.867788
+- PESQ 2.519939
+- STOI 0.929210
+- ESTOI 0.830747
+- LSD 6.507849
+- RTF 0.059431
+
+Delta vs current best GTCRN VoiceBank full-824:
+
+- SI-SDRi -0.059024
+- PESQ -0.000717
+- STOI -0.000710
+- ESTOI -0.001512
+- LSD +0.038081
+
+Interpretation:
+
+- SONA-R ran successfully and produced a checkpoint.
+- It is much closer than SONA-G and essentially ties GTCRN on PESQ.
+- It does not beat the current best GTCRN.
+- SI-SDRi, STOI, ESTOI, and LSD are all slightly worse than GTCRN.
+- Strict online adaptation again changes almost nothing while increasing RTF.
+- Do not promote this SONA-R checkpoint.
+- Stop architecture hopping for now; lock GTCRN as the Layer A winner.
+
 ### VoiceBank Mamba-GTCRN Pilot
 
 Artifact stored in:
@@ -1131,19 +1179,12 @@ Interpretation:
 
 1. Keep `gtcrn_ch96_h96_b4_mw1p25_mr0p25` as the current main backbone.
 2. Do not promote the current `governed_gtcrn` checkpoint.
-3. Do not run MS-SNSD external validation for this SONA-G version.
-4. Keep the external GTCRN result as the main publishable Layer A evidence.
-5. Upload refreshed `D:\noise cancellation\sona.zip` to Kaggle.
-6. Run `D:\noise cancellation\sona_voicebank_residual_gtcrn_full824.ipynb`.
-7. SONA-R success gate:
-   - SI-SDRi >= 9.90
-   - PESQ >= 2.52
-   - STOI >= 0.930
-   - ESTOI >= 0.833
-   - LSD <= 6.45
-8. If SONA-R passes VoiceBank, run MS-SNSD external validation.
-9. If SONA-R fails, stop architecture churn and move Layer A writing + Layer B product/real-time work around the validated GTCRN.
-10. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
+3. Do not promote the current `residual_gtcrn` checkpoint.
+4. Do not run MS-SNSD external validation for SONA-G or SONA-R.
+5. Treat GTCRN + multi-resolution spectral loss as the locked Layer A winner.
+6. Use GTCRN VoiceBank + MS-SNSD external results as the main publishable Layer A evidence.
+7. Move next to Layer A write-up/ablation packaging and Layer B real-time/product pipeline around the validated GTCRN.
+8. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.
 
 ## Decision Gate
 
