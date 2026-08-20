@@ -9,7 +9,7 @@
     "inv_ratio@10": 1.0,
     "recall@100": 1.0,
     "inv_ratio@100": 1.0,
-    "seconds": 0.5564311999987694
+    "seconds": 0.653562100000272
   },
   {
     "model": "wavlm_base_plus",
@@ -21,7 +21,7 @@
     "inv_ratio@10": 0.9703043103218079,
     "recall@100": 0.65515,
     "inv_ratio@100": 0.9803916811943054,
-    "seconds": 1.0681454999976268
+    "seconds": 0.9799596000011661
   },
   {
     "model": "wavlm_base_plus",
@@ -33,7 +33,7 @@
     "inv_ratio@10": 0.9474343657493591,
     "recall@100": 0.54198,
     "inv_ratio@100": 0.9636046886444092,
-    "seconds": 0.859283100002358
+    "seconds": 0.7722569000034127
   },
   {
     "model": "wavlm_base_plus",
@@ -45,7 +45,7 @@
     "inv_ratio@10": 0.828036904335022,
     "recall@100": 0.15955,
     "inv_ratio@100": 0.871422529220581,
-    "seconds": 0.8418458999985887
+    "seconds": 0.8486781999999948
   },
   {
     "model": "wavlm_base_plus",
@@ -57,7 +57,7 @@
     "inv_ratio@10": 0.9848434329032898,
     "recall@100": 0.7480800000000001,
     "inv_ratio@100": 0.9899252653121948,
-    "seconds": 1.03074689999994
+    "seconds": 1.0402208999985305
   },
   {
     "model": "wavlm_base_plus",
@@ -69,7 +69,7 @@
     "inv_ratio@10": 0.9619696140289307,
     "recall@100": 0.59802,
     "inv_ratio@100": 0.9720252156257629,
-    "seconds": 0.8009286000014981
+    "seconds": 0.8545710999969742
   },
   {
     "model": "wavlm_base_plus",
@@ -81,7 +81,7 @@
     "inv_ratio@10": 0.8372300863265991,
     "recall@100": 0.21488,
     "inv_ratio@100": 0.8903504610061646,
-    "seconds": 0.7011724000003596
+    "seconds": 0.8888566999994509
   },
   {
     "model": "wavlm_base_plus",
@@ -93,7 +93,7 @@
     "inv_ratio@10": 0.9961016178131104,
     "recall@100": 0.87118,
     "inv_ratio@100": 0.9973687529563904,
-    "seconds": 1.1547936999995727
+    "seconds": 1.079300899997179
   },
   {
     "model": "wavlm_base_plus",
@@ -105,7 +105,7 @@
     "inv_ratio@10": 0.9719564318656921,
     "recall@100": 0.65697,
     "inv_ratio@100": 0.979162335395813,
-    "seconds": 0.819570499999827
+    "seconds": 0.8322367000000668
   },
   {
     "model": "wavlm_base_plus",
@@ -117,7 +117,7 @@
     "inv_ratio@10": 0.9501690864562988,
     "recall@100": 0.49578000000000005,
     "inv_ratio@100": 0.9590678811073303,
-    "seconds": 0.7069167999979982
+    "seconds": 0.7644223000024795
   },
   {
     "model": "wavlm_base_plus",
@@ -129,7 +129,7 @@
     "inv_ratio@10": 0.9988266229629517,
     "recall@100": 0.93337,
     "inv_ratio@100": 0.9993027448654175,
-    "seconds": 1.1356608999994933
+    "seconds": 1.13598920000004
   },
   {
     "model": "wavlm_base_plus",
@@ -141,7 +141,7 @@
     "inv_ratio@10": 0.9770113229751587,
     "recall@100": 0.69258,
     "inv_ratio@100": 0.9829378724098206,
-    "seconds": 0.7588001000003715
+    "seconds": 0.8958333999980823
   },
   {
     "model": "wavlm_base_plus",
@@ -153,6 +153,534 @@
     "inv_ratio@10": 0.9749147891998291,
     "recall@100": 0.7187300000000001,
     "inv_ratio@100": 0.9874318838119507,
-    "seconds": 0.8473114000007627
+    "seconds": 0.7059590999997454
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "PQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.244,
+    "inv_ratio@1": 0.9624863266944885,
+    "recall@10": 0.5439,
+    "inv_ratio@10": 0.9776492714881897,
+    "recall@100": 0.74113,
+    "inv_ratio@100": 0.9894254803657532,
+    "seconds": 6.514860799998132
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "OPQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.522,
+    "inv_ratio@1": 0.9886336922645569,
+    "recall@10": 0.726,
+    "inv_ratio@10": 0.9926535487174988,
+    "recall@100": 0.83958,
+    "inv_ratio@100": 0.9959206581115723,
+    "seconds": 98.0567867000027
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "PQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.478,
+    "inv_ratio@1": 0.982896625995636,
+    "recall@10": 0.6886,
+    "inv_ratio@10": 0.9906014204025269,
+    "recall@100": 0.8397199999999999,
+    "inv_ratio@100": 0.995949387550354,
+    "seconds": 12.741680400002224
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "OPQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.769,
+    "inv_ratio@1": 0.9967489838600159,
+    "recall@10": 0.8435,
+    "inv_ratio@10": 0.9977631568908691,
+    "recall@100": 0.9154800000000001,
+    "inv_ratio@100": 0.9988881945610046,
+    "seconds": 184.5198022000004
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "PQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.816,
+    "inv_ratio@1": 0.9981557130813599,
+    "recall@10": 0.8720000000000001,
+    "inv_ratio@10": 0.9985396862030029,
+    "recall@100": 0.9294499999999999,
+    "inv_ratio@100": 0.9991978406906128,
+    "seconds": 23.619398300001194
+  },
+  {
+    "model": "wavlm_base_plus",
+    "method": "OPQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.843,
+    "inv_ratio@1": 0.9988127946853638,
+    "recall@10": 0.899,
+    "inv_ratio@10": 0.9991489052772522,
+    "recall@100": 0.95006,
+    "inv_ratio@100": 0.9995996356010437,
+    "seconds": 341.74398870000005
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "float32-exact",
+    "bits_per_vector": 24576.0,
+    "recall@1": 1.0,
+    "inv_ratio@1": 1.0,
+    "recall@10": 1.0,
+    "inv_ratio@10": 1.0,
+    "recall@100": 1.0,
+    "inv_ratio@100": 1.0,
+    "seconds": 0.7942380999993475
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-1b-rot-gaussian",
+    "bits_per_vector": 800.0,
+    "recall@1": 0.295,
+    "inv_ratio@1": 0.952428936958313,
+    "recall@10": 0.5299,
+    "inv_ratio@10": 0.9631727933883667,
+    "recall@100": 0.75802,
+    "inv_ratio@100": 0.9810758829116821,
+    "seconds": 1.7495817000017269
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-1b-no-rot",
+    "bits_per_vector": 800.0,
+    "recall@1": 0.34,
+    "inv_ratio@1": 0.9593769311904907,
+    "recall@10": 0.5245,
+    "inv_ratio@10": 0.960319459438324,
+    "recall@100": 0.70012,
+    "inv_ratio@100": 0.9723784327507019,
+    "seconds": 1.1889054000021133
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "uniform-1b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.0,
+    "inv_ratio@1": 0.6923623085021973,
+    "recall@10": 0.013300000000000001,
+    "inv_ratio@10": 0.7201135158538818,
+    "recall@100": 0.18634,
+    "inv_ratio@100": 0.828842282295227,
+    "seconds": 1.3991342000008444
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-2b-rot-gaussian",
+    "bits_per_vector": 1568.0,
+    "recall@1": 0.486,
+    "inv_ratio@1": 0.9801499247550964,
+    "recall@10": 0.7085,
+    "inv_ratio@10": 0.9869604706764221,
+    "recall@100": 0.8517100000000001,
+    "inv_ratio@100": 0.9933328628540039,
+    "seconds": 1.6669943999986572
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-2b-no-rot",
+    "bits_per_vector": 1568.0,
+    "recall@1": 0.452,
+    "inv_ratio@1": 0.9763200283050537,
+    "recall@10": 0.6604,
+    "inv_ratio@10": 0.9818233847618103,
+    "recall@100": 0.81773,
+    "inv_ratio@100": 0.9898124933242798,
+    "seconds": 1.1816648000021814
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "uniform-2b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.086,
+    "inv_ratio@1": 0.8385084867477417,
+    "recall@10": 0.2258,
+    "inv_ratio@10": 0.8634451031684875,
+    "recall@100": 0.52356,
+    "inv_ratio@100": 0.9246616363525391,
+    "seconds": 1.3132951999978104
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-3b-rot-gaussian",
+    "bits_per_vector": 2336.0,
+    "recall@1": 0.617,
+    "inv_ratio@1": 0.9903149008750916,
+    "recall@10": 0.7935,
+    "inv_ratio@10": 0.9935487508773804,
+    "recall@100": 0.9118999999999999,
+    "inv_ratio@100": 0.9975898265838623,
+    "seconds": 1.724894700000732
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-3b-no-rot",
+    "bits_per_vector": 2336.0,
+    "recall@1": 0.614,
+    "inv_ratio@1": 0.9904919266700745,
+    "recall@10": 0.7925,
+    "inv_ratio@10": 0.9936075210571289,
+    "recall@100": 0.9059900000000001,
+    "inv_ratio@100": 0.9972416162490845,
+    "seconds": 1.336242699999275
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "uniform-3b",
+    "bits_per_vector": 2304.0,
+    "recall@1": 0.308,
+    "inv_ratio@1": 0.9574533700942993,
+    "recall@10": 0.5665,
+    "inv_ratio@10": 0.9682278037071228,
+    "recall@100": 0.8029900000000001,
+    "inv_ratio@100": 0.988168478012085,
+    "seconds": 1.325235899999825
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-4b-rot-gaussian",
+    "bits_per_vector": 3104.0,
+    "recall@1": 0.792,
+    "inv_ratio@1": 0.9974052906036377,
+    "recall@10": 0.8965,
+    "inv_ratio@10": 0.9984818696975708,
+    "recall@100": 0.95186,
+    "inv_ratio@100": 0.9992949366569519,
+    "seconds": 1.6318980999967607
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "scalar-4b-no-rot",
+    "bits_per_vector": 3104.0,
+    "recall@1": 0.755,
+    "inv_ratio@1": 0.9964068531990051,
+    "recall@10": 0.8739000000000001,
+    "inv_ratio@10": 0.9977622032165527,
+    "recall@100": 0.9436599999999999,
+    "inv_ratio@100": 0.9990166425704956,
+    "seconds": 1.1856119000003673
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "uniform-4b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.527,
+    "inv_ratio@1": 0.9859688878059387,
+    "recall@10": 0.747,
+    "inv_ratio@10": 0.9907842874526978,
+    "recall@100": 0.90401,
+    "inv_ratio@100": 0.9969049096107483,
+    "seconds": 1.1632821000021067
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "PQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.12,
+    "inv_ratio@1": 0.9151890873908997,
+    "recall@10": 0.49470000000000003,
+    "inv_ratio@10": 0.9588300585746765,
+    "recall@100": 0.8120999999999999,
+    "inv_ratio@100": 0.9883143901824951,
+    "seconds": 7.106261699998868
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "OPQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.442,
+    "inv_ratio@1": 0.9778671860694885,
+    "recall@10": 0.7322,
+    "inv_ratio@10": 0.9878811836242676,
+    "recall@100": 0.89302,
+    "inv_ratio@100": 0.9963698387145996,
+    "seconds": 170.16353170000002
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "PQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.445,
+    "inv_ratio@1": 0.9775090217590332,
+    "recall@10": 0.6738000000000001,
+    "inv_ratio@10": 0.984324038028717,
+    "recall@100": 0.88196,
+    "inv_ratio@100": 0.995532214641571,
+    "seconds": 14.414957199998753
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "OPQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.585,
+    "inv_ratio@1": 0.9889886379241943,
+    "recall@10": 0.8000999999999999,
+    "inv_ratio@10": 0.994449257850647,
+    "recall@100": 0.94037,
+    "inv_ratio@100": 0.9987088441848755,
+    "seconds": 275.6153271999974
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "PQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.607,
+    "inv_ratio@1": 0.9905449151992798,
+    "recall@10": 0.8160999999999999,
+    "inv_ratio@10": 0.9949018359184265,
+    "recall@100": 0.94357,
+    "inv_ratio@100": 0.9988928437232971,
+    "seconds": 33.726250599997
+  },
+  {
+    "model": "wav2vec2_base",
+    "method": "OPQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.674,
+    "inv_ratio@1": 0.993371844291687,
+    "recall@10": 0.8472,
+    "inv_ratio@10": 0.9966128468513489,
+    "recall@100": 0.94975,
+    "inv_ratio@100": 0.9991576075553894,
+    "seconds": 524.3532085000006
+  },
+  {
+    "model": "hubert_base",
+    "method": "float32-exact",
+    "bits_per_vector": 24576.0,
+    "recall@1": 1.0,
+    "inv_ratio@1": 1.0,
+    "recall@10": 1.0,
+    "inv_ratio@10": 1.0,
+    "recall@100": 1.0,
+    "inv_ratio@100": 1.0,
+    "seconds": 0.7731589999966673
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-1b-rot-gaussian",
+    "bits_per_vector": 800.0,
+    "recall@1": 0.464,
+    "inv_ratio@1": 0.980565071105957,
+    "recall@10": 0.6982,
+    "inv_ratio@10": 0.9851309657096863,
+    "recall@100": 0.80636,
+    "inv_ratio@100": 0.9895463585853577,
+    "seconds": 1.5024794000019028
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-1b-no-rot",
+    "bits_per_vector": 800.0,
+    "recall@1": 0.147,
+    "inv_ratio@1": 0.9223681688308716,
+    "recall@10": 0.42919999999999997,
+    "inv_ratio@10": 0.9457874894142151,
+    "recall@100": 0.66899,
+    "inv_ratio@100": 0.9683154821395874,
+    "seconds": 1.1988734000005934
+  },
+  {
+    "model": "hubert_base",
+    "method": "uniform-1b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.0,
+    "inv_ratio@1": 0.755524754524231,
+    "recall@10": 0.0058000000000000005,
+    "inv_ratio@10": 0.7767828106880188,
+    "recall@100": 0.20639,
+    "inv_ratio@100": 0.8625681400299072,
+    "seconds": 1.1944250000015018
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-2b-rot-gaussian",
+    "bits_per_vector": 1568.0,
+    "recall@1": 0.53,
+    "inv_ratio@1": 0.9879268407821655,
+    "recall@10": 0.7771,
+    "inv_ratio@10": 0.9924803972244263,
+    "recall@100": 0.89082,
+    "inv_ratio@100": 0.9967387914657593,
+    "seconds": 1.481445800000074
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-2b-no-rot",
+    "bits_per_vector": 1568.0,
+    "recall@1": 0.264,
+    "inv_ratio@1": 0.9608896374702454,
+    "recall@10": 0.5877,
+    "inv_ratio@10": 0.9723023176193237,
+    "recall@100": 0.77215,
+    "inv_ratio@100": 0.9849323630332947,
+    "seconds": 1.3498939999990398
+  },
+  {
+    "model": "hubert_base",
+    "method": "uniform-2b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.021,
+    "inv_ratio@1": 0.8249792456626892,
+    "recall@10": 0.1681,
+    "inv_ratio@10": 0.8520184755325317,
+    "recall@100": 0.39783999999999997,
+    "inv_ratio@100": 0.9096584320068359,
+    "seconds": 1.162543900001765
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-3b-rot-gaussian",
+    "bits_per_vector": 2336.0,
+    "recall@1": 0.676,
+    "inv_ratio@1": 0.9947665929794312,
+    "recall@10": 0.8695999999999999,
+    "inv_ratio@10": 0.9977223873138428,
+    "recall@100": 0.9359999999999999,
+    "inv_ratio@100": 0.9989134073257446,
+    "seconds": 1.6084067000010691
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-3b-no-rot",
+    "bits_per_vector": 2336.0,
+    "recall@1": 0.277,
+    "inv_ratio@1": 0.9664136171340942,
+    "recall@10": 0.6347,
+    "inv_ratio@10": 0.978738009929657,
+    "recall@100": 0.79357,
+    "inv_ratio@100": 0.9877244234085083,
+    "seconds": 1.3488528999987466
+  },
+  {
+    "model": "hubert_base",
+    "method": "uniform-3b",
+    "bits_per_vector": 2304.0,
+    "recall@1": 0.2,
+    "inv_ratio@1": 0.956680417060852,
+    "recall@10": 0.485,
+    "inv_ratio@10": 0.9601307511329651,
+    "recall@100": 0.7541,
+    "inv_ratio@100": 0.9827826619148254,
+    "seconds": 1.1320622999992338
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-4b-rot-gaussian",
+    "bits_per_vector": 3104.0,
+    "recall@1": 0.797,
+    "inv_ratio@1": 0.9983697533607483,
+    "recall@10": 0.9212,
+    "inv_ratio@10": 0.9992426633834839,
+    "recall@100": 0.9644499999999999,
+    "inv_ratio@100": 0.9996728897094727,
+    "seconds": 1.6485354999967967
+  },
+  {
+    "model": "hubert_base",
+    "method": "scalar-4b-no-rot",
+    "bits_per_vector": 3104.0,
+    "recall@1": 0.445,
+    "inv_ratio@1": 0.9794281721115112,
+    "recall@10": 0.7141,
+    "inv_ratio@10": 0.9861021637916565,
+    "recall@100": 0.80789,
+    "inv_ratio@100": 0.9892154335975647,
+    "seconds": 1.0858138000003237
+  },
+  {
+    "model": "hubert_base",
+    "method": "uniform-4b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.404,
+    "inv_ratio@1": 0.9810707569122314,
+    "recall@10": 0.7266,
+    "inv_ratio@10": 0.9886206388473511,
+    "recall@100": 0.88343,
+    "inv_ratio@100": 0.996168315410614,
+    "seconds": 1.1122490000016114
+  },
+  {
+    "model": "hubert_base",
+    "method": "PQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.365,
+    "inv_ratio@1": 0.9789449572563171,
+    "recall@10": 0.7069,
+    "inv_ratio@10": 0.9870081543922424,
+    "recall@100": 0.84642,
+    "inv_ratio@100": 0.9929498434066772,
+    "seconds": 8.634785499998543
+  },
+  {
+    "model": "hubert_base",
+    "method": "OPQ-m96-8b",
+    "bits_per_vector": 768.0,
+    "recall@1": 0.437,
+    "inv_ratio@1": 0.981052041053772,
+    "recall@10": 0.738,
+    "inv_ratio@10": 0.9907206892967224,
+    "recall@100": 0.91156,
+    "inv_ratio@100": 0.9978228807449341,
+    "seconds": 146.12498729999788
+  },
+  {
+    "model": "hubert_base",
+    "method": "PQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.316,
+    "inv_ratio@1": 0.9756636023521423,
+    "recall@10": 0.7123,
+    "inv_ratio@10": 0.9874621033668518,
+    "recall@100": 0.9021399999999999,
+    "inv_ratio@100": 0.9973176717758179,
+    "seconds": 16.88561529999788
+  },
+  {
+    "model": "hubert_base",
+    "method": "OPQ-m192-8b",
+    "bits_per_vector": 1536.0,
+    "recall@1": 0.576,
+    "inv_ratio@1": 0.9909951686859131,
+    "recall@10": 0.8656,
+    "inv_ratio@10": 0.9975866079330444,
+    "recall@100": 0.9535899999999999,
+    "inv_ratio@100": 0.9994218945503235,
+    "seconds": 267.6401971999985
+  },
+  {
+    "model": "hubert_base",
+    "method": "PQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.506,
+    "inv_ratio@1": 0.9891483187675476,
+    "recall@10": 0.8278000000000001,
+    "inv_ratio@10": 0.9959300756454468,
+    "recall@100": 0.943,
+    "inv_ratio@100": 0.9989397525787354,
+    "seconds": 30.966558500000247
+  },
+  {
+    "model": "hubert_base",
+    "method": "OPQ-m384-8b",
+    "bits_per_vector": 3072.0,
+    "recall@1": 0.765,
+    "inv_ratio@1": 0.9971851706504822,
+    "recall@10": 0.9095000000000001,
+    "inv_ratio@10": 0.9990152716636658,
+    "recall@100": 0.96697,
+    "inv_ratio@100": 0.9997045993804932,
+    "seconds": 502.5466274999999
   }
 ]

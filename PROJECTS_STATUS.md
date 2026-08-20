@@ -110,11 +110,34 @@ Say so plainly in the paper — the size/fidelity trade-off is the contribution,
 | spectral subtraction | 0.071 | 0.057 | 0.115 | 0.061 | 0.056 | 0.068 |
 | Wiener | 0.097 | 0.081 | 0.140 | 0.103 | 0.070 | 0.092 |
 
-**Report this honestly: on aggregate WER, enhancement slightly *hurts* (0.047 vs 0.043).** The
-finding is that the effect is strongly condition-dependent — a 41 % relative *cut* in `bus` noise
-(0.034 → 0.020) against a 44 % *rise* in `cafe` babble (0.063 → 0.091). Enhancement tuned for
-human listening is not automatically good for a downstream ASR model. Classical methods degrade
-WER everywhere, which is consistent with the perceptual table.
+**Corrected 2026-08-20 — the earlier bus/cafe claim did not survive testing.** The previous
+wording ("41 % cut in `bus` against a 44 % rise in `cafe`") rested on point estimates. Under paired
+Wilcoxon with Benjamini-Hochberg FDR inside the 5-noise-type family, the `bus` improvement fails
+(q = 0.095), and the better-powered corpus-level analysis does not find it at all.
+
+What survives, and is stronger: **enhancement significantly degrades ASR overall (+24.1 % relative
+corpus WER, CI excludes zero), and the degradation is concentrated in `cafe` babble (+57.9 %) and
+the lowest SNR bin (2.5 dB, +43.1 %)**, with the remaining three noise types showing no significant
+effect. Enhancement tuned for human listening is not automatically good for a downstream ASR model.
+
+Two further points, both reportable:
+
+- **Per-clip and corpus-level WER disagree on the same 824 clips** — about whether an aggregate
+  effect exists *and* about the sign of the `bus` effect. Per-clip averaging weights a 3-word and a
+  36-word utterance equally; corpus-level weights by reference length. Papers reporting "WER"
+  rarely say which they used.
+- **The per-clip test was underpowered.** Utterances are short (6 183 reference words over 824
+  clips, median 7) and Whisper transcribes most perfectly under both methods, so only **129/824**
+  pairs differ and per-condition effective n falls to 16–37.
+
+Classical methods degrade WER everywhere, robustly and at an order of magnitude larger effect —
+19/40 comparisons survive FDR, all of them classical baselines getting worse. That claim is
+untouched.
+
+**Remedy (R1):** condition-gated enhancement — see `results/condition_gating/FINDINGS_R1.md`.
+Corpus WER is 0.0428 always-enhance, 0.0370 with a learned router evaluated leave-one-noise-type-out,
+0.0345 never-enhance, 0.0333 oracle. The honest recommendation is the blunt one: **keep the
+enhancer out of the ASR path** and give the human listener the enhanced signal instead.
 
 ### Deployment artefacts
 

@@ -143,13 +143,14 @@ def main() -> None:
                           "precision_at_k": fp32, "random_baseline": base})
 
         for bits in (1, 2, 3, 4):
-            for meth in ("rot", "norot", "pq", "opq"):
+            for meth in ("rot", "norot", "uniform", "pq", "opq"):
                 try:
                     Xq = reconstruct(X, meth, d, bits, train=TRAIN)
                     p = precision_at_k(Xq, labels, args.k)
                     per_query[(task, meth, bits)] = per_query_precision(Xq, labels, args.k)
                     retained = p / fp32 if fp32 > 0 else float("nan")
                     name = {"rot": f"scalar-{bits}b+rotation", "norot": f"scalar-{bits}b no-rot",
+                            "uniform": f"uniform-{bits}b",
                             "pq": f"PQ({bits}b-equiv)", "opq": f"OPQ({bits}b-equiv)"}[meth]
                     print(f"  {name:32s} P@{args.k}={p:.4f}  ({retained*100:5.1f}% of float32)")
                     out_rows.append({"task": task, "method": name, "bits": bits * d,
