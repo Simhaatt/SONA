@@ -64,6 +64,7 @@ results/deepfilternet2_voicebank/
 
 # Bundle zip is a build artifact of paper_bundle/ + scripts/build_paper_bundle.py
 paper_bundle_*.zip
+sona_kaggle_data.zip
 
 # Staged Kaggle upload (1.2 GB of copied corpora); rebuild with scripts/stage_kaggle_dataset.py
 kaggle_upload/
