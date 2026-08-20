@@ -97,6 +97,79 @@ class GTCRNMask(BaseGainModel):
         return logits
 
 
+class ComplexGTCRNMask(BaseGainModel):
+    """GTCRN backbone with a per-band COMPLEX ratio mask head.
+
+    Identical encoder/decoder to `GTCRNMask` (stem + gated TF blocks + band GRU);
+    the ONLY difference is the head predicts two channels per band — the real and
+    imaginary parts of a bounded complex ratio mask — instead of a single magnitude
+    gain. The mask is applied via `TorchFrontend.apply_band_complex`, which modifies
+    both magnitude AND phase (the noisy phase is no longer preserved). This isolates
+    "complex mask vs magnitude gain" as the single variable in a fair A/B.
+
+    Output: (B, T, n_bands, 2). Each component is bounded to +/-`bound` via tanh for
+    training stability; identity (mask = 1 + 0j) is comfortably reachable.
+    """
+
+    is_complex = True
+
+    def __init__(
+        self,
+        n_bands: int,
+        n_feat_channels: int = 3,
+        ch: int = 96,
+        hidden: int = 96,
+        n_blocks: int = 4,
+        kernel_t: int = 3,
+        kernel_f: int = 3,
+        dropout: float = 0.1,
+        bound: float = 2.0,
+    ) -> None:
+        super().__init__(n_bands, n_feat_channels)
+        self.bound = bound
+        self.stem = nn.Sequential(
+            nn.Conv2d(n_feat_channels, ch, kernel_size=(1, 3), padding=(0, 1)),
+            nn.GroupNorm(1, ch),
+            nn.GELU(),
+        )
+        self.blocks = nn.ModuleList(
+            [
+                _GatedTFBlock(ch, dilation=2**i, kernel_t=kernel_t, kernel_f=kernel_f,
+                              dropout=dropout)
+                for i in range(n_blocks)
+            ]
+        )
+        self.band_gru = nn.GRU(ch, hidden, num_layers=1, batch_first=True)
+        self.head = nn.Linear(hidden, 2)  # real, imag
+        # Initialise to a near-identity mask (real=1, imag=0) so the model starts as
+        # a pass-through, mirroring how the sigmoid magnitude model starts near a 0.5
+        # gain. Without this the complex mask starts near 0 (silence) and is unfairly
+        # handicapped early in training. bound*tanh(atanh(1/bound)) = 1.
+        with torch.no_grad():
+            # Scale (not zero) the head so the identity bias dominates the initial
+            # output while gradients stay healthy. 0.1 gives ~4% pass-through error
+            # at init AND full learning capacity; smaller (0.01) starts cleaner but
+            # throttles backbone gradients and cripples training.
+            self.head.weight.mul_(0.1)
+            r0 = float(torch.atanh(torch.tensor(1.0 / bound)))
+            self.head.bias.copy_(torch.tensor([r0, 0.0]))
+
+    def predict_gain(self, feats: torch.Tensor) -> torch.Tensor:
+        b, t, k, _ = feats.shape
+        x = feats.permute(0, 3, 1, 2)  # (B, C, T, K)
+        x = self.stem(x)
+        for block in self.blocks:
+            x = block(x)
+        x = x.permute(0, 3, 2, 1).reshape(b * k, t, -1)  # (B*K, T, C)
+        h, _ = self.band_gru(x)
+        ri = self.head(h).reshape(b, k, t, 2).permute(0, 2, 1, 3)  # (B, T, K, 2)
+        return ri
+
+    def forward(self, feats: torch.Tensor) -> torch.Tensor:
+        # bounded complex mask; no sigmoid (that would forbid phase sign changes)
+        return self.bound * torch.tanh(self.predict_gain(feats))
+
+
 class _MambaLiteBlock(nn.Module):
     """Small causal selective state-space block.
 

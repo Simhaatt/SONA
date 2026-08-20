@@ -1,0 +1,7 @@
+method,uid,noise_type,snr_db,wer,rtf
+passthrough,p232_001,unknown,,0.0,0.008469186358204362
+passthrough,p232_002,unknown,,0.0,0.005119896891128401
+passthrough,p232_003,unknown,,0.0,0.005077708384671883
+spectral_subtraction,p232_001,unknown,,0.0,0.006440486671367417
+spectral_subtraction,p232_002,unknown,,0.09090909090909091,0.008085222352128388
+spectral_subtraction,p232_003,unknown,,0.1,0.00672774405686226

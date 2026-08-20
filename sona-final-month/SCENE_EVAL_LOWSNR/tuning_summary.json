@@ -1,0 +1,11 @@
+{
+  "n_clips": 180,
+  "shipped_accuracy": 0.4694,
+  "cv_accuracy_mean": 0.4898283998283999,
+  "cv_accuracy_std": 0.07231112603597088,
+  "cv_balanced_mean": 0.5391666666666667,
+  "cv_balanced_std": 0.08071416377915282,
+  "full_fit_accuracy_in_sample": 0.6111111111111112,
+  "folds": 5,
+  "iters": 6000
+}

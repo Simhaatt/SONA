@@ -1,0 +1,11 @@
+rendering 200 dev clips across variants
+  clean + fp32: 0 pending, done (0s)
+  uniform_int8     already complete, skipping
+  only_stem        already complete, skipping
+  only_block0_d1  : 60 pending, done (21s)
+  only_block1_d2  : 200 pending, done (80s)
+  only_block2_d4  : 200 pending, done (91s)
+  only_block3_d8  : 200 pending, done (96s)
+  only_head       : 200 pending, done (101s)
+
+wrote wavs to E:\Rohit\FYP\noise cancellation\PERCEPTUAL_MP\pesq_wavs

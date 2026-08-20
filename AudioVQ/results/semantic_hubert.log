@@ -1,0 +1,63 @@
+codebook-fitting bank (held out): (10000, 768)
+
+============================================================================================
+TASK: speaker   n=824  classes=2  random baseline P@10=0.5005
+============================================================================================
+  float32 (uncompressed)           P@10=0.9750
+  scalar-1b+rotation               P@10=0.9609  ( 98.6% of float32)
+  scalar-1b no-rot                 P@10=0.9604  ( 98.5% of float32)
+  PQ(1b-equiv)                     P@10=0.9654  ( 99.0% of float32)
+  OPQ(1b-equiv)                    P@10=0.9749  (100.0% of float32)
+  scalar-2b+rotation               P@10=0.9682  ( 99.3% of float32)
+  scalar-2b no-rot                 P@10=0.9627  ( 98.7% of float32)
+  PQ(2b-equiv)                     P@10=0.9728  ( 99.8% of float32)
+  OPQ(2b-equiv)                    P@10=0.9754  (100.0% of float32)
+  scalar-3b+rotation               P@10=0.9746  (100.0% of float32)
+  scalar-3b no-rot                 P@10=0.9689  ( 99.4% of float32)
+  PQ(3b-equiv)                     P@10=0.9746  (100.0% of float32)
+  OPQ(3b-equiv)                    P@10=0.9744  ( 99.9% of float32)
+  scalar-4b+rotation               P@10=0.9757  (100.1% of float32)
+  scalar-4b no-rot                 P@10=0.9717  ( 99.7% of float32)
+  PQ(4b-equiv)                     P@10=0.9748  (100.0% of float32)
+  OPQ(4b-equiv)                    P@10=0.9751  (100.0% of float32)
+
+============================================================================================
+TASK: noise_type   n=1100  classes=9  random baseline P@10=0.1482
+============================================================================================
+  float32 (uncompressed)           P@10=0.6662
+  scalar-1b+rotation               P@10=0.6481  ( 97.3% of float32)
+  scalar-1b no-rot                 P@10=0.6653  ( 99.9% of float32)
+  PQ(1b-equiv)                     P@10=0.6242  ( 93.7% of float32)
+  OPQ(1b-equiv)                    P@10=0.6373  ( 95.7% of float32)
+  scalar-2b+rotation               P@10=0.6521  ( 97.9% of float32)
+  scalar-2b no-rot                 P@10=0.6689  (100.4% of float32)
+  PQ(2b-equiv)                     P@10=0.6495  ( 97.5% of float32)
+  OPQ(2b-equiv)                    P@10=0.6556  ( 98.4% of float32)
+  scalar-3b+rotation               P@10=0.6614  ( 99.3% of float32)
+  scalar-3b no-rot                 P@10=0.6725  (100.9% of float32)
+  PQ(3b-equiv)                     P@10=0.6591  ( 98.9% of float32)
+  OPQ(3b-equiv)                    P@10=0.6612  ( 99.2% of float32)
+  scalar-4b+rotation               P@10=0.6667  (100.1% of float32)
+  scalar-4b no-rot                 P@10=0.6714  (100.8% of float32)
+  PQ(4b-equiv)                     P@10=0.6635  ( 99.6% of float32)
+  OPQ(4b-equiv)                    P@10=0.6622  ( 99.4% of float32)
+
+============================================================================================
+ROTATION ABLATION significance (paired over queries, Wilcoxon; +ve favours rotation)
+============================================================================================
+task          bits  with rot    no rot     delta          p        verdict
+speaker          1    0.9609    0.9604   +0.0005   7.02e-01 no sig. difference
+speaker          2    0.9682    0.9627   +0.0055   2.41e-02 rotation helps
+speaker          3    0.9746    0.9689   +0.0057   7.40e-04 rotation helps
+speaker          4    0.9757    0.9717   +0.0040   1.05e-03 rotation helps
+noise_type       1    0.6481    0.6653   -0.0172   2.68e-03 rotation HURTS
+noise_type       2    0.6521    0.6689   -0.0168   2.57e-04 rotation HURTS
+noise_type       3    0.6614    0.6725   -0.0111   3.25e-03 rotation HURTS
+noise_type       4    0.6667    0.6714   -0.0046   8.85e-02 no sig. difference
+============================================================================================
+SEMANTIC RETENTION at the most aggressive budget (1 bit/coord)
+============================================================================================
+  speaker      float32=0.9750  rot-scalar=0.9609 (98.6%)  OPQ=0.9749 (100.0%)
+  noise_type   float32=0.6662  rot-scalar=0.6481 (97.3%)  OPQ=0.6373 (95.7%)
+
+wrote E:\Rohit\FYP\AudioVQ\results\semantic\semantic_hubert_base.csv

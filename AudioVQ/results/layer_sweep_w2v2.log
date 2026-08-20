@@ -1,0 +1,40 @@
+wav2vec2_base: 3000 database + 400 query clips, all layers
+
+  extracting database ...
+    250/3000
+    500/3000
+    750/3000
+    1000/3000
+    1250/3000
+    1500/3000
+    1750/3000
+    2000/3000
+    2250/3000
+    2500/3000
+    2750/3000
+    3000/3000
+  extracting queries ...
+    250/400
+
+  got 12 layers, d=768
+
+ layer   crest  kurtosis     cos  R@10 rot  R@10 norot  rot gain
+     0    9.75     19.20  +0.756    0.8090      0.7105     13.9%
+     1   13.97     56.14  +0.754    0.7995      0.6112     30.8%
+     2   15.94     89.48  +0.770    0.7760      0.5613     38.3%
+     3   16.71    106.38  +0.765    0.7760      0.5557     39.6%
+     4   17.15    117.87  +0.747    0.7532      0.5753     30.9%
+     5   16.81    109.87  +0.741    0.7605      0.6085     25.0%
+     6   16.34     98.90  +0.747    0.7315      0.6178     18.4%
+     7   16.25     98.70  +0.758    0.7570      0.5497     37.7%
+     8   17.10    119.58  +0.781    0.7415      0.5757     28.8%
+     9   15.59     81.69  +0.838    0.7198      0.6125     17.5%
+    10   10.29     22.69  +0.957    0.7432      0.6865      8.3%
+    11    3.62      0.57  +0.932    0.7555      0.7015      7.7%
+
+  crest factor across layers: 3.62 -> 17.15 (4.7x spread)
+  rotation gain across layers: +7.7% -> +39.6%
+  best layer for retrieval: layer 0 (R@10 0.8090) vs final layer 11 (R@10 0.7555)
+  Pearson r(crest, rotation gain) across 12 layers = +0.737
+
+wrote E:\Rohit\FYP\AudioVQ\results\layers\layers_wav2vec2_base.csv

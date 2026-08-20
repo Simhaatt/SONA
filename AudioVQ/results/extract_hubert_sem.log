@@ -1,0 +1,12 @@
+model=hubert_base device=cuda sr=16000
+
+[speakers] VoiceBank-DEMAND test clean: 824 clips
+    500/824 (42.2 clips/s)
+  saved speakers: (824, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\hubert_base\speakers.npy
+
+[noisy] MS-SNSD noisy mixtures: 1100 clips
+    500/1100 (17.4 clips/s)
+    1000/1100 (17.4 clips/s)
+  saved noisy: (1100, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\hubert_base\noisy.npy
+
+all banks written to E:\Rohit\FYP\AudioVQ\embeddings\hubert_base

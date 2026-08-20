@@ -1,0 +1,41 @@
+wavlm_base_plus: comparing layers [2, 11] at 1 bit/coord
+  3000 db, 400 queries, 824 speaker clips, 1100 noisy clips
+
+--- layer 2 ---
+    500/3000
+    1000/3000
+    1500/3000
+    2000/3000
+    2500/3000
+    3000/3000
+    500/824
+    500/1100
+    1000/1100
+  Recall@10 kept        : 62.3%
+  speaker P@10 kept     : 99.7% (0.9978 -> 0.9947)
+  noise-type P@10 kept  : 97.5% (0.8283 -> 0.8073)
+
+--- layer 11 ---
+    500/3000
+    1000/3000
+    1500/3000
+    2000/3000
+    2500/3000
+    3000/3000
+    500/824
+    500/1100
+    1000/1100
+  Recall@10 kept        : 54.8%
+  speaker P@10 kept     : 96.5% (0.9340 -> 0.9012)
+  noise-type P@10 kept  : 95.7% (0.6215 -> 0.5945)
+
+==============================================================================
+DOES THE GEOMETRY-vs-MEANING DISSOCIATION (F7) SURVIVE ON A GOOD LAYER?
+==============================================================================
+ layer  Recall@10 kept   speaker kept   noise kept
+     2          62.3%         99.7%       97.5%
+    11          54.8%         96.5%       95.7%
+
+  => dissociation (task retention >> recall retention) holds on ALL tested layers: YES
+
+wrote E:\Rohit\FYP\AudioVQ\results\layers\best_layer_validation_wavlm_base_plus.csv

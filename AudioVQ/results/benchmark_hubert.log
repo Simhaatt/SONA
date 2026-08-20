@@ -1,0 +1,40 @@
+database=(10000, 768) queries=(1000, 768) d=768
+computing exhaustive float32 ground truth ...
+  done (0.1s)
+  float32-exact                24576 b/vec  R@1=1.0000 R@10=1.0000 R@100=1.0000  (0s)
+  scalar-1b-rot-gaussian         800 b/vec  R@1=0.4640 R@10=0.6982 R@100=0.8064  (0s)
+  scalar-1b-no-rot               800 b/vec  R@1=0.1470 R@10=0.4292 R@100=0.6690  (0s)
+  uniform-1b                     768 b/vec  R@1=0.0000 R@10=0.0058 R@100=0.2064  (0s)
+  scalar-2b-rot-gaussian        1568 b/vec  R@1=0.5300 R@10=0.7771 R@100=0.8908  (1s)
+  scalar-2b-no-rot              1568 b/vec  R@1=0.2640 R@10=0.5877 R@100=0.7722  (0s)
+  uniform-2b                    1536 b/vec  R@1=0.0210 R@10=0.1681 R@100=0.3978  (0s)
+  scalar-3b-rot-gaussian        2336 b/vec  R@1=0.6760 R@10=0.8696 R@100=0.9360  (1s)
+  scalar-3b-no-rot              2336 b/vec  R@1=0.2770 R@10=0.6347 R@100=0.7936  (0s)
+  uniform-3b                    2304 b/vec  R@1=0.2000 R@10=0.4850 R@100=0.7541  (0s)
+  scalar-4b-rot-gaussian        3104 b/vec  R@1=0.7970 R@10=0.9212 R@100=0.9644  (1s)
+  scalar-4b-no-rot              3104 b/vec  R@1=0.4450 R@10=0.7141 R@100=0.8079  (0s)
+  uniform-4b                    3072 b/vec  R@1=0.4040 R@10=0.7266 R@100=0.8834  (0s)
+  PQ-m96-8b                      768 b/vec  R@1=0.3650 R@10=0.7069 R@100=0.8464  (4s)
+  OPQ-m96-8b                     768 b/vec  R@1=0.4370 R@10=0.7380 R@100=0.9116  (79s)
+  PQ-m192-8b                    1536 b/vec  R@1=0.3160 R@10=0.7123 R@100=0.9021  (10s)
+  OPQ-m192-8b                   1536 b/vec  R@1=0.5760 R@10=0.8656 R@100=0.9536  (149s)
+  PQ-m288-8b                 FAILED: Error in void __cdecl faiss::ProductQuantizer::set_derived_values(void) at D:\a\faiss\faiss\faiss\impl\ProductQuantizer.
+  OPQ-m288-8b                FAILED: Error in void __cdecl faiss::ProductQuantizer::set_derived_values(void) at D:\a\faiss\faiss\faiss\impl\ProductQuantizer.
+  PQ-m384-8b                    3072 b/vec  R@1=0.5060 R@10=0.8278 R@100=0.9430  (17s)
+  OPQ-m384-8b                   3072 b/vec  R@1=0.7650 R@10=0.9095 R@100=0.9670  (244s)
+
+================================================================================================
+MATCHED-BUDGET COMPARISON (RQ1: data-oblivious vs data-dependent)
+================================================================================================
+ bits/vec     data-oblivious (rot+scalar)          PQ         OPQ          winner
+
+================================================================================================
+RQ2: does the random rotation help? (identical quantizer, rotation on vs off)
+================================================================================================
+bits/coord   with rotation    without     delta
+         1          0.6982     0.4292   +0.2690
+         2          0.7771     0.5877   +0.1894
+         3          0.8696     0.6347   +0.2349
+         4          0.9212     0.7141   +0.2071
+
+wrote E:\Rohit\FYP\AudioVQ\results\retrieval\benchmark_hubert_base.csv

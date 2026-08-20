@@ -1,0 +1,14 @@
+\begin{table}[t]
+\centering
+\caption{Geometry versus meaning at 1 bit/coordinate ($\approx$30$\times$ compression). Roughly half the true neighbours are lost, yet $\sim$96\,\% of downstream retrieval performance is retained on both models.}
+\label{tab:geo_vs_sem}
+\begin{tabular}{lrrr}
+\toprule
+Model & Recall@10 kept & speaker P@10 kept & noise-type P@10 kept \\
+\midrule
+WavLM-Base+ & 48.3% & 96.5% & 96.0% \\
+wav2vec2-base & 53.0% & 95.7% & 96.9% \\
+HuBERT-base & 69.8% & 98.6% & 97.3% \\
+\bottomrule
+\end{tabular}
+\end{table}

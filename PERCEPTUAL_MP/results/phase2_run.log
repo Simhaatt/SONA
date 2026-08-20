@@ -1,0 +1,61 @@
+22:33:52 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:34:42 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:34:43 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:35:32 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:35:32 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:36:21 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:36:21 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:37:06 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:37:07 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:37:58 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:37:59 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+22:38:50 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+exported/found 6 new configs
+evaluating fp32 baseline (0 layers quantized)...
+  done (185s)
+evaluating step1_head (['head'])...
+  done (26s)  si_sdr=11.0141 size=2820.8KB
+evaluating step2_head_b3 (['head', 'block3_d8'])...
+  done (56s)  si_sdr=11.0127 size=2334.3KB
+evaluating step3a_pesq_add_b2 (['head', 'block3_d8', 'block2_d4'])...
+  done (147s)  si_sdr=11.0083 size=1847.7KB
+evaluating step3b_sisdr_add_b1 (['head', 'block3_d8', 'block1_d2'])...
+  done (146s)  si_sdr=11.0080 size=1847.7KB
+evaluating step4_shared (['head', 'block3_d8', 'block2_d4', 'block1_d2'])...
+  done (151s)  si_sdr=11.0062 size=1361.2KB
+evaluating step5_shared (['head', 'block3_d8', 'block2_d4', 'block1_d2', 'block0_d1'])...
+  done (164s)  si_sdr=11.0108 size=874.6KB
+evaluating step6_uniform (all 6 layers, reusing Phase 0 export)...
+
+==========================================================================================
+PARETO FRONT: size vs quality, perceptually-guided (PESQ) vs fidelity-guided (SI-SDR) order
+==========================================================================================
+step                   n_layers    size_KB     si_sdr      stoi     estoi
+-- PESQ-guided cumulative order --
+step0_fp32                    0     2821.1    11.0131    0.8310    0.6889
+step1_head                    1     2820.8    11.0141    0.8310    0.6889
+step2_head_b3                 2     2334.3    11.0127    0.8310    0.6889
+step3a_pesq_add_b2            3     1847.7    11.0083    0.8311    0.6890
+step4_shared                  4     1361.2    11.0062    0.8311    0.6890
+step5_shared                  5      874.6    11.0108    0.8310    0.6889
+step6_uniform                 6      871.8    10.9134    0.8314    0.6873
+-- SI-SDR-guided cumulative order --
+step0_fp32                    0     2821.1    11.0131    0.8310    0.6889
+step1_head                    1     2820.8    11.0141    0.8310    0.6889
+step2_head_b3                 2     2334.3    11.0127    0.8310    0.6889
+step3b_sisdr_add_b1           3     1847.7    11.0080    0.8310    0.6889
+step4_shared                  4     1361.2    11.0062    0.8311    0.6890
+step5_shared                  5      874.6    11.0108    0.8310    0.6889
+step6_uniform                 6      871.8    10.9134    0.8314    0.6873
+
+==========================================================================================
+HEADLINE: the only point where the two curves differ
+==========================================================================================
+  PESQ-order step3  (quantize block2_d4 3rd): SI-SDR=11.0083 STOI=0.8311
+  SI-SDR-order step3(quantize block1_d2 3rd): SI-SDR=11.0080 STOI=0.8310
+  delta (pesq-order minus si_sdr-order): dSI-SDR=+0.0003 dSTOI=+0.00008
+  at IDENTICAL size (1847.7 KB both)
+
+=> The two allocation strategies are practically indistinguishable at their one point of difference. This CONFIRMS Phase 1's null result at the allocation level: perceptually-guided and MSE-guided mixed-precision allocation give the same size-vs-quality trade-off for this checkpoint at INT8/6-layer granularity.
+
+wrote E:\Rohit\FYP\noise cancellation\PERCEPTUAL_MP\results\phase2\phase2_pareto.json

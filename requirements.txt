@@ -15,8 +15,12 @@ torch>=2.1
 pystoi>=0.4
 pesq>=0.0.4            # PESQ; needs a C build. No wheel on Python 3.14 -> optional locally.
 torchmetrics>=1.2     # audio metrics (SI-SDR etc.)
-# onnxruntime>=1.16    # for DNSMOS ONNX model + edge export profiling
-# faster-whisper>=1.0  # ASR for WER (heavy); or use transformers wav2vec2
+onnxruntime>=1.16     # DNSMOS ONNX model + edge export/quantization profiling
+faster-whisper>=1.0   # ASR for differential WER (src/eval/asr.py)
+jiwer>=4.0             # WER scoring against the ASR-derived pseudo-reference
+# nvidia-cublas-cu12, nvidia-cudnn-cu12  # only if faster-whisper's GPU backend can't find
+#   system CUDA 12 libs (CTranslate2 needs its own runtime, separate from torch's cu118 build);
+#   src/eval/asr.py falls back to CPU int8 automatically if these aren't present.
 
 # Profiling
 ptflops>=0.7          # params / MACs

@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Structure of the two audio embedding spaces (10\,000 MS-SNSD utterances, $d=768$). Both are far from the isotropic case that worst-case-optimal data-oblivious quantization is designed for.}
+\label{tab:structure}
+\begin{tabular}{lrrr}
+\toprule
+Property & WavLM-Base+ & wav2vec2-base & isotropic ref. \\
+\midrule
+mean pairwise cosine & +0.830 & +0.929 & -0.000 \\
+effective dim.\ (\% of $d$) & 2.9% & 1.4% & 92.9% \\
+variance in top-10 dirs & 49.7% & 64.7% & 2.1% \\
+within-vector crest (raw) & 10.22 & 3.62 & 3.37 \\
+within-vector kurtosis (raw) & +38.75 & +0.57 & -0.00 \\
+\midrule
+within-vector crest (rotated) & 3.34 & 3.29 & 3.37 \\
+\bottomrule
+\end{tabular}
+\end{table}

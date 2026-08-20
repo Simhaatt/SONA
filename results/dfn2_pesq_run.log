@@ -1,0 +1,12 @@
+scoring 824 clips
+  100/824
+  200/824
+  300/824
+  400/824
+  500/824
+  600/824
+  700/824
+  800/824
+
+mean PESQ = 1.2233  (n=793/824)
+wrote /root/dfn2_pesq/pesq_per_clip.csv

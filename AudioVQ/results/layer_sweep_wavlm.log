@@ -1,0 +1,40 @@
+wavlm_base_plus: 3000 database + 400 query clips, all layers
+
+  extracting database ...
+    250/3000
+    500/3000
+    750/3000
+    1000/3000
+    1250/3000
+    1500/3000
+    1750/3000
+    2000/3000
+    2250/3000
+    2500/3000
+    2750/3000
+    3000/3000
+  extracting queries ...
+    250/400
+
+  got 12 layers, d=768
+
+ layer   crest  kurtosis     cos  R@10 rot  R@10 norot  rot gain
+     0    5.54      3.34  +0.809    0.7605      0.7040      8.0%
+     1    6.86      6.75  +0.800    0.7415      0.6787      9.2%
+     2    8.89     14.68  +0.759    0.7980      0.6635     20.3%
+     3    8.55     12.04  +0.756    0.7615      0.6398     19.0%
+     4    7.26      7.74  +0.716    0.7688      0.6028     27.5%
+     5    6.46      4.70  +0.715    0.7765      0.6380     21.7%
+     6    6.85      6.06  +0.673    0.7865      0.6588     19.4%
+     7    6.88      6.64  +0.704    0.7700      0.6478     18.9%
+     8    8.50     10.79  +0.720    0.7588      0.6527     16.2%
+     9    6.70      5.13  +0.754    0.7497      0.6703     11.9%
+    10   15.57     94.61  +0.858    0.7013      0.5877     19.3%
+    11   10.37     39.34  +0.838    0.6435      0.4770     34.9%
+
+  crest factor across layers: 5.54 -> 15.57 (2.8x spread)
+  rotation gain across layers: +8.0% -> +34.9%
+  best layer for retrieval: layer 2 (R@10 0.7980) vs final layer 11 (R@10 0.6435)
+  Pearson r(crest, rotation gain) across 12 layers = +0.352
+
+wrote E:\Rohit\FYP\AudioVQ\results\layers\layers_wavlm_base_plus.csv

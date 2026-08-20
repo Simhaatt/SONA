@@ -40,7 +40,13 @@ MODE_PRESETS: dict[str, ModePreset] = {
         name="speech",
         description="Speech clarity with moderate denoising and presence lift.",
         settings=ControllerSettings(
-            mask_strength=1.05,
+            # mask_strength=1.0 means "trust the model's own gain estimate": the
+            # pipeline blends as noisy + strength*(enhanced-noisy), so strength>1.0
+            # EXTRAPOLATES beyond what GTCRN predicted. Measured against real
+            # clean references (sona-final-month/COMPLEX_MASK_FINDINGS.md-adjacent
+            # sweep), SI-SDR peaks at ~1.0 and falls monotonically above it — the
+            # previous 1.05 here was a small, consistent quality loss.
+            mask_strength=1.0,
             safety_floor=0.06,
             eq_gains_db=(-2.0, -1.5, -1.0, 0.0, 0.8, 1.5, 1.0, 0.3),
             compressor_threshold_db=-26.0,
@@ -52,7 +58,14 @@ MODE_PRESETS: dict[str, ModePreset] = {
         name="aggressive_speech",
         description="Stronger speech denoising for obvious fan, traffic, or room noise.",
         settings=ControllerSettings(
-            mask_strength=1.25,
+            # was 1.25: extrapolating 25% past the model's gain estimate. Measured
+            # on AirConditioner/Traffic/Babble clips at -5..10 dB SNR against real
+            # clean references, 1.25 lost ~1.4 dB SI-SDR on average vs 1.0, and
+            # actively made hard clips WORSE than doing nothing (e.g. AirConditioner
+            # @ -5 dB: +0.21 dB at strength=1.0 vs -2.04 dB at strength=1.25). The
+            # "stronger denoising" this mode should offer comes from the EQ/
+            # compressor settings below, not from overshooting the model's mask.
+            mask_strength=1.0,
             safety_floor=0.03,
             eq_gains_db=(-3.0, -2.2, -1.2, 0.0, 0.7, 1.2, 0.8, 0.0),
             compressor_threshold_db=-24.0,

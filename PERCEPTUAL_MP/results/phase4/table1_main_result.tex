@@ -1,0 +1,14 @@
+\begin{table}[t]
+\centering
+\caption{Post-training quantization of the GTCRN backbone on the VoiceBank-DEMAND test set (824 clips, held out from the dev split used to choose the allocation). Exempting the 3.8\,KB stem convolution from INT8 recovers essentially all of the quantization loss and yields a model that is statistically indistinguishable from FP32 ($p=0.25$). It is also \emph{smaller} than uniform INT8: quantizing every layer makes ONNX Runtime insert QDQ pairs around $143$ additional activation tensors ($172$ vs.\ $29$ QDQ nodes), whose graph overhead exceeds the stem's $2.8$\,KB of weight savings. The mixed allocation therefore dominates uniform INT8 on both size and quality.}
+\label{tab:mixed_precision}
+\begin{tabular}{lrrrr}
+\toprule
+Method & Size (KB) & SI-SDR (dB) & STOI & ESTOI \\
+\midrule
+FP32 (no quantization) & 2842.7 & 18.377 & 0.9299 & 0.8322 \\
+Mixed: stem FP32, rest INT8 (ours) & 916.9 & 18.375 & 0.9299 & 0.8322 \\
+Uniform INT8 & 950.7 & 18.267 & 0.9300 & 0.8295 \\
+\bottomrule
+\end{tabular}
+\end{table}

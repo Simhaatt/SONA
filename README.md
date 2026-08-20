@@ -38,11 +38,16 @@ See the full plan in the design doc referenced at the bottom.
 | **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | In progress: real-data path works; online adaptation improves PESQ in RL but still needs tuning to preserve SI-SDR/STOI |
 | **P3** adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM) | ✅ (low-dim adaptation wins locally) |
 | **P4** differentiable parametric EQ + hum notch + compressor/limiter | ✅ built & tested |
-| P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ⏳ |
-| P5 real-time streaming, latency/RTF/power, ONNX/TFLite export, GUI, Raspberry Pi | ⏳ |
-| P6 paper write-up + provisional patent draft | ⏳ |
+| P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ✅ scene classifier now a learned 1,716-param model at 0.748 grouped-CV accuracy |
+| P5 real-time streaming, latency/RTF, ONNX export, web demo | ✅ except Raspberry Pi (never measured on hardware) |
+| P6 paper write-up | ⏳ results frozen; writing is the remaining work |
 
-38 tests passing.
+75 tests passing (`tests/` + `web_demo/tests`), plus 34 in `AudioVQ/`.
+
+> **`PROJECTS_STATUS.md` is the current state of everything** — this README describes the SONA
+> core only. Since 2026-07 the tree also carries a mixed-precision quantization study
+> (`PERCEPTUAL_MP/`), the final-month analysis package and FYP report (`sona-final-month/`), and a
+> separate paper on data-oblivious vector quantization (`AudioVQ/`).
 
 ## Install
 
@@ -128,7 +133,21 @@ scripts/          prepare_data, run_benchmark, eval_shift, kaggle_run
 notebooks/        kaggle_benchmark.ipynb (real-data run on the T4)
 configs/          YAML experiment configs (inherit default.yaml)
 tests/            DSP correctness, pipeline, reward, adapters, EQ/DRC
+web_demo/         Flask offline demo (port 7860)
+
+PERCEPTUAL_MP/    mixed-precision quantization study (stem-exemption result)
+sona-final-month/ frozen result tables, significance battery, figures, complex-mask A/B,
+                  scene-classifier evaluation, realtime streaming demo, FYP report
+AudioVQ/          data-oblivious vector quantization for audio retrieval (separate paper)
+mos_test/         blinded MOS listening-test app (awaiting raters)
+
+results/          per-experiment summaries and per-clip artefacts
+vbd_local/        local 16 kHz VoiceBank-DEMAND copy (3.0 GB, gitignored, regenerable)
+external_data/    MS-SNSD corpus + SONA-mixed test set
 ```
+
+Corpus locations resolve from environment variables, falling back to paths derived from each
+file's own location — so the tree can be moved or copied to another drive without edits.
 
 ## Tests
 

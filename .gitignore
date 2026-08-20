@@ -35,3 +35,22 @@ results/web_demo_preferences.json
 # OS
 .DS_Store
 Thumbs.db
+
+# --- Consolidated FYP tree (moved in from F:\Rohit\FYP on 2026-08-20) ---
+
+# Local 16 kHz VoiceBank-DEMAND copy (~3 GB) + its machine-absolute manifests.
+# Rebuild with: python sona-final-month/scripts/prep_voicebank_local.py
+vbd_local/
+
+# AudioVQ cached embedding banks (~115 MB of .npy); regenerate with
+# python AudioVQ/scripts/extract_embeddings.py --model <name>
+AudioVQ/embeddings/
+
+# Raw per-clip renders kept only to feed the WSL PESQ scorer.
+PERCEPTUAL_MP/pesq_wavs/
+sona-final-month/COMPLEX_MASK_FULL5K/pesq_wavs/
+results/dfn2_clean16k/
+results/deepfilternet2_voicebank/
+
+# Office lock files
+~$*

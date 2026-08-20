@@ -1,0 +1,131 @@
+{
+  "sensitivity_mean_abs_delta": {
+    "only_stem": {
+      "d_si_sdr": 0.03024807453259776,
+      "d_stoi": 0.000370391507962258,
+      "d_estoi": 0.000740218749015244,
+      "d_lsd": 0.04355547308921814,
+      "mask_mse": 0.0002735918819280414
+    },
+    "only_block0_d1": {
+      "d_si_sdr": 0.01791122777078651,
+      "d_stoi": 0.00019340915424181872,
+      "d_estoi": 0.00036662520459937356,
+      "d_lsd": 0.006904850006103516,
+      "mask_mse": 2.0874005767836933e-05
+    },
+    "only_block1_d2": {
+      "d_si_sdr": 0.014633870030116092,
+      "d_stoi": 0.00021594076024540165,
+      "d_estoi": 0.00037539460390448006,
+      "d_lsd": 0.007629961967468262,
+      "mask_mse": 1.91608511204322e-05
+    },
+    "only_block2_d4": {
+      "d_si_sdr": 0.017143841791405153,
+      "d_stoi": 0.00021007412371229717,
+      "d_estoi": 0.00034215562056188987,
+      "d_lsd": 0.005668563842773438,
+      "mask_mse": 1.7431317342015973e-05
+    },
+    "only_block3_d8": {
+      "d_si_sdr": 0.014542292734852871,
+      "d_stoi": 0.00019893526672175698,
+      "d_estoi": 0.0003102105528557766,
+      "d_lsd": 0.006231399774551391,
+      "mask_mse": 1.5873735680997924e-05
+    },
+    "only_head": {
+      "d_si_sdr": 0.00290377917741923,
+      "d_stoi": 5.88612681114703e-05,
+      "d_estoi": 0.00010130489878500667,
+      "d_lsd": 0.005072883367538452,
+      "mask_mse": 3.8583834748351365e-06
+    }
+  },
+  "rankings": {
+    "d_si_sdr": {
+      "only_stem": 1,
+      "only_block0_d1": 2,
+      "only_block2_d4": 3,
+      "only_block1_d2": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    },
+    "d_stoi": {
+      "only_stem": 1,
+      "only_block1_d2": 2,
+      "only_block2_d4": 3,
+      "only_block3_d8": 4,
+      "only_block0_d1": 5,
+      "only_head": 6
+    },
+    "d_estoi": {
+      "only_stem": 1,
+      "only_block1_d2": 2,
+      "only_block0_d1": 3,
+      "only_block2_d4": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    },
+    "d_lsd": {
+      "only_stem": 1,
+      "only_block1_d2": 2,
+      "only_block0_d1": 3,
+      "only_block3_d8": 4,
+      "only_block2_d4": 5,
+      "only_head": 6
+    },
+    "mask_mse": {
+      "only_stem": 1,
+      "only_block0_d1": 2,
+      "only_block1_d2": 3,
+      "only_block2_d4": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    }
+  },
+  "spearman": {
+    "d_si_sdr_vs_d_stoi": {
+      "rho": 0.6,
+      "p": 0.20799999999999985
+    },
+    "d_si_sdr_vs_d_estoi": {
+      "rho": 0.8285714285714287,
+      "p": 0.04156268221574334
+    },
+    "d_si_sdr_vs_d_lsd": {
+      "rho": 0.7142857142857143,
+      "p": 0.1107871720116617
+    },
+    "d_si_sdr_vs_mask_mse": {
+      "rho": 0.942857142857143,
+      "p": 0.0048046647230320545
+    },
+    "d_stoi_vs_d_estoi": {
+      "rho": 0.8285714285714287,
+      "p": 0.04156268221574334
+    },
+    "d_stoi_vs_d_lsd": {
+      "rho": 0.7714285714285715,
+      "p": 0.07239650145772594
+    },
+    "d_stoi_vs_mask_mse": {
+      "rho": 0.6571428571428573,
+      "p": 0.15617492711370237
+    },
+    "d_estoi_vs_d_lsd": {
+      "rho": 0.942857142857143,
+      "p": 0.0048046647230320545
+    },
+    "d_estoi_vs_mask_mse": {
+      "rho": 0.942857142857143,
+      "p": 0.0048046647230320545
+    },
+    "d_lsd_vs_mask_mse": {
+      "rho": 0.8857142857142858,
+      "p": 0.01884548104956266
+    }
+  },
+  "note": "n=6 layers -> Spearman/p-values here are indicative, not well-powered on their own; the per-clip bootstrap CIs from Phase 0 are the primary evidence for which individual layers have a real (non-zero) effect. STOI showed weaker sensitivity than SI-SDR at INT8 in Phase 0 -- PESQ (phase1_pesq_wsl.py) is the more decisive perceptual metric and should be weighted more heavily than this STOI-only pass."
+}

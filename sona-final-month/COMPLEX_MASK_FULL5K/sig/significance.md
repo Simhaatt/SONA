@@ -1,0 +1,12 @@
+# SONA — paired significance tests
+
+Mean difference is A - B on clips shared by both methods. Bootstrap 95% CI (10k resamples) and two-sided Wilcoxon signed-rank.
+
+| comparison | metric | better_is | n_pairs | mean_A | mean_B | mean_diff_A_minus_B | ci95_low | ci95_high | wilcoxon_p | significant_0.05 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| complex vs magnitude (VB-824) | si_sdr_i | higher | 824 | 10.039244 | 9.726707 | 0.312537 | 0.268796 | 0.354799 | 0.0 | True |
+| complex vs magnitude (VB-824) | si_sdr | higher | 824 | 18.488677 | 18.17614 | 0.312537 | 0.268796 | 0.354799 | 0.0 | True |
+| complex vs magnitude (VB-824) | snr_i | higher | 824 | 10.090635 | 9.779967 | 0.310669 | 0.26544 | 0.35383 | 0.0 | True |
+| complex vs magnitude (VB-824) | stoi | higher | 824 | 0.931284 | 0.929255 | 0.002029 | 0.001695 | 0.002364 | 0.0 | True |
+| complex vs magnitude (VB-824) | estoi | higher | 824 | 0.831425 | 0.830909 | 0.000516 | -0.000146 | 0.001196 | 0.831294 | False |
+| complex vs magnitude (VB-824) | lsd | lower | 824 | 6.198751 | 6.218143 | -0.019392 | -0.035344 | -0.003019 | 3.5e-05 | True |

@@ -59,6 +59,66 @@ def test_feature_and_gain_shapes():
         assert float(gains.min().detach()) >= 0.0 and float(gains.max().detach()) <= 1.0
 
 
+def test_complex_mask_identity_reconstructs():
+    # a complex ratio mask of (1 + 0j) must reconstruct the unmasked signal exactly
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    x = torch.randn(2, 16000)
+    spec = tf.stft(x)
+    ident = torch.zeros(spec.shape[0], spec.shape[2], tf.n_bands, 2)
+    ident[..., 0] = 1.0  # real=1, imag=0
+    y = tf.apply_band_complex(spec, ident, length=x.shape[-1])
+    ref = torch.istft(spec, n_fft=512, hop_length=128, win_length=512,
+                      window=tf.window, center=True, length=x.shape[-1])
+    assert (y - ref).abs().max().item() < 1e-4
+
+
+def test_complex_gtcrn_shapes_and_flag():
+    from src.models import ComplexGTCRNMask
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=24)
+    x = torch.randn(3, 8000)
+    spec, feats = tf.analyze(x)
+    model = ComplexGTCRNMask(n_bands=24, ch=16, hidden=24, n_blocks=2)
+    assert model.is_complex
+    out = model(feats)
+    assert out.shape == (3, feats.shape[1], 24, 2)          # real+imag per band
+    assert out.abs().max().item() <= model.bound + 1e-5     # bounded mask
+    est = tf.apply_band_complex(spec, out, length=x.shape[-1])
+    assert est.shape == x.shape and torch.isfinite(est).all()
+
+
+def test_complex_gtcrn_overfits_single_batch():
+    # the complex path must be differentiable end-to-end and able to learn
+    from src.models import ComplexGTCRNMask
+    from src.train.losses import si_sdr_loss
+    torch.manual_seed(0)
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    x = torch.randn(2, 12000) * 0.1
+    spec, feats = tf.analyze(x)
+    clean = torch.tanh(x * 3.0) * 0.1
+    model = ComplexGTCRNMask(n_bands=32, ch=32, hidden=48, n_blocks=3)
+    opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+    start = None
+    for i in range(100):
+        opt.zero_grad()
+        est = tf.apply_band_complex(spec, model(feats), length=x.shape[-1])
+        loss = si_sdr_loss(est, clean)
+        loss.backward()
+        opt.step()
+        if i == 0:
+            start = loss.item()
+    assert loss.item() < start - 1.0, f"no learning: start={start:.3f} end={loss.item():.3f}"
+
+
+def test_complex_neural_enhancer_roundtrip():
+    from src.models import ComplexGTCRNMask
+    tf = TorchFrontend(n_fft=512, hop=128, n_bands=32)
+    model = ComplexGTCRNMask(n_bands=32, ch=16, hidden=24, n_blocks=2)
+    enh = NeuralEnhancer(model, tf, name="complex_gtcrn")
+    s = next(iter(SyntheticNoisyDataset(n=1, duration=1.0, seed=7)))
+    y = enh.enhance(s.noisy, s.sr)
+    assert y.shape[0] == len(s.noisy) and np.isfinite(y).all()
+
+
 def test_mask_polarity_loss_prefers_confident_masks():
     uncertain = torch.full((2, 5, 8), 0.5)
     confident = torch.cat([torch.zeros(2, 5, 4), torch.ones(2, 5, 4)], dim=2)

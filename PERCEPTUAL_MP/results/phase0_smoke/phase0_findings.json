@@ -1,0 +1,173 @@
+{
+  "0b_per_layer_control": {
+    "pass": false,
+    "qdq_uniform": 172,
+    "qdq_single": {
+      "head": 5,
+      "band_gru": 0,
+      "stem": 6
+    },
+    "max_abs_diff_fp32_vs_uniform": 0.2217521369457245,
+    "max_abs_diff_fp32_vs_headonly": 0.007355690002441406
+  },
+  "0c_int4": {
+    "status": "export_failed",
+    "error": "Quantized weights for stem.0.weight_quantized must be 8-bit before packing as 4-bit values."
+  },
+  "0a_budget": {
+    "uniform_stoi_significant": false,
+    "uniform_sisdr_significant": true,
+    "single_layers_measurable": [
+      "only_band_gru"
+    ],
+    "n_single_probed": 3,
+    "summary": {
+      "uniform_int8": {
+        "d_stoi": {
+          "mean": -0.0022577700708912296,
+          "ci_lo": -0.007068207212717809,
+          "ci_hi": 0.001592268816349135,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -0.0020559648960136456,
+          "ci_lo": -0.005823838338111537,
+          "ci_hi": 0.0012659624919966195,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -0.08003476573501977,
+          "ci_lo": -0.14459608936523427,
+          "ci_hi": -0.017983563117091705,
+          "significant": true
+        },
+        "d_lsd": {
+          "mean": 0.15214109420776367,
+          "ci_lo": -0.12581849098205566,
+          "ci_hi": 0.430100679397583,
+          "significant": false
+        },
+        "mask_mse": {
+          "mean": 0.003458853519987315,
+          "ci_lo": 0.0023364421213045716,
+          "ci_hi": 0.004854294122196734
+        }
+      },
+      "only_head": {
+        "d_stoi": {
+          "mean": -1.5677805713487647e-05,
+          "ci_lo": -5.4108063574337395e-05,
+          "ci_hi": 3.151889270605612e-05,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": 6.407423623894237e-05,
+          "ci_lo": 3.0367392535868287e-06,
+          "ci_hi": 0.0001173949861184298,
+          "significant": true
+        },
+        "d_si_sdr": {
+          "mean": 0.0018564316194082942,
+          "ci_lo": -0.0013355709166731344,
+          "ci_hi": 0.005048434155489723,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": -0.004151463508605957,
+          "ci_lo": -0.006313800811767578,
+          "ci_hi": -0.001989126205444336,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 4.038658289573505e-06,
+          "ci_lo": 3.409695182199357e-06,
+          "ci_hi": 4.667621396947652e-06
+        }
+      },
+      "only_band_gru": {
+        "d_stoi": {
+          "mean": -6.826879353494242e-07,
+          "ci_lo": -1.1468797457836466e-06,
+          "ci_hi": -9.233918593642976e-08,
+          "significant": true
+        },
+        "d_estoi": {
+          "mean": -1.0685724958492404e-06,
+          "ci_lo": -1.400468437884328e-06,
+          "ci_hi": -6.48165286304403e-07,
+          "significant": true
+        },
+        "d_si_sdr": {
+          "mean": -2.2176881028013185e-05,
+          "ci_lo": -6.227675884407091e-05,
+          "ci_hi": 1.7922996788044543e-05,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": 9.1552734375e-05,
+          "ci_lo": 2.1457672119140625e-06,
+          "ci_hi": 0.00022017955780029297,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 3.301940301042583e-10,
+          "ci_lo": 8.343889988660091e-11,
+          "ci_hi": 7.879145287603695e-10
+        }
+      },
+      "only_stem": {
+        "d_stoi": {
+          "mean": 3.588625453060379e-05,
+          "ci_lo": -0.0004210007676376526,
+          "ci_hi": 0.0006271340449276186,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": 0.0002708623729140991,
+          "ci_lo": -0.0003570023559094637,
+          "ci_hi": 0.0009590604299967442,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -0.00483899212757688,
+          "ci_lo": -0.04043541225687486,
+          "ci_hi": 0.027033287338924072,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": -0.0012160539627075195,
+          "ci_lo": -0.01263427734375,
+          "ci_hi": 0.012279629707336426,
+          "significant": false
+        },
+        "mask_mse": {
+          "mean": 0.00031005425489638583,
+          "ci_lo": 1.9116534531349316e-05,
+          "ci_hi": 0.0008856537801875675
+        }
+      }
+    }
+  },
+  "0d_gru": {
+    "rtf_fp32": 0.4336652916632981,
+    "rtf_gru_only": 0.4357990000062273,
+    "rtf_uniform": 0.5951282083333354,
+    "speedup": 0.9951039163859974,
+    "size_ratio": 1.0035644720795616,
+    "profitable": false
+  },
+  "0e_rtf": {
+    "pytorch": 0.4716546250104633,
+    "onnx_fp32": 0.4336652916632981,
+    "onnx_int8": 0.5951282083333354,
+    "iqr_pytorch": 0.011321166675770655,
+    "iqr_onnx_fp32": 0.01071054167065692
+  },
+  "verdict": {
+    "proceed": false,
+    "reasons": [
+      "per-layer quantization control does not work -> design is impossible",
+      "GRU is not profitably quantizable -> pin it to FP32 (a reportable finding)"
+    ]
+  }
+}

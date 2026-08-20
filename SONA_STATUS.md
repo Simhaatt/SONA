@@ -1,6 +1,44 @@
 # SONA Status
 
-Last updated: 2026-07-07
+Last updated: 2026-08-20.
+
+> **Read `PROJECTS_STATUS.md` first.** This file is the chronological run log for the SONA core
+> and stops at 2026-07-07. Everything after that date — the mixed-precision quantization study,
+> the WER and DeepFilterNet2 evaluations, the ONNX export, the complex-mask A/B, the scene
+> classifier rebuild, and the AudioVQ paper — is summarised there.
+
+## 2026-08-20 — tree consolidation
+
+All work previously split across `F:\Rohit\FYP\` (and referenced in older docs as
+`E:\Rohit\FYP\`) was merged into `D:\noise cancellation`, which is now the only working copy.
+What came in:
+
+| brought in | as |
+|---|---|
+| mixed-precision quantization study | `PERCEPTUAL_MP/` |
+| final-month analysis package, complex-mask A/B, scene classifier, realtime, FYP report | `sona-final-month/` |
+| data-oblivious VQ paper | `AudioVQ/` |
+| local 16 kHz VoiceBank-DEMAND copy (3.0 GB) | `vbd_local/` |
+| MOS listening-test app | `mos_test/` |
+| WER, DeepFilterNet2, ONNX, per-condition breakdowns | `results/` |
+| 12 modified source files (complex mask head, SNR loss, learned scene model, ASR eval) | in place |
+
+Re-rooting done as part of the move, so the tree survives being copied to another drive:
+
+- Every hardcoded `E:\Rohit\FYP\...` default replaced with a path derived from the file's own
+  location (`Path(__file__).resolve().parents[n]`), keeping the existing environment-variable
+  overrides intact.
+- `sona-final-month/` used to sit *beside* the repo and now sits *inside* it, so its
+  `parents[2] / "noise cancellation"` references collapse to `parents[2]`.
+- All 9 generated manifest/result CSVs carrying absolute paths were rewritten, and every one of
+  the 13 500+ audio paths they reference was confirmed to resolve on disk.
+- `vbd_local/` manifests regenerated with `D:` paths (5000 train + 824 test rows, 0 missing).
+- `.gitignore` extended for the new regenerable bulk: `vbd_local/`, `AudioVQ/embeddings/`, and the
+  per-clip PESQ render directories.
+
+Verified after the move: **75 tests pass** (`tests/` + `web_demo/tests`), plus **34 in AudioVQ**.
+
+Hardware from here on: **Kaggle T4 for GPU work, local CPU for everything else.** No local GPU.
 
 ## Current Goal
 
@@ -1338,7 +1376,7 @@ Interpretation:
 4. Do not run MS-SNSD external validation for SONA-G or SONA-R.
 5. Treat GTCRN + multi-resolution spectral loss as the locked Layer A winner.
 6. Use GTCRN VoiceBank + MS-SNSD external results as the main publishable Layer A evidence.
-7. Test the scene classifier on real speech/music/noise clips and tune thresholds if needed.
+7. ~~Test the scene classifier on real speech/music/noise clips and tune thresholds if needed.~~ Done 2026-07-23: the shipped heuristic scored 0.469 on real audio and was replaced by a 1,716-parameter learned model at 0.748 grouped-CV accuracy — see `sona-final-month/SCENE_CLASSIFIER_FINDINGS.md`.
 8. ~~Build the first GUI/web demo around the offline pipeline.~~ Done 2026-07-07: `web_demo\` (see "SONA Web Demo v1").
 9. Then move to realtime mic/speaker streaming.
 10. RL governor remains postponed until the action space is stable and clearly improves over strict online adaptation.

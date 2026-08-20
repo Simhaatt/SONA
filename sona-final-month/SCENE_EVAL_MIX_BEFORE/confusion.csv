@@ -1,0 +1,8 @@
+true\pred,speech,music,traffic,fan,crowd,mixed,unknown
+speech,40,0,0,0,0,0,0
+music,0,0,0,0,0,0,0
+traffic,14,0,3,11,12,0,0
+fan,65,2,1,40,44,0,0
+crowd,29,2,1,8,48,0,0
+mixed,0,0,0,0,0,0,0
+unknown,0,0,0,0,0,0,0

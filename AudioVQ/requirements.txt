@@ -1,0 +1,19 @@
+# AudioVQ dependencies, pinned to the versions the reported results were produced with.
+# Install torch/torchaudio from the PyTorch index matching your CUDA version; the CPU wheels work
+# too (embedding extraction is simply slower).
+
+numpy==2.2.6
+scipy==1.16.3
+matplotlib==3.10.7
+pandas==2.3.3
+
+# retrieval baselines: PQ and OPQ come from faiss rather than being reimplemented, so the
+# data-dependent side of every comparison is the reference implementation.
+faiss-cpu==1.15.0
+scikit-learn==1.8.0
+
+# embedding extraction (WavLM / wav2vec2 / HuBERT are pretrained torchaudio pipelines)
+torch==2.7.1
+torchaudio==2.7.1
+
+pytest==9.1.1

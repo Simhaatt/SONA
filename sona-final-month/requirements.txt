@@ -1,0 +1,9 @@
+pandas>=1.5
+numpy>=1.23
+scipy>=1.9
+matplotlib>=3.6
+pytest>=7.0
+# needed for the real scene-classifier eval (eval_scene_classifier.py --manifest):
+soundfile>=0.12
+# optional — only needed for the live-mic realtime demo (realtime/realtime_demo.py --mode live):
+# sounddevice>=0.4

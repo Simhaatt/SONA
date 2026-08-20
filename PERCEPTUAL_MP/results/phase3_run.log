@@ -1,0 +1,15 @@
+18:49:22 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+18:50:05 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+FROZEN ALLOCATION recorded at 2026-08-14 18:49:13
+  INT8: ['block0_d1', 'block1_d2', 'block2_d4', 'block3_d8', 'head']
+  FP32: ['stem', 'band_gru']
+
+========================================================================================
+DATASET: voicebank_test824
+========================================================================================
+  824 clips
+  fp32             mean SI-SDR= 18.3765 STOI=0.9299 (469s)
+  mixed_stemfp32   mean SI-SDR= 18.3751 STOI=0.9299 (597s)
+  uniform_int8     mean SI-SDR= 18.2671 STOI=0.9300 (649s)
+  stem_only_int8   mean SI-SDR= 18.3742 STOI=0.9299 (417s)
+  blocks5_int8     mean SI-SDR= 18.3751 STOI=0.9299 (490s)

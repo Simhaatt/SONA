@@ -1,0 +1,50 @@
+evaluating fp32 ...
+  fp32       mean SI-SDR=11.0131  STOI=0.8310
+evaluating stem_only ...
+  stem_only  mean SI-SDR=11.0070  STOI=0.8309
+evaluating blocks5 ...
+  blocks5    mean SI-SDR=11.0108  STOI=0.8310
+evaluating uniform ...
+  uniform    mean SI-SDR=10.9134  STOI=0.8314
+
+======================================================================================
+PAIRED TESTS (n=200 dev clips, 95% bootstrap CI + Wilcoxon signed-rank)
+======================================================================================
+
+keeping stem FP32 vs quantizing everything
+  si_sdr delta=+0.09738 [+0.04726,+0.15527]* wilcoxon_p=4.16e-05
+  stoi   delta=-0.00041 [-0.00104,+0.00020]  wilcoxon_p=1.21e-01
+  estoi  delta=+0.00163 [+0.00072,+0.00258]* wilcoxon_p=5.93e-04
+
+FP32 vs uniform INT8 (total quantization cost)
+  si_sdr delta=+0.09964 [+0.04990,+0.15580]* wilcoxon_p=3.92e-05
+  stoi   delta=-0.00041 [-0.00106,+0.00022]  wilcoxon_p=1.84e-01
+  estoi  delta=+0.00164 [+0.00073,+0.00258]* wilcoxon_p=4.58e-04
+
+FP32 vs stem-FP32 mixed (residual cost)
+  si_sdr delta=+0.00225 [-0.00390,+0.00882]  wilcoxon_p=7.73e-01
+  stoi   delta=-0.00000 [-0.00009,+0.00008]  wilcoxon_p=6.76e-01
+  estoi  delta=+0.00001 [-0.00013,+0.00015]  wilcoxon_p=4.37e-01
+
+FP32 vs stem-only quantized
+  si_sdr delta=+0.00608 [-0.00115,+0.01434]  wilcoxon_p=4.72e-01
+  stoi   delta=+0.00009 [+0.00002,+0.00017]* wilcoxon_p=3.00e-02
+  estoi  delta=+0.00033 [+0.00017,+0.00050]* wilcoxon_p=9.73e-06
+
+======================================================================================
+NON-ADDITIVITY: does quantization error compound through the network?
+======================================================================================
+  stem-only degradation           : -0.00608 dB
+  blocks-only (5 layers)          : -0.00225 dB
+  sum if independent              : -0.00834 dB
+  ACTUAL combined (uniform)       : -0.09964 dB
+  interaction (actual - sum)      : -0.09130 dB [-0.14897,-0.04035]*
+  combined / sum-if-independent   : 11.95x
+
+======================================================================================
+COST/BENEFIT OF EXEMPTING THE STEM
+======================================================================================
+  stem is 3840 bytes = 0.133% of FP32 model weights
+  exempting it costs +2.8 KB and recovers +0.0974 dB SI-SDR
+
+wrote E:\Rohit\FYP\noise cancellation\PERCEPTUAL_MP\results\phase2\phase2b_stem_verification.json

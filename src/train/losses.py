@@ -23,6 +23,18 @@ def si_sdr_loss(estimate: torch.Tensor, reference: torch.Tensor) -> torch.Tensor
     return -si_sdr.mean()
 
 
+def snr_loss(estimate: torch.Tensor, reference: torch.Tensor) -> torch.Tensor:
+    """Negative mean SNR — scale-SENSITIVE (unlike SI-SDR, which rescales).
+
+    SI-SDR is invariant to a global gain on the estimate, so a model can drift the
+    output level without penalty. A complex ratio mask can exploit that (it controls
+    magnitude directly), hurting scale-sensitive metrics like SNR. Adding a small SNR
+    term anchors the absolute level. Shapes (B, N)."""
+    noise = estimate - reference
+    ratio = (reference.pow(2).sum(dim=-1) + EPS) / (noise.pow(2).sum(dim=-1) + EPS)
+    return -(10.0 * torch.log10(ratio)).mean()
+
+
 def magnitude_loss(estimate: torch.Tensor, reference: torch.Tensor, n_fft: int = 512,
                    hop: int = 128) -> torch.Tensor:
     """L1 distance between log-magnitude spectrograms of estimate and reference."""
@@ -49,12 +61,14 @@ def multi_resolution_magnitude_loss(
 
 def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: float = 0.5,
                   n_fft: int = 512, hop: int = 128,
-                  mr_mag_weight: float = 0.0) -> torch.Tensor:
+                  mr_mag_weight: float = 0.0, snr_weight: float = 0.0) -> torch.Tensor:
     loss = si_sdr_loss(estimate, reference)
     if mag_weight > 0:
         loss = loss + mag_weight * magnitude_loss(estimate, reference, n_fft, hop)
     if mr_mag_weight > 0:
         loss = loss + mr_mag_weight * multi_resolution_magnitude_loss(estimate, reference)
+    if snr_weight > 0:
+        loss = loss + snr_weight * snr_loss(estimate, reference)
     return loss
 
 

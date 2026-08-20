@@ -19,6 +19,10 @@ from .torch_frontend import TorchFrontend
 
 
 class BaseGainModel(nn.Module):
+    #: complex-mask models output (B, T, n_bands, 2) and use TorchFrontend.apply_band_complex;
+    #: real-gain models output (B, T, n_bands) in [0, 1] and use apply_band_gain.
+    is_complex: bool = False
+
     def __init__(self, n_bands: int, n_feat_channels: int = 3) -> None:
         super().__init__()
         self.n_bands = n_bands
@@ -67,6 +71,9 @@ class NeuralEnhancer(Enhancer):
     def enhance(self, wav: np.ndarray, sr: int | None = None) -> np.ndarray:
         x = torch.from_numpy(np.asarray(wav, dtype=np.float32)).unsqueeze(0).to(self.device)
         spec, feats = self.tf.analyze(x)
-        gains = self.model(feats)  # (1, T, n_bands)
-        out = self.tf.apply_band_gain(spec, gains, length=x.shape[-1])
+        gains = self.model(feats)  # (1, T, n_bands) real, or (1, T, n_bands, 2) complex
+        if getattr(self.model, "is_complex", False):
+            out = self.tf.apply_band_complex(spec, gains, length=x.shape[-1])
+        else:
+            out = self.tf.apply_band_gain(spec, gains, length=x.shape[-1])
         return out.squeeze(0).cpu().numpy().astype(np.float32)

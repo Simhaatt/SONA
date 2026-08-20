@@ -1,0 +1,30 @@
+E:\Rohit\FYP\noise cancellation\.venv_dfn2\Lib\site-packages\df\io.py:9: UserWarning: `torchaudio.backend.common.AudioMetaData` has been moved to `torchaudio.AudioMetaData`. Please update the import path.
+  from torchaudio.backend.common import AudioMetaData
+[32m2026-08-13 22:15:25[0m | [1mINFO    [0m | [36mDF[0m | [1mRunning on torch 2.1.0+cpu[0m
+[32m2026-08-13 22:15:25[0m | [1mINFO    [0m | [36mDF[0m | [1mRunning on host devilman[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mGit commit: 76e6de9, branch: master[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mLoading model settings of DeepFilterNet2[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mUsing DeepFilterNet2 model at C:\Users\rohit\AppData\Local\DeepFilterNet\DeepFilterNet\Cache\DeepFilterNet2[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mInitializing model `deepfilternet2`[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mFound checkpoint C:\Users\rohit\AppData\Local\DeepFilterNet\DeepFilterNet\Cache\DeepFilterNet2\checkpoints\model_96.ckpt.best with epoch 96[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mRunning on device cpu[0m
+[32m2026-08-13 22:15:26[0m | [1mINFO    [0m | [36mDF[0m | [1mModel loaded[0m
+processing 824 clips, DeepFilterNet2 @ 48000 Hz
+  50/824
+  100/824
+  150/824
+  200/824
+  250/824
+  300/824
+  350/824
+  400/824
+  450/824
+  500/824
+  550/824
+  600/824
+  650/824
+  700/824
+  750/824
+  800/824
+processed 821 new clips, mean RTF (CPU, this venv) = 0.2805
+wrote enhanced wavs to results\deepfilternet2_voicebank

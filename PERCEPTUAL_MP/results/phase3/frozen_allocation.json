@@ -1,0 +1,16 @@
+{
+  "frozen_at": "2026-08-14 18:49:13",
+  "quantized_int8": [
+    "/blocks.0/conv/Conv",
+    "/blocks.1/conv/Conv",
+    "/blocks.2/conv/Conv",
+    "/blocks.3/conv/Conv",
+    "/head/MatMul"
+  ],
+  "kept_fp32": [
+    "/stem/stem.0/Conv",
+    "/band_gru/GRU"
+  ],
+  "selected_on": "dev split (VoiceBank TRAIN speakers p254/p256), 200 clips",
+  "rationale": "Phase 2b: exempting the 3.8KB stem recovers +0.097 dB SI-SDR (p=4.2e-05) for +2.8KB; mixed model statistically indistinguishable from FP32 (p=0.77) at 3.2x compression."
+}

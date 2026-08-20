@@ -45,15 +45,18 @@ def build_model(cfg, tf: TorchFrontend) -> BaseGainModel:
 
 
 def _step(model, tf, noisy, clean, mag_weight, n_fft, hop, mr_mag_weight=0.0,
-          mask_polarity_weight=0.0, mask_polarity_target=0.0):
+          mask_polarity_weight=0.0, mask_polarity_target=0.0, snr_weight=0.0):
     spec, feats = tf.analyze(noisy)
     gains = model(feats)
-    est = tf.apply_band_gain(spec, gains, length=noisy.shape[-1])
+    if getattr(model, "is_complex", False):
+        est = tf.apply_band_complex(spec, gains, length=noisy.shape[-1])
+    else:
+        est = tf.apply_band_gain(spec, gains, length=noisy.shape[-1])
     loss = combined_loss(
         est, clean, mag_weight=mag_weight, n_fft=n_fft, hop=hop,
-        mr_mag_weight=mr_mag_weight,
+        mr_mag_weight=mr_mag_weight, snr_weight=snr_weight,
     )
-    if mask_polarity_weight > 0.0:
+    if mask_polarity_weight > 0.0 and not getattr(model, "is_complex", False):
         loss = loss + mask_polarity_weight * mask_polarity_loss(gains, mask_polarity_target)
     return loss
 
@@ -77,6 +80,7 @@ def train(
     epochs = int(t.get("epochs", 20))
     mag_weight = float(t.get("mag_weight", 0.5))
     mr_mag_weight = float(t.get("mr_mag_weight", 0.0))
+    snr_weight = float(t.get("snr_weight", 0.0))
     mask_polarity_weight = float(t.get("mask_polarity_weight", 0.0))
     mask_polarity_target = float(t.get("mask_polarity_target", 0.0))
     n_fft = int(cfg.get_path("stft.n_fft", 512))
@@ -102,6 +106,7 @@ def train(
                 mr_mag_weight=mr_mag_weight,
                 mask_polarity_weight=mask_polarity_weight,
                 mask_polarity_target=mask_polarity_target,
+                snr_weight=snr_weight,
             )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)

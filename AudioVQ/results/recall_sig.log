@@ -1,0 +1,25 @@
+wavlm_base_plus: database=(10000, 768) queries=(1000, 768)
+
+  computed budget 1 bit/coord (m=96)
+  computed budget 2 bit/coord (m=192)
+  computed budget 3 bit/coord (m=256)
+  computed budget 4 bit/coord (m=384)
+
+================================================================================================
+Recall@10 with 95% bootstrap CI, and paired Wilcoxon vs the data-oblivious method
+================================================================================================
+ bits      method     mean               95% CI   vs oblivious           p
+    1   oblivious   0.4829 [0.4738, 0.4922]                 --          --
+    1          PQ   0.5439 [0.5359, 0.5519]            +0.0610    1.80e-24*
+    1         OPQ   0.7260 [0.7190, 0.7330]            +0.2431   3.49e-146*
+    2   oblivious   0.6198 [0.6110, 0.6287]                 --          --
+    2          PQ   0.6886 [0.6815, 0.6958]            +0.0688    1.12e-36*
+    2         OPQ   0.8435 [0.8380, 0.8490]            +0.2237   3.43e-148*
+    3   oblivious   0.7950 [0.7887, 0.8013]                 --          --
+    3          PQ   0.7665 [0.7601, 0.7730]            -0.0285    3.57e-12*
+    3         OPQ   0.8466 [0.8411, 0.8520]            +0.0516    4.22e-37*
+    4   oblivious   0.8791 [0.8743, 0.8839]                 --          --
+    4          PQ   0.8720 [0.8671, 0.8771]            -0.0071    1.48e-02*
+    4         OPQ   0.8990 [0.8942, 0.9038]            +0.0199    8.95e-09*
+
+wrote E:\Rohit\FYP\AudioVQ\results\retrieval\recall_significance_wavlm_base_plus.csv

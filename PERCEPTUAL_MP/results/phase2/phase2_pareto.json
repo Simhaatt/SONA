@@ -1,0 +1,113 @@
+{
+  "results": {
+    "step0_fp32": {
+      "layers": [],
+      "size_bytes": 2888836,
+      "si_sdr": 11.013057145537669,
+      "stoi": 0.8310106710662317,
+      "estoi": 0.6888941757559525
+    },
+    "step1_head": {
+      "layers": [
+        "head"
+      ],
+      "size_bytes": 2888545.0,
+      "si_sdr": 11.01414590787387,
+      "stoi": 0.831038609845585,
+      "estoi": 0.6889168926740957
+    },
+    "step2_head_b3": {
+      "layers": [
+        "head",
+        "block3_d8"
+      ],
+      "size_bytes": 2390305.0,
+      "si_sdr": 11.01267876352706,
+      "stoi": 0.8310133902757864,
+      "estoi": 0.6889084100803522
+    },
+    "step3a_pesq_add_b2": {
+      "layers": [
+        "head",
+        "block3_d8",
+        "block2_d4"
+      ],
+      "size_bytes": 1892065.0,
+      "si_sdr": 11.008300403873172,
+      "stoi": 0.8310734503923524,
+      "estoi": 0.6889952412844932
+    },
+    "step3b_sisdr_add_b1": {
+      "layers": [
+        "head",
+        "block3_d8",
+        "block1_d2"
+      ],
+      "size_bytes": 1892065.0,
+      "si_sdr": 11.008038602214144,
+      "stoi": 0.8309935812050467,
+      "estoi": 0.6889050844157193
+    },
+    "step4_shared": {
+      "layers": [
+        "head",
+        "block3_d8",
+        "block2_d4",
+        "block1_d2"
+      ],
+      "size_bytes": 1393825.0,
+      "si_sdr": 11.00617079209145,
+      "stoi": 0.8310634601763286,
+      "estoi": 0.688951026097036
+    },
+    "step5_shared": {
+      "layers": [
+        "head",
+        "block3_d8",
+        "block2_d4",
+        "block1_d2",
+        "block0_d1"
+      ],
+      "size_bytes": 895585.0,
+      "si_sdr": 11.010771744122689,
+      "stoi": 0.8310125017135439,
+      "estoi": 0.6888836614304108
+    },
+    "step6_uniform": {
+      "layers": [
+        "stem",
+        "block0_d1",
+        "block1_d2",
+        "block2_d4",
+        "block3_d8",
+        "head"
+      ],
+      "size_bytes": 892705.0,
+      "si_sdr": 10.913418991264656,
+      "stoi": 0.8314226907122847,
+      "estoi": 0.6872507288627638
+    }
+  },
+  "pesq_curve": [
+    "step0_fp32",
+    "step1_head",
+    "step2_head_b3",
+    "step3a_pesq_add_b2",
+    "step4_shared",
+    "step5_shared",
+    "step6_uniform"
+  ],
+  "sisdr_curve": [
+    "step0_fp32",
+    "step1_head",
+    "step2_head_b3",
+    "step3b_sisdr_add_b1",
+    "step4_shared",
+    "step5_shared",
+    "step6_uniform"
+  ],
+  "step3_delta": {
+    "d_si_sdr": 0.00026180165902722763,
+    "d_stoi": 7.986918730562564e-05
+  }
+}

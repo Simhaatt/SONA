@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONA listening test</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #14161c; color: #e8e8ec; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  .card {
+    width: min(560px, 92vw); background: #1c1f28; border-radius: 14px; padding: 28px 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  h1 { font-size: 1.25rem; margin: 0 0 6px; }
+  p.sub { color: #9aa0ad; margin: 0 0 20px; font-size: .92rem; line-height: 1.5; }
+  input[type=text] {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #33384a;
+    background: #11131a; color: #e8e8ec; font-size: .95rem;
+  }
+  button {
+    cursor: pointer; border: none; border-radius: 8px; padding: 10px 18px; font-size: .95rem;
+    font-weight: 600;
+  }
+  .primary { background: #5b8cff; color: #0b0d12; }
+  .primary:disabled { background: #33384a; color: #6b7180; cursor: not-allowed; }
+  .progress { font-size: .85rem; color: #9aa0ad; margin-bottom: 10px; }
+  audio { width: 100%; margin: 16px 0; }
+  .scale { display: flex; gap: 8px; margin: 18px 0; }
+  .scale button {
+    flex: 1; background: #262b38; color: #cfd3dc; padding: 14px 4px; font-size: .82rem;
+    display: flex; flex-direction: column; gap: 4px; align-items: center;
+  }
+  .scale button b { font-size: 1.1rem; }
+  .scale button.selected { background: #5b8cff; color: #0b0d12; }
+  .row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .hidden { display: none; }
+  .thanks { text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="card" id="app">
+
+  <div id="screen-start">
+    <h1>SONA speech-enhancement listening test</h1>
+    <p class="sub">
+      You'll hear ~29 short audio clips. Please use headphones in a quiet room.
+      For each clip, rate the overall quality on a 1&ndash;5 scale. There's no right answer for
+      any single clip -- just say how it sounds to you. Takes about 10 minutes.
+    </p>
+    <input type="text" id="rater-id" placeholder="Your name or email (for our records only)">
+    <div class="row"><button class="primary" id="btn-start">Start</button></div>
+  </div>
+
+  <div id="screen-rate" class="hidden">
+    <div class="progress" id="progress"></div>
+    <audio id="player" controls></audio>
+    <p class="sub" style="margin:0 0 4px">How would you rate the overall quality of this clip?</p>
+    <div class="scale" id="scale">
+      <button data-v="1">Bad<b>1</b></button>
+      <button data-v="2">Poor<b>2</b></button>
+      <button data-v="3">Fair<b>3</b></button>
+      <button data-v="4">Good<b>4</b></button>
+      <button data-v="5">Excellent<b>5</b></button>
+    </div>
+    <div class="row"><button class="primary" id="btn-next" disabled>Next</button></div>
+  </div>
+
+  <div id="screen-done" class="hidden">
+    <div class="thanks">
+      <h1>Thank you!</h1>
+      <p class="sub">Your ratings have been recorded. You can close this tab now.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let clips = [];
+let idx = 0;
+let ratings = [];
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+document.getElementById('btn-start').addEventListener('click', async () => {
+  const raterId = document.getElementById('rater-id').value.trim();
+  if (!raterId) { alert('Please enter your name or email first.'); return; }
+  window._raterId = raterId;
+  const res = await fetch('/api/clips');
+  clips = shuffle(await res.json());
+  idx = 0; ratings = [];
+  document.getElementById('screen-start').classList.add('hidden');
+  document.getElementById('screen-rate').classList.remove('hidden');
+  showClip();
+});
+
+function showClip() {
+  const clip = clips[idx];
+  document.getElementById('progress').textContent = `Clip ${idx + 1} of ${clips.length}`;
+  document.getElementById('player').src = `/api/audio/${clip.clip_id}`;
+  document.querySelectorAll('.scale button').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btn-next').disabled = true;
+  document.getElementById('btn-next').textContent = (idx === clips.length - 1) ? 'Submit' : 'Next';
+}
+
+document.getElementById('scale').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('.scale button').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._currentRating = parseInt(btn.dataset.v, 10);
+  document.getElementById('btn-next').disabled = false;
+});
+
+document.getElementById('btn-next').addEventListener('click', async () => {
+  ratings.push({ clip_id: clips[idx].clip_id, rating: window._currentRating });
+  idx += 1;
+  if (idx < clips.length) {
+    showClip();
+  } else {
+    await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rater_id: window._raterId, ratings }),
+    });
+    document.getElementById('screen-rate').classList.add('hidden');
+    document.getElementById('screen-done').classList.remove('hidden');
+  }
+});
+</script>
+</body>
+</html>

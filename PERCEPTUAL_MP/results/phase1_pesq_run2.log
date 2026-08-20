@@ -1,0 +1,25 @@
+scoring 200 clips x 8 methods, PESQ timeout=15s
+  20/200 clips (scored 160, skipped 0, pesq_fail 0)
+  40/200 clips (scored 320, skipped 0, pesq_fail 0)
+  60/200 clips (scored 480, skipped 0, pesq_fail 0)
+  80/200 clips (scored 640, skipped 0, pesq_fail 0)
+  100/200 clips (scored 800, skipped 0, pesq_fail 0)
+  120/200 clips (scored 960, skipped 0, pesq_fail 0)
+  140/200 clips (scored 1120, skipped 0, pesq_fail 0)
+  160/200 clips (scored 1280, skipped 0, pesq_fail 0)
+  180/200 clips (scored 1440, skipped 0, pesq_fail 0)
+  200/200 clips (scored 1600, skipped 0, pesq_fail 0)
+done: scored 1600 new rows, skipped 0 already-done, 0 pesq failures/timeouts
+
+method              PESQ    STOI   ESTOI  (n_ok)
+fp32              1.9502  0.8307  0.6888  (200/200)
+uniform_int8      1.9268  0.8312  0.6872  (200/200)
+only_stem         1.9491  0.8307  0.6885  (200/200)
+only_block0_d1    1.9499  0.8307  0.6887  (200/200)
+only_block1_d2    1.9502  0.8307  0.6888  (200/200)
+only_block2_d4    1.9502  0.8307  0.6888  (200/200)
+only_block3_d8    1.9502  0.8307  0.6887  (200/200)
+only_head         1.9506  0.8308  0.6888  (200/200)
+
+wrote /root/pesq_wavs/pesq_per_clip.csv
+wrote /root/pesq_wavs/pesq_summary.csv

@@ -1,0 +1,75 @@
+{
+  "raw": {
+    "label": "audio embeddings (raw)",
+    "n": 10000,
+    "d": 768,
+    "var_top1": 0.1626580648554402,
+    "var_top10": 0.49744774839781414,
+    "var_top50": 0.8114853708131086,
+    "participation_ratio": 22.600045215177452,
+    "effective_dim_frac": 0.029427142207262308,
+    "mean_pairwise_cosine": 0.8296771757324277,
+    "mean_excess_kurtosis": 0.12016653733944875,
+    "max_abs_coord_corr": 0.7899779773939263,
+    "mean_abs_coord_corr": 0.11826952128480032
+  },
+  "rot_hadamard": {
+    "label": "after hadamard rotation",
+    "n": 10000,
+    "d": 1024,
+    "var_top1": 0.15920562731378363,
+    "var_top10": 0.49366128709104573,
+    "var_top50": 0.8085994691324354,
+    "participation_ratio": 23.19871214881119,
+    "effective_dim_frac": 0.022654992332823427,
+    "mean_pairwise_cosine": 0.8296771757043395,
+    "mean_excess_kurtosis": 0.07355539378427964,
+    "max_abs_coord_corr": 0.7875197684207176,
+    "mean_abs_coord_corr": 0.14909862008538452
+  },
+  "rot_gaussian": {
+    "label": "after gaussian rotation",
+    "n": 10000,
+    "d": 768,
+    "var_top1": 0.15920562731378374,
+    "var_top10": 0.4936612870910462,
+    "var_top50": 0.808599469132436,
+    "participation_ratio": 23.19871214881115,
+    "effective_dim_frac": 0.03020665644376452,
+    "mean_pairwise_cosine": 0.8296771757043395,
+    "mean_excess_kurtosis": 0.06252785792232102,
+    "max_abs_coord_corr": 0.7258724509677243,
+    "mean_abs_coord_corr": 0.14780150997553568
+  },
+  "gaussian_reference": {
+    "label": "isotropic Gaussian ref",
+    "n": 10000,
+    "d": 768,
+    "var_top1": 0.002116360820509939,
+    "var_top10": 0.02081066195222812,
+    "var_top50": 0.09951071408386888,
+    "participation_ratio": 713.0994195308689,
+    "effective_dim_frac": 0.9285148691808188,
+    "mean_pairwise_cosine": -2.4856927528011452e-05,
+    "mean_excess_kurtosis": -0.005428615112174465,
+    "max_abs_coord_corr": 0.05082818769380794,
+    "mean_abs_coord_corr": 0.007961248765136457
+  },
+  "within_vector": {
+    "raw": {
+      "crest_mean": 10.215566587832924,
+      "crest_p95": 11.946379990996443,
+      "within_kurtosis_mean": 38.75036443756665
+    },
+    "rotated": {
+      "crest_mean": 3.3417728383292227,
+      "crest_p95": 3.833337155274034,
+      "within_kurtosis_mean": 0.018364213816571003
+    },
+    "isotropic_ref": {
+      "crest_mean": 3.36980787742202,
+      "crest_p95": 3.9803643134224296,
+      "within_kurtosis_mean": -0.0022832476687951455
+    }
+  }
+}

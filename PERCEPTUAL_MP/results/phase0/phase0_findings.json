@@ -1,0 +1,307 @@
+{
+  "0b_per_layer_control": {
+    "pass": true,
+    "qdq_uniform": 172,
+    "qdq_single": {
+      "stem": 6,
+      "block0_d1": 6,
+      "block1_d2": 6,
+      "block2_d4": 6,
+      "block3_d8": 6,
+      "band_gru": 0,
+      "head": 5
+    },
+    "inert_layers": [
+      "band_gru"
+    ],
+    "max_abs_diff_fp32_vs_uniform": 0.24051976203918457,
+    "max_abs_diff_fp32_vs_headonly": 0.008234113454818726
+  },
+  "0c_int4": {
+    "status": "export_failed",
+    "error": "Quantized weights for stem.0.weight_quantized must be 8-bit before packing as 4-bit values."
+  },
+  "0a_budget": {
+    "uniform_stoi_significant": false,
+    "uniform_sisdr_significant": true,
+    "single_layers_measurable": [
+      "only_stem",
+      "only_block0_d1",
+      "only_block1_d2",
+      "only_head"
+    ],
+    "n_quantizable_probed": 6,
+    "summary": {
+      "uniform_int8": {
+        "d_stoi": {
+          "mean": 0.0004120196460527156,
+          "ci_lo": -0.0002244987072914265,
+          "ci_hi": 0.00106318708820995,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -0.0016434468931885798,
+          "ci_lo": -0.002584448266216531,
+          "ci_hi": -0.0007305329736659258,
+          "significant": true
+        },
+        "d_si_sdr": {
+          "mean": -0.09963815427300933,
+          "ci_lo": -0.1557986480139172,
+          "ci_hi": -0.04990351834790227,
+          "significant": true
+        },
+        "d_lsd": {
+          "mean": 0.018247350454330444,
+          "ci_lo": -0.02557529252767563,
+          "ci_hi": 0.059892305880784945,
+          "significant": false
+        },
+        "mask_mse": {
+          "mean": 0.003410632678787806,
+          "ci_lo": 0.0028320840138803764,
+          "ci_hi": 0.004014876485745844
+        }
+      },
+      "only_stem": {
+        "d_stoi": {
+          "mean": -9.498528045562754e-05,
+          "ci_lo": -0.0001715857690892602,
+          "ci_hi": -2.0447628933066755e-05,
+          "significant": true
+        },
+        "d_estoi": {
+          "mean": -0.00032578176401020095,
+          "ci_lo": -0.000495816111062263,
+          "ci_hi": -0.00016517741075769673,
+          "significant": true
+        },
+        "d_si_sdr": {
+          "mean": -0.006081239535278071,
+          "ci_lo": -0.014343200468055102,
+          "ci_hi": 0.0011536263514200019,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": 0.0198121440410614,
+          "ci_lo": 0.006225408673286439,
+          "ci_hi": 0.034667569905519474,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 0.0002735918819280414,
+          "ci_lo": 0.00016317126668332092,
+          "ci_hi": 0.00039940610423263933
+        }
+      },
+      "only_block0_d1": {
+        "d_stoi": {
+          "mean": 5.03669116396932e-06,
+          "ci_lo": -3.4076990592566766e-05,
+          "ci_hi": 4.506408018444623e-05,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -6.021307649611049e-05,
+          "ci_lo": -0.00012962404674033464,
+          "ci_hi": 8.224793287208387e-06,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": 0.004920440871920337,
+          "ci_lo": 0.0012039836423167688,
+          "ci_hi": 0.008626916796726036,
+          "significant": true
+        },
+        "d_lsd": {
+          "mean": -0.00480471134185791,
+          "ci_lo": -0.005835666358470917,
+          "ci_hi": -0.0038046278357505804,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 2.0874005767836933e-05,
+          "ci_lo": 1.8436109655624476e-05,
+          "ci_hi": 2.4497895462332054e-05
+        }
+      },
+      "only_block1_d2": {
+        "d_stoi": {
+          "mean": -2.7887888016667194e-05,
+          "ci_lo": -7.410025980914234e-05,
+          "ci_hi": 1.8165119871646273e-05,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -2.6242784261351626e-06,
+          "ci_lo": -8.156359930819743e-05,
+          "ci_hi": 7.421574535729515e-05,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -0.00451819030211289,
+          "ci_lo": -0.007509532839297994,
+          "ci_hi": -0.001451717601385972,
+          "significant": true
+        },
+        "d_lsd": {
+          "mean": 0.005016281604766846,
+          "ci_lo": 0.0038222435116767885,
+          "ci_hi": 0.0062689827084541315,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 1.91608511204322e-05,
+          "ci_lo": 1.812277519422878e-05,
+          "ci_hi": 2.026898552230705e-05
+        }
+      },
+      "only_block2_d4": {
+        "d_stoi": {
+          "mean": 3.073661576893372e-06,
+          "ci_lo": -3.945844351790783e-05,
+          "ci_hi": 4.5946843295276136e-05,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": 6.723003813847995e-07,
+          "ci_lo": -6.334912708939816e-05,
+          "ci_hi": 6.437364641009052e-05,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -0.0037578689409062884,
+          "ci_lo": -0.007896417838118697,
+          "ci_hi": 0.0006726050705055881,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": 0.0022360682487487793,
+          "ci_lo": 0.0012044904232025146,
+          "ci_hi": 0.0033300054371356953,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 1.7431317342015973e-05,
+          "ci_lo": 1.600403523218574e-05,
+          "ci_hi": 1.9111302779379e-05
+        }
+      },
+      "only_block3_d8": {
+        "d_stoi": {
+          "mean": -2.6753824441299036e-05,
+          "ci_lo": -6.796675907561423e-05,
+          "ci_hi": 1.4962310878643293e-05,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -2.5039999516820176e-05,
+          "ci_lo": -8.54984078926318e-05,
+          "ci_hi": 3.6996858687820504e-05,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -0.001573861986346998,
+          "ci_lo": -0.004809760235494228,
+          "ci_hi": 0.001750306020570313,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": 0.0034816133975982665,
+          "ci_lo": 0.0024626964032649994,
+          "ci_hi": 0.004465601056814194,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 1.5873735680997924e-05,
+          "ci_lo": 1.4818082829833656e-05,
+          "ci_hi": 1.714157535883487e-05
+        }
+      },
+      "only_band_gru": {
+        "d_stoi": {
+          "mean": -2.8888414796035546e-07,
+          "ci_lo": -6.351222254580153e-07,
+          "ci_hi": 1.3228372976527274e-07,
+          "significant": false
+        },
+        "d_estoi": {
+          "mean": -2.280590630762691e-07,
+          "ci_lo": -7.027529119325512e-07,
+          "ci_hi": 2.6913522878804074e-07,
+          "significant": false
+        },
+        "d_si_sdr": {
+          "mean": -2.0369850384804323e-05,
+          "ci_lo": -4.4501224669451574e-05,
+          "ci_hi": 4.575042979828487e-06,
+          "significant": false
+        },
+        "d_lsd": {
+          "mean": 6.088018417358398e-05,
+          "ci_lo": 4.882085323333741e-05,
+          "ci_hi": 7.39220678806305e-05,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 1.2902895733649979e-09,
+          "ci_lo": 6.646014890443821e-10,
+          "ci_hi": 2.1985040300083435e-09
+        }
+      },
+      "only_head": {
+        "d_stoi": {
+          "mean": 2.7938779353011145e-05,
+          "ci_lo": 1.6988524483885644e-05,
+          "ci_hi": 3.966370456141617e-05,
+          "significant": true
+        },
+        "d_estoi": {
+          "mean": 2.2716918143388802e-05,
+          "ci_lo": 4.212661678197633e-06,
+          "ci_hi": 4.094787195865381e-05,
+          "significant": true
+        },
+        "d_si_sdr": {
+          "mean": 0.001088762336200991,
+          "ci_lo": 0.0005836368888424915,
+          "ci_hi": 0.0015782767788566656,
+          "significant": true
+        },
+        "d_lsd": {
+          "mean": -0.004762605428695678,
+          "ci_lo": -0.005300811886787415,
+          "ci_hi": -0.004232292354106903,
+          "significant": true
+        },
+        "mask_mse": {
+          "mean": 3.8583834748351365e-06,
+          "ci_lo": 3.7283144880007056e-06,
+          "ci_hi": 3.990660435079007e-06
+        }
+      }
+    }
+  },
+  "0d_gru": {
+    "rtf_fp32": 0.2413749999929375,
+    "rtf_gru_only": 0.2637127916629349,
+    "rtf_uniform": 0.4274708750017453,
+    "speedup": 0.9152950013189027,
+    "size_ratio": 1.0035644720795616,
+    "profitable": false
+  },
+  "0e_rtf": {
+    "pytorch": 0.32535174999793526,
+    "onnx_fp32": 0.2413749999929375,
+    "onnx_int8": 0.4274708750017453,
+    "iqr_pytorch": 0.05078854166640667,
+    "iqr_onnx_fp32": 0.015498187506940061
+  },
+  "verdict": {
+    "proceed": true,
+    "reasons": [
+      "ORT does not quantize ['band_gru'] at all -> excluded from the study; the search space is 6 layers, so exhaustive allocation is 2^6 = 64 configs",
+      "GRU is not profitably quantizable -> pin it to FP32 (a reportable finding)"
+    ]
+  }
+}

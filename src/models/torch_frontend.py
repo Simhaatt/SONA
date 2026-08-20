@@ -87,6 +87,34 @@ class TorchFrontend(nn.Module):
         )
         return wav
 
+    def apply_band_complex(self, spec: torch.Tensor, mask_ri: torch.Tensor, length: int) -> torch.Tensor:
+        """Apply a per-band COMPLEX ratio mask to a complex spectrogram and invert.
+
+        Unlike `apply_band_gain` (real gain on magnitude, noisy phase preserved), a
+        complex ratio mask M = M_r + jM_i multiplies the complex spectrum, so BOTH
+        magnitude and phase are modified: enhanced = M * noisy. All bins within a
+        band share the mask value (same band resolution as the gain baseline, so the
+        only thing that differs between the two is real-gain vs complex-mask).
+
+        spec (B, n_bins, T) complex; mask_ri (B, T, n_bands, 2) real; -> wav (B, length).
+        """
+        mask_r = mask_ri[..., 0]  # (B, T, n_bands)
+        mask_i = mask_ri[..., 1]
+        bin_r = torch.einsum("b t k, f k -> b t f", mask_r, self.synthesis).permute(0, 2, 1)
+        bin_i = torch.einsum("b t k, f k -> b t f", mask_i, self.synthesis).permute(0, 2, 1)
+        mask = torch.complex(bin_r, bin_i)  # (B, n_bins, T)
+        enh = spec * mask
+        wav = torch.istft(
+            enh,
+            n_fft=self.n_fft,
+            hop_length=self.hop,
+            win_length=self.n_fft,
+            window=self.window,
+            center=True,
+            length=length,
+        )
+        return wav
+
     def analyze(self, wav: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Return (complex spectrogram, feature tensor) for a batch of waveforms."""
         spec = self.stft(wav)

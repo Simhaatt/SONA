@@ -1,0 +1,111 @@
+C:\Users\rohit\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\torch\onnx\symbolic_opset9.py:4244: UserWarning: Exporting a model to ONNX with a batch_size other than 1, with a variable length with GRU can cause an error when running the ONNX model with a different batch size. Make sure to save the model with a batch size of 1, or define the initial states (h0/c0) as inputs of the model. 
+  warnings.warn(
+19:14:48 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:15:55 | WARNING | root | Expected bias '/stem/stem.1/Constant_2_output_0' to be an initializer
+19:15:55 | WARNING | root | Expected bias '/blocks.0/norm/Constant_2_output_0' to be an initializer
+19:15:55 | WARNING | root | Expected bias '/blocks.1/norm/Constant_2_output_0' to be an initializer
+19:15:55 | WARNING | root | Expected bias '/blocks.2/norm/Constant_2_output_0' to be an initializer
+19:15:55 | WARNING | root | Expected bias '/blocks.3/norm/Constant_2_output_0' to be an initializer
+19:15:55 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:15:55 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:17:07 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:17:07 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:18:13 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:18:14 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:19:23 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:19:23 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:20:30 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:20:30 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:21:36 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:21:36 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:22:42 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:22:42 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:23:47 | WARNING | root | Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:23:50 | WARNING | root | Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+19:24:58 | WARNING | root | ONNX QuantizeLinear and DequantizeLinear operators do not support 16-bit/4-bit integer quantization types prior to opset 21. The domain of QuantizeLinear and DequantizeLinear operators will be set to 'com.microsoft' to enable support.
+==============================================================================
+PHASE 0 FEASIBILITY PROBE
+==============================================================================
+
+checkpoint : last.pt
+calibration: 64 clips   dev: 200 clips
+
+[setup] computing calibration features ...
+[setup] FP32 graph exported (2842.7 KB)
+
+------------------------------------------------------------------------------
+0b  per-layer control via nodes_to_quantize
+------------------------------------------------------------------------------
+  uniform INT8      : 172 QDQ nodes,    950.7 KB
+  only stem         :   6 QDQ nodes,   2851.9 KB
+  only block0_d1    :   6 QDQ nodes,   2368.6 KB
+  only block1_d2    :   6 QDQ nodes,   2368.6 KB
+  only block2_d4    :   6 QDQ nodes,   2368.6 KB
+  only block3_d8    :   6 QDQ nodes,   2368.6 KB
+  only band_gru     :   0 QDQ nodes,   2852.9 KB  <- INERT (not quantized)
+  only head         :   5 QDQ nodes,   2854.0 KB
+  max|fp32 - uniform| = 2.405e-01
+  max|fp32 - headonly|= 8.234e-03
+  max|headonly - uni| = 2.407e-01
+  => per-layer control WORKS for the 6 quantizable layers
+  => layers ORT refuses to quantize: ['band_gru'] (excluded from the study)
+
+------------------------------------------------------------------------------
+0c  INT4 support for these op types
+------------------------------------------------------------------------------
+  INT4 weight quantization: export_failed
+    -> Quantized weights for stem.0.weight_quantized must be 8-bit before packing as 4-bit values.
+
+------------------------------------------------------------------------------
+0a  degradation budget -- is there signal to decompose?
+------------------------------------------------------------------------------
+  scoring 200 dev clips per variant (this is the slow part) ...
+    fp32 reference done (321s)
+    uniform_int8           done (296s)
+    only_stem              done (218s)
+    only_block0_d1         done (224s)
+    only_block1_d2         done (83s)
+    only_block2_d4         done (183s)
+    only_block3_d8         done (164s)
+    only_band_gru          done (173s)
+    only_head              done (152s)
+
+  variant                                 dSTOI             dSI-SDR dB   mask MSE
+  uniform_int8           +0.00041 [-0.00022,+0.00106]  -0.100 [-0.156,-0.050]* 3.411e-03
+  only_stem              -0.00009 [-0.00017,-0.00002]* -0.006 [-0.014,+0.001]  2.736e-04
+  only_block0_d1         +0.00001 [-0.00003,+0.00005]  +0.005 [+0.001,+0.009]* 2.087e-05
+  only_block1_d2         -0.00003 [-0.00007,+0.00002]  -0.005 [-0.008,-0.001]* 1.916e-05
+  only_block2_d4         +0.00000 [-0.00004,+0.00005]  -0.004 [-0.008,+0.001]  1.743e-05
+  only_block3_d8         -0.00003 [-0.00007,+0.00001]  -0.002 [-0.005,+0.002]  1.587e-05
+  only_band_gru          -0.00000 [-0.00000,+0.00000]  -0.000 [-0.000,+0.000]  1.290e-09
+  only_head              +0.00003 [+0.00002,+0.00004]* +0.001 [+0.001,+0.002]* 3.858e-06
+  (* = 95% bootstrap CI excludes zero, i.e. a measurable effect)
+
+------------------------------------------------------------------------------
+0d  is the GRU profitably quantizable?
+------------------------------------------------------------------------------
+  fp32          RTF 0.2414 (IQR 0.0155)    2842.7 KB
+  GRU-only int8 RTF 0.2637 (IQR 0.0126)    2852.9 KB
+  uniform  int8 RTF 0.4275 (IQR 0.0236)     950.7 KB
+  GRU quantization speedup 0.915x, size ratio 1.004
+  => GRU is NOT profitably quantizable on this runtime
+
+------------------------------------------------------------------------------
+0e  clean RTF (warmup discarded, median of 7) -- settles 0.121 vs 0.480
+------------------------------------------------------------------------------
+  pytorch  (1 thread) RTF 0.3254 (IQR 0.0508)
+  onnx fp32(1 thread) RTF 0.2414 (IQR 0.0155)
+  onnx int8(1 thread) RTF 0.4275 (IQR 0.0236)
+
+==============================================================================
+VERDICT
+==============================================================================
+
+  PROCEED TO PHASE 1: YES
+
+   - ORT does not quantize ['band_gru'] at all -> excluded from the study; the search space is 6 layers, so exhaustive allocation is 2^6 = 64 configs
+   - GRU is not profitably quantizable -> pin it to FP32 (a reportable finding)
+   - single layers with measurable effect: ['only_stem', 'only_block0_d1', 'only_block1_d2', 'only_head']
+
+wrote E:\Rohit\FYP\noise cancellation\PERCEPTUAL_MP\results\phase0\phase0_findings.json
+wrote E:\Rohit\FYP\noise cancellation\PERCEPTUAL_MP\results\phase0\0a_dev_deltas.csv

@@ -1,0 +1,40 @@
+model=wavlm_base_plus device=cuda sr=16000
+
+[database] MS-SNSD clean_train: 10000 clips
+    500/10000 (41.7 clips/s)
+    1000/10000 (45.9 clips/s)
+    1500/10000 (46.1 clips/s)
+    2000/10000 (47.0 clips/s)
+    2500/10000 (47.3 clips/s)
+    3000/10000 (47.4 clips/s)
+    3500/10000 (47.7 clips/s)
+    4000/10000 (46.2 clips/s)
+    4500/10000 (45.3 clips/s)
+    5000/10000 (44.8 clips/s)
+    5500/10000 (44.1 clips/s)
+    6000/10000 (43.5 clips/s)
+    6500/10000 (43.1 clips/s)
+    7000/10000 (42.6 clips/s)
+    7500/10000 (42.3 clips/s)
+    8000/10000 (42.0 clips/s)
+    8500/10000 (41.9 clips/s)
+    9000/10000 (41.7 clips/s)
+    9500/10000 (41.7 clips/s)
+    10000/10000 (41.7 clips/s)
+  saved database: (10000, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\wavlm_base_plus\database.npy
+
+[queries] MS-SNSD clean_test: 1000 clips
+    500/1000 (15.6 clips/s)
+    1000/1000 (16.0 clips/s)
+  saved queries: (1000, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\wavlm_base_plus\queries.npy
+
+[speakers] VoiceBank-DEMAND test clean: 824 clips
+    500/824 (28.4 clips/s)
+  saved speakers: (824, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\wavlm_base_plus\speakers.npy
+
+[noisy] MS-SNSD noisy mixtures: 1100 clips
+    500/1100 (16.3 clips/s)
+    1000/1100 (16.4 clips/s)
+  saved noisy: (1100, 768) -> E:\Rohit\FYP\AudioVQ\embeddings\wavlm_base_plus\noisy.npy
+
+all banks written to E:\Rohit\FYP\AudioVQ\embeddings\wavlm_base_plus

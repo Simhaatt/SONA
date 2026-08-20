@@ -1,0 +1,26 @@
+comparison,metric,better_is,n_pairs,mean_A,mean_B,mean_diff_A_minus_B,ci95_low,ci95_high,wilcoxon_p,significant_0.05
+GTCRN vs Attention (VoiceBank),si_sdr_i,higher,824,9.927043,9.081744,0.845299,0.753395,0.94196,0.0,True
+GTCRN vs Attention (VoiceBank),pesq,higher,824,2.520714,2.501244,0.019469,0.005744,0.033294,0.000207,True
+GTCRN vs Attention (VoiceBank),stoi,higher,824,0.929916,0.932215,-0.002299,-0.00311,-0.001507,0.0,True
+GTCRN vs Attention (VoiceBank),estoi,higher,824,0.832254,0.83439,-0.002136,-0.003458,-0.000831,0.002724,True
+GTCRN vs Attention (VoiceBank),lsd,lower,824,6.469693,5.970064,0.49963,0.468265,0.530928,0.0,True
+GTCRN vs Mamba-GTCRN (VoiceBank),si_sdr_i,higher,824,9.927043,9.844146,0.082896,0.04583,0.123026,0.0,True
+GTCRN vs Mamba-GTCRN (VoiceBank),pesq,higher,824,2.520714,2.504768,0.015946,0.006204,0.025485,0.0,True
+GTCRN vs Mamba-GTCRN (VoiceBank),stoi,higher,824,0.929916,0.927906,0.00201,0.001696,0.002321,0.0,True
+GTCRN vs Mamba-GTCRN (VoiceBank),estoi,higher,824,0.832254,0.830768,0.001486,0.00084,0.002145,0.0,True
+GTCRN vs Mamba-GTCRN (VoiceBank),lsd,lower,824,6.469693,6.617599,-0.147906,-0.160715,-0.135324,0.0,True
+GTCRN vs SONA-G governed (VoiceBank),si_sdr_i,higher,824,9.927043,9.887606,0.039436,-0.008134,0.095474,0.010192,True
+GTCRN vs SONA-G governed (VoiceBank),pesq,higher,824,2.520714,2.454897,0.065817,0.057731,0.074265,0.0,True
+GTCRN vs SONA-G governed (VoiceBank),stoi,higher,824,0.929916,0.930346,-0.00043,-0.000755,-0.000115,0.003407,True
+GTCRN vs SONA-G governed (VoiceBank),estoi,higher,824,0.832254,0.830752,0.001502,0.000794,0.002177,0.0,True
+GTCRN vs SONA-G governed (VoiceBank),lsd,lower,824,6.469693,6.64126,-0.171567,-0.186674,-0.156028,0.0,True
+GTCRN vs SONA-R residual (VoiceBank),si_sdr_i,higher,824,9.927043,9.868019,0.059024,0.024624,0.093737,1e-06,True
+GTCRN vs SONA-R residual (VoiceBank),pesq,higher,824,2.520714,2.519997,0.000717,-0.008084,0.00936,0.393998,False
+GTCRN vs SONA-R residual (VoiceBank),stoi,higher,824,0.929916,0.929206,0.00071,0.000397,0.001021,0.0,True
+GTCRN vs SONA-R residual (VoiceBank),estoi,higher,824,0.832254,0.830742,0.001512,0.000897,0.002135,0.0,True
+GTCRN vs SONA-R residual (VoiceBank),lsd,lower,824,6.469693,6.507774,-0.038081,-0.049561,-0.026375,0.0,True
+Strict-guard online vs frozen (VoiceBank),si_sdr_i,higher,824,9.079047,9.081744,-0.002697,-0.003804,-0.001655,2e-06,True
+Strict-guard online vs frozen (VoiceBank),pesq,higher,824,2.50342,2.501244,0.002175,0.001379,0.003017,0.0,True
+Strict-guard online vs frozen (VoiceBank),stoi,higher,824,0.932198,0.932215,-1.7e-05,-6.2e-05,2.1e-05,0.358346,False
+Strict-guard online vs frozen (VoiceBank),estoi,higher,824,0.834362,0.83439,-2.8e-05,-8e-05,2.1e-05,0.260094,False
+Strict-guard online vs frozen (VoiceBank),lsd,lower,824,5.962981,5.970064,-0.007083,-0.009524,-0.004899,0.0,True

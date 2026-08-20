@@ -1,0 +1,149 @@
+{
+  "pesq_per_layer": {
+    "only_stem": {
+      "mean": -0.0011577486991882324,
+      "ci_lo": -0.002930899053812027,
+      "ci_hi": 0.00039581842720508493,
+      "significant": false,
+      "mean_abs": 0.0058691704273223875
+    },
+    "only_block0_d1": {
+      "mean": -0.00037892937660217286,
+      "ci_lo": -0.0008886684328317643,
+      "ci_hi": 0.0001370519101619718,
+      "significant": false,
+      "mean_abs": 0.0027477860450744627
+    },
+    "only_block1_d2": {
+      "mean": -8.247077465057374e-05,
+      "ci_lo": -0.0005302867740392685,
+      "ci_hi": 0.000391346961259841,
+      "significant": false,
+      "mean_abs": 0.002175660729408264
+    },
+    "only_block2_d4": {
+      "mean": -5.633831024169922e-06,
+      "ci_lo": -0.00041250352561473846,
+      "ci_hi": 0.0004088863730430602,
+      "significant": false,
+      "mean_abs": 0.0020358335971832277
+    },
+    "only_block3_d8": {
+      "mean": -4.994869232177735e-07,
+      "ci_lo": -0.0003900575935840606,
+      "ci_hi": 0.00042795866727828844,
+      "significant": false,
+      "mean_abs": 0.0018559861183166503
+    },
+    "only_head": {
+      "mean": 0.0003635215759277344,
+      "ci_lo": 0.00020262880623340607,
+      "ci_hi": 0.0005143564343452454,
+      "significant": true,
+      "mean_abs": 0.0008538746833801269
+    }
+  },
+  "sensitivity": {
+    "only_stem": {
+      "pesq": 0.0058691704273223875,
+      "si_sdr": 0.03024807453259776,
+      "stoi": 0.000370391507962258,
+      "mask_mse": 0.0002735918819280414
+    },
+    "only_block0_d1": {
+      "pesq": 0.0027477860450744627,
+      "si_sdr": 0.01791122777078651,
+      "stoi": 0.00019340915424181872,
+      "mask_mse": 2.0874005767836933e-05
+    },
+    "only_block1_d2": {
+      "pesq": 0.002175660729408264,
+      "si_sdr": 0.014633870030116092,
+      "stoi": 0.00021594076024540165,
+      "mask_mse": 1.91608511204322e-05
+    },
+    "only_block2_d4": {
+      "pesq": 0.0020358335971832277,
+      "si_sdr": 0.017143841791405153,
+      "stoi": 0.00021007412371229717,
+      "mask_mse": 1.7431317342015973e-05
+    },
+    "only_block3_d8": {
+      "pesq": 0.0018559861183166503,
+      "si_sdr": 0.014542292734852871,
+      "stoi": 0.00019893526672175698,
+      "mask_mse": 1.5873735680997924e-05
+    },
+    "only_head": {
+      "pesq": 0.0008538746833801269,
+      "si_sdr": 0.00290377917741923,
+      "stoi": 5.88612681114703e-05,
+      "mask_mse": 3.8583834748351365e-06
+    }
+  },
+  "rankings": {
+    "pesq": {
+      "only_stem": 1,
+      "only_block0_d1": 2,
+      "only_block1_d2": 3,
+      "only_block2_d4": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    },
+    "si_sdr": {
+      "only_stem": 1,
+      "only_block0_d1": 2,
+      "only_block2_d4": 3,
+      "only_block1_d2": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    },
+    "stoi": {
+      "only_stem": 1,
+      "only_block1_d2": 2,
+      "only_block2_d4": 3,
+      "only_block3_d8": 4,
+      "only_block0_d1": 5,
+      "only_head": 6
+    },
+    "mask_mse": {
+      "only_stem": 1,
+      "only_block0_d1": 2,
+      "only_block1_d2": 3,
+      "only_block2_d4": 4,
+      "only_block3_d8": 5,
+      "only_head": 6
+    }
+  },
+  "spearman": {
+    "pesq_vs_si_sdr": {
+      "rho": 0.942857142857143,
+      "p": 0.0048046647230320545
+    },
+    "pesq_vs_mask_mse": {
+      "rho": 1.0,
+      "p": 0.0
+    },
+    "pesq_vs_stoi": {
+      "rho": 0.6571428571428573,
+      "p": 0.15617492711370237
+    },
+    "si_sdr_vs_mask_mse": {
+      "rho": 0.942857142857143,
+      "p": 0.0048046647230320545
+    },
+    "si_sdr_vs_stoi": {
+      "rho": 0.6,
+      "p": 0.20799999999999985
+    },
+    "stoi_vs_mask_mse": {
+      "rho": 0.6571428571428573,
+      "p": 0.15617492711370237
+    }
+  },
+  "biggest_rank_disagreement": {
+    "layer": "only_block1_d2",
+    "rank_delta": 1
+  },
+  "note": "n=6 layers -> Spearman here is indicative, not a well-powered hypothesis test on its own. The per-layer PESQ bootstrap CIs (from 200 paired dev clips) are the primary quantitative evidence for whether an individual layer's perceptual effect is distinguishable from zero."
+}
