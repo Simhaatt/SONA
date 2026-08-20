@@ -31,6 +31,7 @@ Doc map:
 |---|---|
 | `PROJECTS_STATUS.md` | **this file** — current state of everything |
 | `SONA_STATUS.md` | chronological run log for the SONA core (to 2026-07-07) |
+| `PAPER_PLAN.md` | **the current plan** — one merged paper, experiments, sequence |
 | `NEXT_STEPS_PLAN.md` | the Jul-20 → Aug-16 plan; **expired**, kept for provenance |
 | `PERCEPTUAL_MP_QUANT_PLAN.md` / `PERCEPTUAL_MP/FINDINGS.md` | quantization design + results |
 | `PERCEPTUAL_MP/PAPER_DRAFT.md` | **quantization paper draft** (new 2026-08-20) |
