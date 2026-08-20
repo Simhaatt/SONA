@@ -1,0 +1,94 @@
+{
+  "rows": [
+    {
+      "layer": "stem",
+      "quantizable": true,
+      "n_params": 1152,
+      "hessian_trace": 824.3538430333138,
+      "hessian_trace_se": 200.0904017897173,
+      "avg_hessian_trace": 0.7155849331886404,
+      "n_estimates": 32
+    },
+    {
+      "layer": "block0_d1",
+      "quantizable": true,
+      "n_params": 166080,
+      "hessian_trace": 295.03933349251747,
+      "hessian_trace_se": 87.36455429998215,
+      "avg_hessian_trace": 0.0017764892430907843,
+      "n_estimates": 32
+    },
+    {
+      "layer": "block1_d2",
+      "quantizable": true,
+      "n_params": 166080,
+      "hessian_trace": 160.25966969132423,
+      "hessian_trace_se": 113.68250493550762,
+      "avg_hessian_trace": 0.0009649546585460275,
+      "n_estimates": 32
+    },
+    {
+      "layer": "block2_d4",
+      "quantizable": true,
+      "n_params": 166080,
+      "hessian_trace": 467.7201324701309,
+      "hessian_trace_se": 203.52397541952172,
+      "avg_hessian_trace": 0.0028162339382835438,
+      "n_estimates": 32
+    },
+    {
+      "layer": "block3_d8",
+      "quantizable": true,
+      "n_params": 166080,
+      "hessian_trace": 466.70166552066803,
+      "hessian_trace_se": 147.77156796430208,
+      "avg_hessian_trace": 0.002810101550582057,
+      "n_estimates": 32
+    },
+    {
+      "layer": "head",
+      "quantizable": true,
+      "n_params": 97,
+      "hessian_trace": 57.13742220401764,
+      "hessian_trace_se": 34.78660708522473,
+      "avg_hessian_trace": 0.5890455897321406,
+      "n_estimates": 32
+    },
+    {
+      "layer": "band_gru",
+      "quantizable": false,
+      "n_params": 55872,
+      "hessian_trace": 614.3384527564049,
+      "hessian_trace_se": 188.57853774052623,
+      "avg_hessian_trace": 0.010995461998074257,
+      "n_estimates": 32
+    }
+  ],
+  "correlations": {
+    "avg_hessian_trace vs d_si_sdr": {
+      "spearman_rho": 0.14285714285714288,
+      "p": 0.7871720116618076,
+      "n_layers": 6
+    },
+    "avg_hessian_trace vs mask_mse": {
+      "spearman_rho": -0.028571428571428574,
+      "p": 0.9571545189504373,
+      "n_layers": 6
+    },
+    "avg_hessian_trace vs d_stoi": {
+      "spearman_rho": 0.08571428571428573,
+      "p": 0.8717434402332361,
+      "n_layers": 6
+    },
+    "avg_hessian_trace vs d_estoi": {
+      "spearman_rho": -0.08571428571428573,
+      "p": 0.8717434402332361,
+      "n_layers": 6
+    },
+    "avg_hessian_trace vs d_lsd": {
+      "spearman_rho": -0.14285714285714288,
+      "p": 0.7871720116618076,
+      "n_layers": 6
+    }
+  }
+}

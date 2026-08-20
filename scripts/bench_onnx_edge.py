@@ -12,7 +12,8 @@ and the quality-parity check isolates quantization error from DSP differences.
 
 Usage:
     python scripts/bench_onnx_edge.py --checkpoint ".../last.pt" \\
-        --onnx-dir results/onnx/gtcrn --manifest "E:\\...\\test_manifest.csv" --limit 100
+        --onnx-dir results/onnx/gtcrn --variants fp32,int8,mixed \\
+        --manifest vbd_local/test_manifest.csv --limit 100
 """
 
 from __future__ import annotations
@@ -30,7 +31,9 @@ if str(ROOT) not in sys.path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
-    ap.add_argument("--onnx-dir", required=True, help="dir with model_fp32.onnx / model_int8.onnx")
+    ap.add_argument("--onnx-dir", required=True, help="dir holding model_<variant>.onnx files")
+    ap.add_argument("--variants", default="fp32,int8",
+                    help="comma-separated variant names; each needs model_<name>.onnx in --onnx-dir")
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--limit", type=int, default=100)
     ap.add_argument("--threads", default="1,2", help="ONNX intra-op thread counts to benchmark")
@@ -65,8 +68,15 @@ def main() -> None:
         raise SystemExit(f"No samples found in {args.manifest}")
 
     thread_counts = [int(x) for x in args.threads.split(",") if x.strip()]
-    sessions: dict[str, dict[int, ort.InferenceSession]] = {"fp32": {}, "int8": {}}
-    for kind in ("fp32", "int8"):
+    variants = [v.strip() for v in args.variants.split(",") if v.strip()]
+    missing = [v for v in variants if not (onnx_dir / f"model_{v}.onnx").exists()]
+    if missing:
+        raise SystemExit(
+            "Missing ONNX file(s) for variant(s) " + ", ".join(missing) +
+            f" -- expected model_<name>.onnx in {onnx_dir}"
+        )
+    sessions: dict[str, dict[int, ort.InferenceSession]] = {v: {} for v in variants}
+    for kind in variants:
         path = onnx_dir / f"model_{kind}.onnx"
         for n in thread_counts:
             so = ort.SessionOptions()
@@ -75,7 +85,7 @@ def main() -> None:
                 str(path), sess_options=so, providers=["CPUExecutionProvider"]
             )
     model_size_kb = {
-        kind: (onnx_dir / f"model_{kind}.onnx").stat().st_size / 1024 for kind in ("fp32", "int8")
+        kind: (onnx_dir / f"model_{kind}.onnx").stat().st_size / 1024 for kind in variants
     }
 
     def run_backend(feats_np: np.ndarray, backend: str, threads: int | None = None):
@@ -100,7 +110,7 @@ def main() -> None:
         audio_dur = len(s.noisy) / s.sr
 
         backends = [("pytorch", None)] + [
-            (kind, n) for kind in ("fp32", "int8") for n in thread_counts
+            (kind, n) for kind in variants for n in thread_counts
         ]
         for backend, threads in backends:
             gain, elapsed = run_backend(feats_np, backend, threads)
