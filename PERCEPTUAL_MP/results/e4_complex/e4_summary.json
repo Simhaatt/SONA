@@ -1,0 +1,16 @@
+{
+  "architecture": "complex_gtcrn",
+  "most_sensitive_layer": "only_stem",
+  "sensitivity_order": [
+    "only_stem",
+    "only_block0_d1",
+    "only_block1_d2",
+    "only_block3_d8",
+    "only_block2_d4",
+    "only_head"
+  ],
+  "uniform_int8_d_si_sdr": -0.05101879831001295,
+  "mixed_stemfp32_d_si_sdr": 0.0040514240701604596,
+  "stem_share_of_degradation_pct": 92.05895825781273,
+  "verdict": "stem dominant -- replicates the magnitude-model finding"
+}

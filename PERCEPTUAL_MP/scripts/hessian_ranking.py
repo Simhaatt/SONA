@@ -110,6 +110,24 @@ def main() -> None:
             raise SystemExit(f"no parameters matched prefix for layer '{name}'")
     print("parameter counts:", n_params)
 
+    # ---- INT8 perturbation per layer: || Q(w) - w ||^2, symmetric per-tensor, as deployed.
+    # This is the second factor of the HAWQ-V2 criterion and the one that carries parameter
+    # count and weight scale.
+    def int8_perturbation(ps: list[torch.nn.Parameter]) -> float:
+        total = 0.0
+        for q in ps:
+            w = q.detach()
+            scale = w.abs().max() / 127.0
+            if float(scale) == 0.0:
+                continue
+            qw = torch.clamp(torch.round(w / scale), -127, 127) * scale
+            total += float(((qw - w) ** 2).sum())
+        return total
+
+    perturb = {name: int8_perturbation(ps) for name, ps in params.items()}
+    print("INT8 perturbation ||Q(w)-w||^2:",
+          {k: f"{v:.4e}" for k, v in perturb.items()})
+
     samples = list(PairDataset(manifest=args.dev_manifest, limit=args.n_clips))
     print(f"dev clips: {len(samples)}  probes/clip: {args.n_probes}")
 
@@ -171,7 +189,10 @@ def main() -> None:
             "n_params": n_params[name],
             "hessian_trace": mean,
             "hessian_trace_se": se,
-            "avg_hessian_trace": mean / n_params[name],   # HAWQ-V2 sensitivity
+            "avg_hessian_trace": mean / n_params[name],
+            "int8_perturbation": perturb[name],
+            # full HAWQ-V2 criterion: average curvature x actual quantization perturbation
+            "hawq_v2_omega": (mean / n_params[name]) * perturb[name],
             "n_estimates": n,
         })
 
@@ -186,41 +207,52 @@ def main() -> None:
     prior_path = HERE.parent / "results" / "phase1" / "phase1a_local_rankings.json"
     correlations = {}
     q = [r for r in rows if r["quantizable"]]
-    hawq_order = {r["layer"]: r["avg_hessian_trace"] for r in q}
+    variants = {
+        "avg_hessian_trace": {r["layer"]: r["avg_hessian_trace"] for r in q},
+        "raw_hessian_trace": {r["layer"]: r["hessian_trace"] for r in q},
+        "hawq_v2_omega": {r["layer"]: r["hawq_v2_omega"] for r in q},
+    }
 
     if prior_path.exists():
         prior = json.loads(prior_path.read_text(encoding="utf-8"))
         sens = prior.get("sensitivity_mean_abs_delta", {})
         alias = {f"only_{k}": k for k in LAYER_PREFIX}
-        for metric in ("d_si_sdr", "mask_mse", "d_stoi", "d_estoi", "d_lsd"):
-            pairs = []
-            for key, vals in sens.items():
-                lay = alias.get(key)
-                if lay and lay in hawq_order and metric in vals:
-                    pairs.append((hawq_order[lay], vals[metric]))
-            if len(pairs) >= 3:
-                a, b = zip(*pairs)
-                rho, p = stats.spearmanr(a, b)
-                correlations[f"avg_hessian_trace vs {metric}"] = {
-                    "spearman_rho": float(rho), "p": float(p), "n_layers": len(pairs)}
+        for vname, order in variants.items():
+            for metric in ("d_si_sdr", "mask_mse", "d_stoi", "d_estoi", "d_lsd"):
+                pairs = []
+                for key, vals in sens.items():
+                    lay = alias.get(key)
+                    if lay and lay in order and metric in vals:
+                        pairs.append((order[lay], vals[metric]))
+                if len(pairs) >= 3:
+                    a, b = zip(*pairs)
+                    rho, pv = stats.spearmanr(a, b)
+                    correlations[f"{vname} vs {metric}"] = {
+                        "spearman_rho": float(rho), "p": float(pv), "n_layers": len(pairs)}
 
     (out / "hessian_ranking.json").write_text(
         json.dumps({"rows": rows, "correlations": correlations}, indent=2), encoding="utf-8")
 
-    order = sorted(q, key=lambda r: -r["avg_hessian_trace"])
+    order = sorted(q, key=lambda r: -r["hawq_v2_omega"])
     lines = ["# Hessian-trace layer sensitivity (HAWQ-V2 proxy)", "",
              f"Hutchinson estimator, {args.n_probes} Rademacher probes per clip over "
              f"{len(samples)} dev clips (speaker-disjoint split p254/p256; no test data touched). "
              "HAWQ-V2 ranks layers by **average** Hessian trace, tr(H)/n_params.", "",
-             "| rank | layer | quantizable | params | tr(H) | avg tr(H)/n |",
-             "|---|---|---|---|---|---|"]
+             "Ranked by the full HAWQ-V2 criterion "
+             "`Omega = (tr(H)/n) * ||Q(w)-w||^2` -- average curvature times the actual INT8 "
+             "perturbation. The raw and averaged traces are shown alongside because they order "
+             "the layers differently, which is itself the finding.", "",
+             "| rank | layer | quantizable | params | tr(H) | avg tr(H)/n | ||Q(w)-w||^2 | Omega |",
+             "|---|---|---|---|---|---|---|---|"]
     for i, r in enumerate(order, 1):
         lines.append(f"| {i} | {r['layer']} | yes | {r['n_params']} | "
-                     f"{r['hessian_trace']:.4e} | {r['avg_hessian_trace']:.4e} |")
+                     f"{r['hessian_trace']:.4e} | {r['avg_hessian_trace']:.4e} | "
+                     f"{r['int8_perturbation']:.4e} | {r['hawq_v2_omega']:.4e} |")
     for r in rows:
         if not r["quantizable"]:
             lines.append(f"| -- | {r['layer']} | **no** (unquantizable) | {r['n_params']} | "
-                         f"{r['hessian_trace']:.4e} | {r['avg_hessian_trace']:.4e} |")
+                         f"{r['hessian_trace']:.4e} | {r['avg_hessian_trace']:.4e} | "
+                         f"{r['int8_perturbation']:.4e} | {r['hawq_v2_omega']:.4e} |")
     if correlations:
         lines += ["", "## Agreement with the existing sensitivity rankings", "",
                   "| comparison | Spearman rho | p | layers |", "|---|---|---|---|"]
@@ -229,9 +261,13 @@ def main() -> None:
     (out / "hessian_ranking.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(f"\nwrote {out / 'hessian_ranking.md'}\n")
-    print("HAWQ-V2 ranking (most sensitive first, quantizable layers only):")
+    print("HAWQ-V2 ranking by full Omega (most sensitive first, quantizable only):")
     for i, r in enumerate(order, 1):
-        print(f"  {i}. {r['layer']:12s} avg_tr(H)/n = {r['avg_hessian_trace']:.4e}")
+        print(f"  {i}. {r['layer']:12s} Omega = {r['hawq_v2_omega']:.4e}  "
+              f"(raw tr={r['hessian_trace']:.3e}, avg={r['avg_hessian_trace']:.3e})")
+    print("\nranking by RAW trace:")
+    for i, r in enumerate(sorted(q, key=lambda r: -r["hessian_trace"]), 1):
+        print(f"  {i}. {r['layer']:12s} tr(H) = {r['hessian_trace']:.4e}")
     for k, v in correlations.items():
         print(f"  {k}: rho={v['spearman_rho']:+.3f} (p={v['p']:.4f})")
 

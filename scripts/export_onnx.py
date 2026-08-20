@@ -36,6 +36,10 @@ def main() -> None:
     ap.add_argument("--calib-samples", type=int, default=30)
     ap.add_argument("--out", default=str(ROOT / "results" / "onnx" / "gtcrn"))
     ap.add_argument("--dummy-frames", type=int, default=250, help="time steps for the export trace")
+    ap.add_argument("--dynamo", action="store_true",
+                    help="use torch's dynamo ONNX exporter. Off by default: it emits Split with a "
+                         "num_outputs attribute that ONNX Runtime 1.20.1 cannot load during "
+                         "static quantization.")
     args = ap.parse_args()
 
     import numpy as np
@@ -68,6 +72,7 @@ def main() -> None:
         dynamic_axes={"feats": {1: "time"}, "gain": {1: "time"}},
         opset_version=17,
         do_constant_folding=True,
+        dynamo=args.dynamo,
     )
     print(f"FP32 ONNX graph written to {fp32_path} ({fp32_path.stat().st_size / 1024:.1f} KB)")
 

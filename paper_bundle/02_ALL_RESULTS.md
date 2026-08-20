@@ -1035,27 +1035,244 @@ psquare & 166 & $+0.175$ & $[+0.126, +0.235]$ \\
 
 ### Hessian-trace layer sensitivity (HAWQ-V2 proxy)
 
-Hutchinson estimator, 8 Rademacher probes per clip over 4 dev clips (speaker-disjoint split p254/p256; no test data touched). HAWQ-V2 ranks layers by **average** Hessian trace, tr(H)/n_params.
+Hutchinson estimator, 32 Rademacher probes per clip over 50 dev clips (speaker-disjoint split p254/p256; no test data touched). HAWQ-V2 ranks layers by **average** Hessian trace, tr(H)/n_params.
 
-| rank | layer | quantizable | params | tr(H) | avg tr(H)/n |
-|---|---|---|---|---|---|
-| 1 | stem | yes | 1152 | 8.2435e+02 | 7.1558e-01 |
-| 2 | head | yes | 97 | 5.7137e+01 | 5.8905e-01 |
-| 3 | block2_d4 | yes | 166080 | 4.6772e+02 | 2.8162e-03 |
-| 4 | block3_d8 | yes | 166080 | 4.6670e+02 | 2.8101e-03 |
-| 5 | block0_d1 | yes | 166080 | 2.9504e+02 | 1.7765e-03 |
-| 6 | block1_d2 | yes | 166080 | 1.6026e+02 | 9.6495e-04 |
-| -- | band_gru | **no** (unquantizable) | 55872 | 6.1434e+02 | 1.0995e-02 |
+Ranked by the full HAWQ-V2 criterion `Omega = (tr(H)/n) * ||Q(w)-w||^2` -- average curvature times the actual INT8 perturbation. The raw and averaged traces are shown alongside because they order the layers differently, which is itself the finding.
+
+| rank | layer | quantizable | params | tr(H) | avg tr(H)/n | ||Q(w)-w||^2 | Omega |
+|---|---|---|---|---|---|---|---|
+| 1 | stem | yes | 1152 | 4.7929e+02 | 4.1605e-01 | 2.6591e-03 | 1.1063e-03 |
+| 2 | block3_d8 | yes | 166080 | 4.4787e+02 | 2.6967e-03 | 4.8118e-02 | 1.2976e-04 |
+| 3 | block2_d4 | yes | 166080 | 4.5767e+02 | 2.7557e-03 | 4.5295e-02 | 1.2482e-04 |
+| 4 | block0_d1 | yes | 166080 | 1.8055e+02 | 1.0871e-03 | 7.5921e-02 | 8.2535e-05 |
+| 5 | block1_d2 | yes | 166080 | 1.2455e+02 | 7.4992e-04 | 6.5584e-02 | 4.9183e-05 |
+| 6 | head | yes | 97 | 8.6169e+01 | 8.8834e-01 | 3.1798e-05 | 2.8247e-05 |
+| -- | band_gru | **no** (unquantizable) | 55872 | 5.4883e+02 | 9.8230e-03 | 6.6782e-02 | 6.5600e-04 |
 
 #### Agreement with the existing sensitivity rankings
 
 | comparison | Spearman rho | p | layers |
 |---|---|---|---|
-| avg_hessian_trace vs d_si_sdr | +0.143 | 0.7872 | 6 |
-| avg_hessian_trace vs mask_mse | -0.029 | 0.9572 | 6 |
-| avg_hessian_trace vs d_stoi | +0.086 | 0.8717 | 6 |
-| avg_hessian_trace vs d_estoi | -0.086 | 0.8717 | 6 |
-| avg_hessian_trace vs d_lsd | -0.143 | 0.7872 | 6 |
+| avg_hessian_trace vs d_si_sdr | -0.143 | 0.7872 | 6 |
+| avg_hessian_trace vs mask_mse | -0.314 | 0.5441 | 6 |
+| avg_hessian_trace vs d_stoi | -0.200 | 0.7040 | 6 |
+| avg_hessian_trace vs d_estoi | -0.371 | 0.4685 | 6 |
+| avg_hessian_trace vs d_lsd | -0.429 | 0.3965 | 6 |
+| raw_hessian_trace vs d_si_sdr | +0.714 | 0.1108 | 6 |
+| raw_hessian_trace vs mask_mse | +0.543 | 0.2657 | 6 |
+| raw_hessian_trace vs d_stoi | +0.657 | 0.1562 | 6 |
+| raw_hessian_trace vs d_estoi | +0.486 | 0.3287 | 6 |
+| raw_hessian_trace vs d_lsd | +0.429 | 0.3965 | 6 |
+| hawq_v2_omega vs d_si_sdr | +0.600 | 0.2080 | 6 |
+| hawq_v2_omega vs mask_mse | +0.486 | 0.3287 | 6 |
+| hawq_v2_omega vs d_stoi | +0.600 | 0.2080 | 6 |
+| hawq_v2_omega vs d_estoi | +0.429 | 0.3965 | 6 |
+| hawq_v2_omega vs d_lsd | +0.486 | 0.3287 | 6 |
+
+## E2 — findings
+
+`PERCEPTUAL_MP/results/hessian/FINDINGS_HESSIAN.md`
+
+### E2 — Hessian-trace sensitivity (HAWQ-V2): findings
+
+Script: `PERCEPTUAL_MP/scripts/hessian_ranking.py`. Hutchinson estimator, 32 Rademacher probes per
+clip over 50 dev clips (p254/p256, speaker-disjoint from TRAIN — no test data touched), 1 600
+estimates per layer.
+
+---
+
+#### 1. Why this experiment exists
+
+Study 1's negative result is that a *perceptual* (PESQ) sensitivity ranking agrees with
+*output-error* rankings (SI-SDR, mask-MSE). But the field-standard way to rank layers for
+mixed-precision allocation is neither: HAWQ and HAWQ-V2 rank by second-order curvature. Without
+that column, the negative result never compares against the baseline a reviewer actually has in
+mind.
+
+#### 2. A correction made during this experiment
+
+The first pass ranked layers by **average Hessian trace**, `tr(H)/n`, alone. That is *not* the
+HAWQ-V2 criterion. HAWQ-V2 ranks by the expected loss perturbation from quantizing the layer:
+
+```
+Omega_l = (tr(H_l) / n_l) * || Q(w_l) - w_l ||^2
+```
+
+The second factor — the actual INT8 perturbation of that layer's weights — is what carries
+parameter count and weight scale. Dropping it compares curvature *per weight* while ignoring how
+many weights there are, which is precisely the axis on which this model is pathological: the head
+has **97** parameters and each block has **166 080**.
+
+Ranking on the incomplete criterion produced a striking but wrong conclusion (that HAWQ-V2
+misranks). The corrected criterion reverses it. Reporting the incomplete version would have been a
+strawman, and a reviewer would rightly have said the baseline was implemented incorrectly.
+
+#### 3. Result
+
+| rank | layer | params | tr(H) | avg tr(H)/n | ‖Q(w)−w‖² | **Ω** |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | **stem** | 1 152 | 4.79e+02 | 4.16e-01 | 2.66e-03 | **1.11e-03** |
+| 2 | block3_d8 | 166 080 | 4.48e+02 | 2.70e-03 | 4.81e-02 | 1.30e-04 |
+| 3 | block2_d4 | 166 080 | 4.58e+02 | 2.76e-03 | 4.53e-02 | 1.25e-04 |
+| 4 | block0_d1 | 166 080 | 1.81e+02 | 1.09e-03 | 7.59e-02 | 8.25e-05 |
+| 5 | block1_d2 | 166 080 | 1.25e+02 | 7.50e-04 | 6.56e-02 | 4.92e-05 |
+| 6 | **head** | 97 | 8.62e+01 | 8.88e-01 | 3.18e-05 | **2.82e-05** |
+| — | band_gru *(unquantizable)* | 55 872 | 5.49e+02 | 9.82e-03 | 6.68e-02 | 6.56e-04 |
+
+**The full HAWQ-V2 criterion puts `stem` first and `head` last — exactly matching the empirical
+INT8 damage ranking.**
+
+##### Rank agreement with the measured per-layer damage
+
+| criterion | vs ΔSI-SDR | vs mask-MSE | vs ΔSTOI | vs ΔESTOI | vs ΔLSD |
+|---|---:|---:|---:|---:|---:|
+| **Ω (full HAWQ-V2)** | **+0.600** | +0.486 | +0.600 | +0.429 | +0.486 |
+| raw tr(H) | **+0.714** | +0.543 | +0.657 | +0.486 | +0.429 |
+| avg tr(H)/n *(incomplete)* | −0.143 | −0.314 | −0.200 | −0.371 | −0.429 |
+
+#### 4. What this means for the paper
+
+**The negative result becomes comprehensive rather than partial.** Three independent families of
+sensitivity criterion — perceptual (PESQ), output-error (SI-SDR, mask-MSE), and second-order
+curvature (HAWQ-V2) — all identify the same layer as most sensitive and the same layer as least.
+The criterion does not matter. That is a stronger version of Study 1's claim than "two output-error
+metrics agree with a perceptual one", and it closes the obvious reviewer objection.
+
+**A practical caveat worth one sentence in the paper.** *Average* Hessian trace is often used as
+shorthand for HAWQ-V2 sensitivity. Here that shorthand **inverts the ranking**: it promotes the
+97-parameter head from least to most sensitive, purely because dividing by 97 inflates it against
+blocks divided by 166 080. When layer parameter counts span three orders of magnitude, the
+perturbation term is not optional. Implement the full criterion.
+
+#### 5. Limitations — state these
+
+- **n = 6 layers.** No correlation here reaches significance (p = 0.11–0.40). The claim rests on
+  the agreement of the rank *orderings* — particularly that all three criteria agree on the top and
+  bottom layer — and on the mechanism, not on a p-value. Say so explicitly rather than quoting ρ as
+  though six points settled it.
+- Hutchinson is a stochastic estimator; per-layer standard errors are recorded in
+  `hessian_ranking.csv`.
+- The band GRU is reported for completeness but excluded from the ranking comparison, exactly as it
+  is excluded from the allocation search — it cannot be quantized on this runtime.
+- Curvature is measured at the trained optimum under the training loss (SI-SDR + 1.25·log-mag +
+  0.25·multi-resolution). A different loss would give different curvature.
+
+## E4 — stem exemption on a second architecture
+
+`PERCEPTUAL_MP/results/e4_complex/e4_sensitivity.md`
+
+### E4 -- stem exemption on a second architecture (complex-mask GTCRN)
+
+Same backbone, same runtime, same splits; only the output representation differs (2-channel complex ratio mask, +97 parameters). Dev split p254/p256, 200 clips. Deltas are variant minus FP32.
+
+| variant | size KB | dSI-SDR | 95% CI | mean abs dSI-SDR |
+|---|---|---|---|---|
+| only_stem | 2852.6 | +0.0055 | [+0.0015, +0.0096] | 0.0176 |
+| only_block0_d1 | 2369.4 | +0.0004 | [-0.0023, +0.0030] | 0.0124 |
+| only_block1_d2 | 2369.4 | -0.0009 | [-0.0030, +0.0010] | 0.0086 |
+| only_block2_d4 | 2369.4 | +0.0001 | [-0.0018, +0.0018] | 0.0083 |
+| only_block3_d8 | 2369.4 | +0.0016 | [-0.0004, +0.0037] | 0.0086 |
+| only_head | 2854.4 | +0.0042 | [+0.0030, +0.0053] | 0.0067 |
+| uniform_int8 | 952.2 | -0.0510 | [-0.0709, -0.0318] | 0.1056 |
+| mixed_stemfp32 | 917.4 | +0.0041 | [+0.0000, +0.0080] | 0.0193 |
+
+#### Verdict
+
+Most sensitive single layer: **only_stem**
+
+Sensitivity order (by mean |dSI-SDR|): stem > block0_d1 > block1_d2 > block3_d8 > block2_d4 > head
+
+Stem's share of total INT8 degradation: **92.1 %**
+
+**stem dominant -- replicates the magnitude-model finding**
+
+## E4 — findings
+
+`PERCEPTUAL_MP/results/e4_complex/FINDINGS_E4.md`
+
+### E4 — stem exemption on a second architecture: findings
+
+Script: `PERCEPTUAL_MP/scripts/e4_second_architecture.py`. Complex-mask GTCRN, 200 dev clips
+(p254/p256, speaker-disjoint from TRAIN). Same runtime, same calibration split, same protocol as
+the magnitude model.
+
+**This experiment was run knowing it could weaken the paper's headline.** It did not.
+
+---
+
+#### 1. Result — the finding replicates
+
+| | magnitude GTCRN | complex GTCRN |
+|---|---|---|
+| most sensitive layer | **stem** | **stem** |
+| least sensitive layer | **head** | **head** |
+| stem's share of INT8 degradation | **98.7 %** | **92.1 %** |
+| uniform INT8 ΔSI-SDR | −0.109 dB | −0.051 dB |
+| mixed (stem FP32) ΔSI-SDR | −0.0014 dB (n.s.) | +0.0041 dB |
+| uniform INT8 size | 950.7 KB | 952.2 KB |
+| **mixed size** | **916.9 KB** | **917.4 KB** |
+
+Per-layer sensitivity, mean absolute ΔSI-SDR against FP32:
+
+| layer | mean abs ΔSI-SDR |
+|---|---:|
+| **stem** | **0.0176** |
+| block0_d1 | 0.0124 |
+| block1_d2 | 0.0086 |
+| block3_d8 | 0.0086 |
+| block2_d4 | 0.0083 |
+| head | 0.0067 |
+
+Three things transfer:
+
+1. **The stem dominates.** Most sensitive of the six on both models, and the head is least
+   sensitive on both.
+2. **The exemption works.** Removing the stem from the INT8 set takes the loss from −0.051 dB to
+   +0.004 dB.
+3. **The size inversion replicates.** The mixed model is *smaller* than uniform INT8 (917.4 vs
+   952.2 KB) on this architecture too, for the same reason — quantizing every layer makes the
+   runtime insert QDQ pairs around many more activation tensors, and that graph overhead exceeds
+   the stem's weight savings.
+
+#### 2. What this does and does not license
+
+**Does:** the claim moves from one checkpoint to two models, so "the stem carries the damage" is no
+longer a single-checkpoint observation. The reviewer objection that motivated this experiment is
+answered.
+
+**Does not:** both models share the *same backbone* — stem, four gated TF-conv blocks, band GRU —
+and differ only in the output head (2-channel complex ratio mask, +97 parameters). This is a
+replication across **output representations**, not across architecture families. It does not show
+the finding holds for a differently-shaped denoiser.
+
+State it that way in the paper. The honest scope is: *robust to the output representation, untested
+across backbone families.* A genuinely independent test would need something like DeepFilterNet2,
+whose enhanced outputs are already in the repo but which was never put through the per-layer sweep.
+
+#### 3. One thing our own diagnostic flags
+
+The mixed model scores **+0.0041 dB above FP32** on this dev split, with a bootstrap CI of
+[+0.0000, +0.0080] that only marginally excludes zero.
+
+By the dither rule established in R3 — *a lossy approximation cannot be better than the model it
+approximates, so a variant beating FP32 means the metric is compromised on that data* — this cell
+should be flagged rather than reported as an improvement. The effect is tiny and the CI touches
+zero, so the correct reading is "indistinguishable from FP32", the same conclusion as the magnitude
+model, **not** "better than FP32".
+
+Applying our own rule against our own favourable result is the consistent thing to do, and it is
+worth a sentence in the paper for exactly that reason.
+
+#### 4. Caveats
+
+- Dev split only (200 clips). The magnitude model's headline numbers come from the 824-clip test
+  set; this replication was not run on test, so the two columns in §1 are not measured on the same
+  data. Comparable in direction, not directly comparable in magnitude.
+- The complex checkpoint was trained on a 5 000-clip subset, not the full corpus, so its absolute
+  quality is below the locked model. The *relative* per-layer pattern is what transfers.
+- ONNX export for this model required pinning the legacy TorchScript exporter: torch 2.13's dynamo
+  path emits `Split` with a `num_outputs` attribute that ONNX Runtime 1.20.1 cannot load during
+  static quantization. Recorded in `scripts/export_onnx.py` behind `--dynamo`.
 
 ## R3 — dither diagnostic
 
@@ -1669,6 +1886,216 @@ Both metrics are purely geometric and need no labels. Recall@k asks *are these t
 | wavlm_base_plus | scalar-4b-rot-gaussian | 3104 | 0.8791 | 0.9988 | +0.1197 |
 | wavlm_base_plus | scalar-4b-no-rot | 3104 | 0.5503 | 0.9770 | +0.4267 |
 | wavlm_base_plus | uniform-4b | 3072 | 0.5182 | 0.9749 | +0.4567 |
+| wavlm_base_plus | PQ-m96-8b | 768 | 0.5439 | 0.9776 | +0.4337 |
+| wavlm_base_plus | OPQ-m96-8b | 768 | 0.7260 | 0.9927 | +0.2667 |
+| wavlm_base_plus | PQ-m192-8b | 1536 | 0.6886 | 0.9906 | +0.3020 |
+| wavlm_base_plus | OPQ-m192-8b | 1536 | 0.8435 | 0.9978 | +0.1543 |
+| wavlm_base_plus | PQ-m384-8b | 3072 | 0.8720 | 0.9985 | +0.1265 |
+| wavlm_base_plus | OPQ-m384-8b | 3072 | 0.8990 | 0.9991 | +0.1001 |
+| wav2vec2_base | float32-exact | 24576 | 1.0000 | 1.0000 | +0.0000 |
+| wav2vec2_base | scalar-1b-rot-gaussian | 800 | 0.5299 | 0.9632 | +0.4333 |
+| wav2vec2_base | scalar-1b-no-rot | 800 | 0.5245 | 0.9603 | +0.4358 |
+| wav2vec2_base | uniform-1b | 768 | 0.0133 | 0.7201 | +0.7068 |
+| wav2vec2_base | scalar-2b-rot-gaussian | 1568 | 0.7085 | 0.9870 | +0.2785 |
+| wav2vec2_base | scalar-2b-no-rot | 1568 | 0.6604 | 0.9818 | +0.3214 |
+| wav2vec2_base | uniform-2b | 1536 | 0.2258 | 0.8634 | +0.6376 |
+| wav2vec2_base | scalar-3b-rot-gaussian | 2336 | 0.7935 | 0.9935 | +0.2000 |
+| wav2vec2_base | scalar-3b-no-rot | 2336 | 0.7925 | 0.9936 | +0.2011 |
+| wav2vec2_base | uniform-3b | 2304 | 0.5665 | 0.9682 | +0.4017 |
+| wav2vec2_base | scalar-4b-rot-gaussian | 3104 | 0.8965 | 0.9985 | +0.1020 |
+| wav2vec2_base | scalar-4b-no-rot | 3104 | 0.8739 | 0.9978 | +0.1239 |
+| wav2vec2_base | uniform-4b | 3072 | 0.7470 | 0.9908 | +0.2438 |
+| wav2vec2_base | PQ-m96-8b | 768 | 0.4947 | 0.9588 | +0.4641 |
+| wav2vec2_base | OPQ-m96-8b | 768 | 0.7322 | 0.9879 | +0.2557 |
+| wav2vec2_base | PQ-m192-8b | 1536 | 0.6738 | 0.9843 | +0.3105 |
+| wav2vec2_base | OPQ-m192-8b | 1536 | 0.8001 | 0.9944 | +0.1943 |
+| wav2vec2_base | PQ-m384-8b | 3072 | 0.8161 | 0.9949 | +0.1788 |
+| wav2vec2_base | OPQ-m384-8b | 3072 | 0.8472 | 0.9966 | +0.1494 |
+| hubert_base | float32-exact | 24576 | 1.0000 | 1.0000 | +0.0000 |
+| hubert_base | scalar-1b-rot-gaussian | 800 | 0.6982 | 0.9851 | +0.2869 |
+| hubert_base | scalar-1b-no-rot | 800 | 0.4292 | 0.9458 | +0.5166 |
+| hubert_base | uniform-1b | 768 | 0.0058 | 0.7768 | +0.7710 |
+| hubert_base | scalar-2b-rot-gaussian | 1568 | 0.7771 | 0.9925 | +0.2154 |
+| hubert_base | scalar-2b-no-rot | 1568 | 0.5877 | 0.9723 | +0.3846 |
+| hubert_base | uniform-2b | 1536 | 0.1681 | 0.8520 | +0.6839 |
+| hubert_base | scalar-3b-rot-gaussian | 2336 | 0.8696 | 0.9977 | +0.1281 |
+| hubert_base | scalar-3b-no-rot | 2336 | 0.6347 | 0.9787 | +0.3440 |
+| hubert_base | uniform-3b | 2304 | 0.4850 | 0.9601 | +0.4751 |
+| hubert_base | scalar-4b-rot-gaussian | 3104 | 0.9212 | 0.9992 | +0.0780 |
+| hubert_base | scalar-4b-no-rot | 3104 | 0.7141 | 0.9861 | +0.2720 |
+| hubert_base | uniform-4b | 3072 | 0.7266 | 0.9886 | +0.2620 |
+| hubert_base | PQ-m96-8b | 768 | 0.7069 | 0.9870 | +0.2801 |
+| hubert_base | OPQ-m96-8b | 768 | 0.7380 | 0.9907 | +0.2527 |
+| hubert_base | PQ-m192-8b | 1536 | 0.7123 | 0.9875 | +0.2752 |
+| hubert_base | OPQ-m192-8b | 1536 | 0.8656 | 0.9976 | +0.1320 |
+| hubert_base | PQ-m384-8b | 3072 | 0.8278 | 0.9959 | +0.1681 |
+| hubert_base | OPQ-m384-8b | 3072 | 0.9095 | 0.9990 | +0.0895 |
+
+## E1b — does a label-free metric predict task retention?
+
+`AudioVQ/results/ratio_at_k/metric_predicts_task.md`
+
+### Does a label-free geometric metric predict task retention?
+
+Semantic retention is the measured ground truth: downstream retrieval precision after quantization divided by its float32 value, averaged over the speaker and noise-type tasks. Both candidate metrics are purely geometric and need no labels.
+
+| model | method | semantic | Recall@10 | err | 1/Ratio@10 | err |
+|---|---|---|---|---|---|---|
+| hubert_base | scalar-1b-no-rot | 0.9918 | 0.4292 | -0.5626 | 0.9458 | -0.0461 |
+| hubert_base | scalar-1b-rot-gaussian | 0.9792 | 0.6982 | -0.2810 | 0.9851 | +0.0059 |
+| hubert_base | scalar-2b-no-rot | 0.9958 | 0.5877 | -0.4081 | 0.9723 | -0.0235 |
+| hubert_base | scalar-2b-rot-gaussian | 0.9859 | 0.7771 | -0.2088 | 0.9925 | +0.0065 |
+| hubert_base | scalar-3b-no-rot | 1.0016 | 0.6347 | -0.3669 | 0.9787 | -0.0229 |
+| hubert_base | scalar-3b-rot-gaussian | 0.9962 | 0.8696 | -0.1266 | 0.9977 | +0.0015 |
+| hubert_base | scalar-4b-no-rot | 1.0022 | 0.7141 | -0.2881 | 0.9861 | -0.0161 |
+| hubert_base | scalar-4b-rot-gaussian | 1.0008 | 0.9212 | -0.0796 | 0.9992 | -0.0015 |
+| hubert_base | uniform-1b | 0.9460 | 0.0058 | -0.9402 | 0.7768 | -0.1692 |
+| hubert_base | uniform-2b | 0.9675 | 0.1681 | -0.7994 | 0.8520 | -0.1155 |
+| hubert_base | uniform-3b | 0.9965 | 0.4850 | -0.5115 | 0.9601 | -0.0363 |
+| hubert_base | uniform-4b | 1.0021 | 0.7266 | -0.2755 | 0.9886 | -0.0134 |
+| wav2vec2_base | scalar-1b-no-rot | 0.9651 | 0.5245 | -0.4406 | 0.9603 | -0.0048 |
+| wav2vec2_base | scalar-1b-rot-gaussian | 0.9631 | 0.5299 | -0.4332 | 0.9632 | +0.0000 |
+| wav2vec2_base | scalar-2b-no-rot | 0.9826 | 0.6604 | -0.3222 | 0.9818 | -0.0008 |
+| wav2vec2_base | scalar-2b-rot-gaussian | 0.9807 | 0.7085 | -0.2722 | 0.9870 | +0.0062 |
+| wav2vec2_base | scalar-3b-no-rot | 0.9958 | 0.7925 | -0.2033 | 0.9936 | -0.0022 |
+| wav2vec2_base | scalar-3b-rot-gaussian | 0.9924 | 0.7935 | -0.1989 | 0.9935 | +0.0012 |
+| wav2vec2_base | scalar-4b-no-rot | 0.9994 | 0.8739 | -0.1255 | 0.9978 | -0.0017 |
+| wav2vec2_base | scalar-4b-rot-gaussian | 0.9982 | 0.8965 | -0.1017 | 0.9985 | +0.0003 |
+| wav2vec2_base | uniform-1b | 0.9534 | 0.0133 | -0.9401 | 0.7201 | -0.2333 |
+| wav2vec2_base | uniform-2b | 0.9774 | 0.2258 | -0.7516 | 0.8634 | -0.1140 |
+| wav2vec2_base | uniform-3b | 1.0003 | 0.5665 | -0.4338 | 0.9682 | -0.0321 |
+| wav2vec2_base | uniform-4b | 1.0040 | 0.7470 | -0.2570 | 0.9908 | -0.0133 |
+| wavlm_base_plus | scalar-1b-no-rot | 0.9711 | 0.3437 | -0.6274 | 0.9474 | -0.0236 |
+| wavlm_base_plus | scalar-1b-rot-gaussian | 0.9624 | 0.4829 | -0.4795 | 0.9703 | +0.0079 |
+| wavlm_base_plus | scalar-2b-no-rot | 0.9842 | 0.4430 | -0.5412 | 0.9620 | -0.0222 |
+| wavlm_base_plus | scalar-2b-rot-gaussian | 0.9774 | 0.6198 | -0.3576 | 0.9848 | +0.0074 |
+| wavlm_base_plus | scalar-3b-no-rot | 0.9949 | 0.5051 | -0.4898 | 0.9720 | -0.0230 |
+| wavlm_base_plus | scalar-3b-rot-gaussian | 0.9946 | 0.7950 | -0.1996 | 0.9961 | +0.0015 |
+| wavlm_base_plus | scalar-4b-no-rot | 0.9988 | 0.5503 | -0.4485 | 0.9770 | -0.0218 |
+| wavlm_base_plus | scalar-4b-rot-gaussian | 0.9987 | 0.8791 | -0.1196 | 0.9988 | +0.0001 |
+| wavlm_base_plus | uniform-1b | 0.8891 | 0.0443 | -0.8448 | 0.8280 | -0.0611 |
+| wavlm_base_plus | uniform-2b | 0.9247 | 0.0726 | -0.8521 | 0.8372 | -0.0875 |
+| wavlm_base_plus | uniform-3b | 0.9855 | 0.3434 | -0.6421 | 0.9502 | -0.0353 |
+| wavlm_base_plus | uniform-4b | 0.9953 | 0.5182 | -0.4771 | 0.9749 | -0.0204 |
+
+#### Summary
+
+| metric | mean abs error vs semantic | Pearson r | Spearman rho |
+|---|---|---|---|
+| Recall@10 | 0.4280 | +0.754 | +0.689 |
+| **1/Ratio@10** | **0.0328** | +0.732 | +0.674 |
+
+#### Discrimination check
+
+A metric pinned near 1.0 everywhere would be useless. Uniform 1-bit destroys retrieval and is the case that decides whether 1/Ratio@10 discriminates:
+
+| model | Recall@10 | 1/Ratio@10 | semantic |
+|---|---|---|---|
+| wavlm_base_plus | 0.0443 | 0.8280 | 0.8891 |
+| wav2vec2_base | 0.0133 | 0.7201 | 0.9534 |
+| hubert_base | 0.0058 | 0.7768 | 0.9460 |
+
+## E1 / E1b — findings
+
+`AudioVQ/results/ratio_at_k/FINDINGS_RATIO.md`
+
+### E1 / E1b — does a label-free geometric metric predict task retention?
+
+Scripts: `AudioVQ/scripts/ratio_at_k.py`, `AudioVQ/scripts/metric_predicts_task.py`.
+3 embedding models × 19 methods; 36 points where a geometric metric and measured downstream
+retention are both available.
+
+---
+
+#### 1. The question
+
+The paper argues Recall@k understates deployment quality under quantization. A practitioner's
+immediate reply: *then what should I measure, short of running the downstream task — which needs
+labels my deployment may not have?*
+
+Two candidates, both purely geometric and label-free:
+
+- **Recall@10** — the field default.
+- **1/Ratio@10** — the inverse approximation ratio proposed by Dimitropoulos & Mamoulis
+  (arXiv:2606.04522) for ANN *search*, computed here under *quantization*.
+
+Ground truth is measured semantic retention: downstream speaker- and noise-type-retrieval precision
+after quantization, divided by its float32 value.
+
+#### 2. Result
+
+| metric | mean abs error vs semantic retention | Pearson r | Spearman ρ |
+|---|---:|---:|---:|
+| Recall@10 | 0.4280 | +0.754 | +0.689 |
+| **1/Ratio@10** | **0.0328** | +0.732 | +0.674 |
+
+**1/Ratio@10 is ~13× better calibrated than Recall@10** (0.033 vs 0.428 mean absolute error), while
+the two rank methods almost identically.
+
+The precise statement, which matters: **Recall@k preserves the *ordering* of quantizers but not the
+*calibration*; 1/Ratio@k preserves both.** Recall will tell you which quantizer is better. It will
+badly misinform you about how much you are losing.
+
+At the paper's headline operating point (1 bit/coordinate, ~30× compression) on WavLM:
+
+| | value |
+|---|---|
+| Recall@10 | 0.483 |
+| 1/Ratio@10 | 0.970 |
+| measured semantic retention | 0.965 |
+
+The label-free geometric metric lands within half a point of the task measurement that recall
+misses by 48 points.
+
+#### 3. The discrimination check — and why it was needed
+
+An earlier version of this analysis covered only 12 points, all with semantic retention ≥ 0.96. A
+high correlation over a narrow range is weak evidence however large the coefficient, and a metric
+pinned near 1.0 everywhere would look calibrated on good quantizers while being useless in
+practice.
+
+Two fixes widened the range: an alias bug meant the `no-rot` variants never matched (the semantic
+CSV uses a space, not a hyphen), and the uniform scalar quantizer was absent from the semantic
+sweep entirely although the code already supported it. Uniform 1-bit destroys retrieval, so
+including it is the case that decides whether the metric discriminates.
+
+| model | Recall@10 | 1/Ratio@10 | semantic retention |
+|---|---:|---:|---:|
+| WavLM | 0.0443 | 0.828 | 0.889 |
+| wav2vec2 | 0.0133 | 0.720 | 0.953 |
+| HuBERT | 0.0058 | 0.777 | 0.946 |
+
+**1/Ratio@10 does discriminate** — it drops to 0.72–0.83 on the broken quantizer rather than
+sitting at 1.0. It is *conservative* there, under-predicting retention by 0.13–0.23, which is the
+safe direction for a deployment metric.
+
+#### 4. An unplanned result that is stronger than the headline
+
+Uniform 1-bit loses **95–99 % of true nearest neighbours** (Recall@10 = 0.006–0.044) while retaining
+**89–95 % of downstream task accuracy**.
+
+The geometry–meaning dissociation the paper is built on is therefore not a mild effect at moderate
+compression. At aggressive compression it is close to total: the neighbour list is essentially
+destroyed and the task barely notices. This is the most extreme demonstration in the project and it
+came out of a check added to guard against a weak correlation, not from the planned sweep.
+
+#### 5. What to claim
+
+1. Recall@k is well-ordered but badly calibrated under quantization; report 1/Ratio@k alongside it.
+2. 1/Ratio@k is label-free, so it is available to deployments that cannot run a labelled downstream
+   evaluation — which is the practical contribution.
+3. The dissociation strengthens with compression, up to ~99 % neighbour loss at ~9 % task loss.
+
+#### 6. Limitations
+
+- 36 points across 3 models and 4 bit-widths; not a general claim about all quantizers.
+- Semantic retention here means speaker and noise-type retrieval on two corpora. Other downstream
+  tasks may weight the neighbour list differently — a task that genuinely needs exact nearest
+  neighbours would not show this.
+- 1/Ratio@k under-predicts on badly broken quantizers, so it is a safety-biased estimate rather
+  than an unbiased one.
+- Both metrics are computed on 10 000-vector indices; §5.6 of the paper already shows behaviour
+  shifts with index size.
 
 
 ---
@@ -1933,3 +2360,132 @@ python scripts/train_scene_mlp.py
   are the least reliable.
 - Mixture SNRs use synthetic mixing at the same SNR MS-SNSD itself uses; real
   rooms add reverberation not modelled here.
+
+
+---
+
+# Phase D — deferred
+
+## MOS listening test runbook (built, validated, not run)
+
+`mos_test/RUNBOOK.md`
+
+### Phase D — MOS listening test runbook
+
+Everything is built and validated. What is missing is **human raters**. This is the only part of
+the plan that cannot be done by running something.
+
+---
+
+#### What you need
+
+| | |
+|---|---|
+| **Raters** | **18–20 people.** See the power note below for why not 13. |
+| Time per rater | **12–18 minutes** (50 clips, one rating each) |
+| Equipment | Headphones, quiet room. Laptop speakers invalidate the quantization arm — the differences are small |
+| Who | Normal-hearing adults. No audio expertise needed; ACR is designed for naive listeners |
+| Network | Raters on the same LAN as the machine running the app, or a tunnel |
+
+Recruiting 20 classmates for 15 minutes is realistic in a single afternoon. That is the whole
+remaining cost of Phase D.
+
+#### Why 18–20 and not 13
+
+The dry run (15 simulated raters) put 91 paired observations on the table against a requirement of
+~88 to detect a 0.3 MOS difference at 80 % power — i.e. **exactly at the threshold**. Two of the 15
+were dropped by attention-check filtering, which is a normal rate.
+
+So budget for attrition: **20 recruited → ~17 kept → comfortable margin.** At 13 or fewer the
+`analyze_mos.py` output will label the study a pilot and the equivalence result will be
+inconclusive rather than negative, which is a much weaker thing to report.
+
+#### Running it
+
+```bash
+python mos_test/app.py
+```
+
+Serves on port **7861**. Raters open `http://<your-ip>:7861`, enter any rater id, and rate all 50
+clips on the ACR 1–5 scale. Responses append to `mos_test/responses.csv`.
+
+Verified working against the current 50-clip manifest: all clips serve, and **condition labels are
+never sent to the browser** — the test is genuinely blind.
+
+##### Instructions to give raters
+
+> Rate the **quality of the speech** on each clip from 1 (bad) to 5 (excellent). Some clips are
+> noisy, some have been processed. Judge how pleasant and clear the speech sounds overall. Use
+> headphones. Do not go back and change earlier ratings.
+
+Do not tell them what the conditions are, that some clips are near-identical, or which comparison
+matters. That is the point of blinding.
+
+#### What the test answers
+
+50 clips = 7 utterances × 7 conditions + 1 attention check.
+
+**Arm 1 — complex vs magnitude mask.** SI-SDR says the complex mask wins (+0.313 dB, p < 1e-6);
+PESQ says it loses (−0.016, p = 0.005). The metrics contradict each other, so a human verdict
+settles which one tracked perception.
+
+**Arm 2 — FP32 vs mixed vs uniform INT8.** The paper claims the stem-exempt mixed model is
+*indistinguishable* from FP32. That currently rests on p = 0.25, which is a **failure to reject**,
+not a demonstration of sameness — an underpowered study produces the same p-value. Human ratings
+plus an equivalence test convert this into a positive result.
+
+The expected pattern, if the paper's claim holds:
+
+| comparison | expected |
+|---|---|
+| `quant_fp32` vs `quant_mixed` | **equivalent** within ±0.3 MOS |
+| `quant_fp32` vs `quant_uniform_int8` | uniform audibly **worse** |
+| `quant_mixed` vs `quant_uniform_int8` | mixed **better** |
+
+**If listeners do separate mixed from FP32, the claim must be softened.** Say so; do not re-run
+until it comes out right.
+
+#### Analysis
+
+```bash
+python scripts/analyze_mos.py
+```
+
+Produces per-condition MOS with bootstrap CIs, paired comparisons, equivalence tests, and a
+MOS-vs-STOI correlation.
+
+Two things were added specifically for this test:
+
+1. **Paired within (rater, utterance).** Every rater hears every utterance under every condition,
+   so pairing removes rater severity and utterance difficulty from the error term. Far more
+   sensitive than comparing marginal means at these sample sizes.
+2. **TOST equivalence testing** against a **declared ±0.3 MOS margin** (override with
+   `MOS_EQUIV_MARGIN`). Equivalence is concluded when the 90 % CI of the difference lies entirely
+   inside the margin. The margin is stated up front rather than chosen after seeing the data — a
+   reader can disagree with 0.3, but cannot accuse it of being fitted.
+
+The script drops raters who fail the attention check, and prints a power note that flags the study
+as under-powered if the paired sample is too small to support an equivalence conclusion.
+
+#### Validation already done
+
+The full pipeline was dry-run on 15 simulated raters with a known ground truth, and recovered it:
+
+| comparison | simulated truth | recovered |
+|---|---|---|
+| gtcrn vs complex_gtcrn | tie | no significant difference ✓ |
+| fp32 vs mixed | equivalent | **EQUIVALENT**, TOST p = 0.0091 ✓ |
+| fp32 vs uniform INT8 | uniform worse | fp32 better, p = 0.002 ✓ |
+| noisy vs gtcrn | enhancement helps | gtcrn better, p = 1.8e-11 ✓ |
+
+A deliberately careless simulated rater was caught by the attention check. So the analysis is known
+to work *before* anyone spends time rating — if it had broken after collection, the data could not
+have been regenerated.
+
+#### Reporting
+
+- Under 10 raters: report as a **pilot listening study**, indicative only. The script says so.
+- Report the equivalence margin in the paper text, not just the p-value.
+- Report how many raters were excluded and why.
+- If Arm 1 comes out a tie, that is a real finding: it means the SI-SDR/PESQ disagreement is below
+  the perceptual threshold, and *neither* metric should have been trusted to call a winner.

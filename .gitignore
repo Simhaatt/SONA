@@ -61,3 +61,6 @@ results/deepfilternet2_voicebank/
 *.out
 *.toc
 *.synctex.gz
+
+# Bundle zip is a build artifact of paper_bundle/ + scripts/build_paper_bundle.py
+paper_bundle_*.zip

@@ -37,6 +37,10 @@ SECTIONS: list[tuple[str, str, str]] = [
     ("Phase 4 — summary", "PERCEPTUAL_MP/results/phase4/phase4_summary.json", "json"),
     ("E2 — Hessian-trace ranking (HAWQ-V2 proxy)",
      "PERCEPTUAL_MP/results/hessian/hessian_ranking.md", "md"),
+    ("E2 — findings", "PERCEPTUAL_MP/results/hessian/FINDINGS_HESSIAN.md", "md"),
+    ("E4 — stem exemption on a second architecture",
+     "PERCEPTUAL_MP/results/e4_complex/e4_sensitivity.md", "md"),
+    ("E4 — findings", "PERCEPTUAL_MP/results/e4_complex/FINDINGS_E4.md", "md"),
     ("R3 — dither diagnostic", "PERCEPTUAL_MP/results/dither/dither_diagnostic.md", "md"),
 
     # ---------------------------------------------------------------- Study 2: evaluation
@@ -68,6 +72,9 @@ SECTIONS: list[tuple[str, str, str]] = [
     # ---------------------------------------------------------------- Study 3: embeddings
     ("Study 3 — Embedding quantization", "", "h1"),
     ("E1 — 1/Ratio@k vs Recall@k", "AudioVQ/results/ratio_at_k/ratio_at_k.md", "md"),
+    ("E1b — does a label-free metric predict task retention?",
+     "AudioVQ/results/ratio_at_k/metric_predicts_task.md", "md"),
+    ("E1 / E1b — findings", "AudioVQ/results/ratio_at_k/FINDINGS_RATIO.md", "md"),
 
     # ---------------------------------------------------------------- Remedies
     ("Remedies", "", "h1"),
@@ -82,6 +89,10 @@ SECTIONS: list[tuple[str, str, str]] = [
     ("R2 — mixed vs uniform INT8 timing",
      "results/onnx/edge_bench_mixed_2026-08-20/summary.csv", "csv"),
     ("Scene classifier", "sona-final-month/SCENE_CLASSIFIER_FINDINGS.md", "md"),
+
+    ("Phase D — deferred", "", "h1"),
+    ("MOS listening test runbook (built, validated, not run)",
+     "mos_test/RUNBOOK.md", "md"),
 ]
 
 
