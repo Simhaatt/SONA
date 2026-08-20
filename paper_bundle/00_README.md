@@ -78,7 +78,7 @@ Each failure mode has a **validated** countermeasure. None is merely proposed.
 |---|---|---|
 | perceptual ≈ MSE ranking | skip the PESQ-in-the-loop allocator | ρ = +1.000; allocations differ by 0.0003 dB |
 | metrics flattered by quantization noise | rank on \|deviation from FP32\| | R3: 4/32 cells beat FP32, none in-domain |
-| SI-SDR/PESQ conflict | report a metric set spanning phase sensitivity | complex-mask A/B; MOS pending |
+| SI-SDR/PESQ conflict | report a metric set spanning phase sensitivity | complex-mask A/B (MOS deferred — the effect is below audibility, which is itself the point) |
 | enhancement degrades ASR | **keep the enhancer out of the ASR path** | R1: 0.0428 → 0.0345 |
 | recall misleads | use 1/Ratio@k — label-free | E1: 0.970 vs 96.5 % semantic |
 | underpowered per-clip WER | aggregate at corpus level | E3b recovers the effect the per-clip test missed |
@@ -90,9 +90,11 @@ the overclaiming this paper argues against.
 
 ## What is still open
 
+Nothing now blocks drafting. The remaining compute is optional strengthening.
+
 | item | blocking? | note |
 |---|---|---|
-| **MOS listening test** | **yes, for the strongest version** | app built and verified, clips selected — needs ~15–20 human raters. Converts "metrics disagree with metrics" into "here is which one tracks humans" |
+| **MOS listening test** | **no — deferred to future work** | Built, validated, and ready (`mos_test/RUNBOOK.md`), but the effects are ~19x below what 20 raters can resolve, so it cannot pick a winner. Held for a larger-journal version, where the payoff is the *null*: significance at n=824 outrunning audibility |
 | R2 mixed-allocation timing | no | queued in `sona_phase_a_kaggle.ipynb`; possible free win if fewer QDQ nodes means less slowdown |
 | WER on MS-SNSD, and with `tiny.en` | no | queued on Kaggle; both attack the same zero-inflation power problem |
 | E4 second architecture | no | complex-GTCRN checkpoint exists, sweep not run. **May weaken the stem claim — accepted going in** |

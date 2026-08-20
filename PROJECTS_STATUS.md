@@ -148,8 +148,11 @@ benefit is size only.
 
 ### Open
 
-- **MOS listening test needs human raters.** The app (`mos_test/`) is built and browser-verified,
-  clips selected, analysis script written. Only participants are missing.
+- **MOS listening test — deferred to future work (2026-08-20).** Built, extended to both arms
+  (50 clips), app verified serving blind, and the paired + TOST equivalence analysis validated on
+  simulated raters against a planted ground truth. Deferred because the differences it would have
+  to resolve (0.016 PESQ; 0.0014 dB SI-SDR) sit far below a ~20-rater detection floor of ~0.3 MOS.
+  Held for a larger-journal submission. See `mos_test/RUNBOOK.md`.
 - ~~RTF figures were taken on a loaded machine.~~ **Done 2026-08-20** — re-measured at 6 % CPU
   load with ORT pinned to 1.20.1. The INT8-slower-than-FP32 finding replicates (1.39–1.46× across
   1/2/4 threads); absolute RTFs fell ~25–30 % and are now safe to quote with machine and load
