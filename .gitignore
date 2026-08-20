@@ -54,3 +54,10 @@ results/deepfilternet2_voicebank/
 
 # Office lock files
 ~$*
+
+# LaTeX build intermediates (the .tex sources and .pdf outputs are tracked)
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz

@@ -363,10 +363,10 @@ magnitude is not predictable in either direction. Screen the layer you intend to
   limitation of data-oblivious VQ, the anisotropy of speech representations, layer-wise variation
   in those representations, and audio-embedding compression via hashing/PQ are each established
   independently. Our contribution is the connection and its consequences, not any single component.
-- **Citation pass incomplete.** Related work was surveyed by targeted search rather than a
-  systematic review; the claims of novelty in §1 should be re-verified against a full literature
-  search before submission, particularly for work combining audio embeddings with training-free
-  quantization.
+- **Citation pass completed 2026-08-20** against the quantization, ANN-evaluation,
+  speech-representation and audio-retrieval literatures; bibliography and per-claim audit in
+  [`REFERENCES.md`](REFERENCES.md). One database-level sweep (DBLP / ACL Anthology / ISCA Archive)
+  remains before submission, chiefly to catch work appearing after June 2026.
 
 ## 7. Conclusion
 

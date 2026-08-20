@@ -1,0 +1,425 @@
+% Stem-Exempt INT8 Quantization — conference manuscript.
+% Generated from PAPER_DRAFT.md; every number is checked against results/ by
+% scripts/audit_paper_numbers.py (25 claims).
+%
+% Build:  cd PERCEPTUAL_MP/paper && pdflatex stem_exempt_quantization && pdflatex stem_exempt_quantization
+\documentclass[conference]{IEEEtran}
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{textcomp}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../results/phase4/}}
+
+\begin{document}
+
+\title{0.13\,\% of the Weights Carry 99\,\% of the Loss:\\Stem-Exempt INT8 Quantization\\of a Compact Speech Enhancer}
+
+\author{\IEEEauthorblockN{SPARC FYP Team}
+\IEEEauthorblockA{\textit{Final Year Project}\\
+sparcproject2026@gmail.com}}
+
+\maketitle
+
+\begin{abstract}
+Post-training quantization (PTQ) of speech enhancement models is normally applied uniformly, and
+mixed-precision variants assign precision by layer \emph{type} or by a second-order sensitivity
+proxy. We report a per-layer PTQ study of a 722\,K-parameter Bark-band GTCRN denoiser in which the
+allocation is chosen on a speaker-disjoint development split and then evaluated once,
+out-of-sample, on the 824-clip VoiceBank-DEMAND test set and on 1\,100 MS-SNSD clips.
+We set out to test whether ranking layers by a \emph{perceptual} criterion (PESQ) differs from
+ranking them by an MSE-family criterion, and \textbf{it does not}: across the six quantizable
+layers the two rankings agree at Spearman $\rho = +0.943$ against SI-SDR and $\rho = +1.000$
+against mask-MSE, and the two allocations differ by $0.0003$\,dB. We report this negative result in
+full, because it says something useful---for this model class, the cheap MSE-based sensitivity
+proxy is already perceptually adequate.
+The study's positive finding came from the sensitivity sweep itself. A single \textbf{3.8\,KB stem
+convolution---$0.133\,\%$ of the model's weights---carries $98.7\,\%$ of the total INT8
+degradation} on the held-out test set. Exempting it produces a model that is statistically
+\textbf{indistinguishable from FP32} ($\Delta = 0.0014$\,dB, $p = 0.25$, $n = 824$) at
+$3.2\times$ compression, versus a uniform-INT8 loss of $0.109$\,dB
+($p = 3.7\mathrm{e}{-51}$). The exemption is significant in \textbf{all nine test conditions} and
+replicates on MS-SNSD. Counter-intuitively the mixed model is also \emph{smaller} than uniform INT8
+($916.9$ vs $950.7$\,KB), because quantizing every layer causes the runtime to insert QDQ pairs
+around 143 additional activation tensors whose graph overhead exceeds the stem's $2.8$\,KB of
+weight savings.
+We further show that layer-wise quantization errors are \textbf{not additive}, and document two
+runtime limits: the band GRU cannot be quantized at all, and INT8 inference is $1.4\times$
+\emph{slower} than FP32 on x86.
+\end{abstract}
+
+\begin{IEEEkeywords}
+post-training quantization, mixed precision, speech enhancement, model compression, ONNX Runtime
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Compact speech enhancement models are deployed under a memory budget, and PTQ is the cheapest way
+to meet it---no retraining, no labelled calibration targets. The default is uniform INT8. When that
+costs too much quality, the standard remedies are quantization-aware training (expensive) or mixed
+precision, where some layers are kept at higher precision.
+
+Mixed precision needs a rule for \emph{which} layers. Two rules dominate. The first assigns by
+layer \textbf{type}---for RNN denoisers on microcontrollers, Rusci \emph{et al.}~\cite{rusci2022}
+quantize the recurrent layers to INT8 and keep the rest at FP16. The second assigns by a
+\textbf{second-order sensitivity proxy}: HAWQ~\cite{dong2019} and HAWQ-V2~\cite{dong2020} rank
+layers by top Hessian eigenvalue or average Hessian trace and allocate bits accordingly.
+
+Both proxies are ultimately about reconstruction error. But the objective that matters for speech
+enhancement is \emph{perceptual}, and perceptual quality weights frequency bands very
+non-uniformly. That gap motivated this study: \textbf{if the perceptual ranking of layers differs
+from the MSE ranking, allocating by the perceptual one should win at matched size.}
+
+It does not differ, and we report that plainly (Sec.~\ref{sec:negative}). What the sweep did reveal
+is a much sharper structural fact (Sec.~\ref{sec:stem}): the degradation is not spread across
+layers at all. It is almost entirely attributable to one tiny layer at the very front of the
+network.
+
+\textbf{Contributions.}
+\begin{enumerate}
+\item \textbf{A negative result, reported in full} (Sec.~\ref{sec:negative}): for this model at
+INT8 and 6-layer granularity, perceptual and MSE-family sensitivity rankings coincide. The cheap
+proxy is already adequate; practitioners need not build a PESQ-in-the-loop allocator.
+\item \textbf{The stem-exemption result} (Sec.~\ref{sec:stem}): $0.133\,\%$ of the weights carry
+$98.7\,\%$ of INT8 loss---validated out-of-sample after the allocation was frozen and timestamped.
+\item \textbf{A size inversion that contradicts the naive model of quantization}: quantizing
+\emph{more} layers produced a \emph{larger} file, because QDQ graph overhead outgrew the weight
+savings. This is invisible in any bits-per-weight analysis.
+\item \textbf{Condition-level robustness and an explicit cross-corpus caveat}
+(Sec.~\ref{sec:conditions}--\ref{sec:crosscorpus}).
+\item \textbf{Evidence that layer-wise quantization error is non-additive}
+(Sec.~\ref{sec:additive}), which invalidates the additive-cost assumption behind greedy per-layer
+allocation search.
+\item \textbf{Two hard runtime limits} (Sec.~\ref{sec:runtime}) that bound this problem on ONNX
+Runtime.
+\end{enumerate}
+
+\section{Related work and positioning}
+
+\textbf{Mixed-precision PTQ for speech enhancement.} The closest prior work is Rusci \emph{et
+al.}~\cite{rusci2022}, who deploy an RNN denoiser on a 9-core RISC-V MCU using mixed FP16--INT8
+PTQ, reporting $1.4$--$1.7\times$ memory saving at $0.06$ PESQ degradation against $0.3$ for
+uniform INT8. Two differences matter. First, their allocation is by \textbf{layer type}---recurrent
+layers to INT8---whereas ours is derived from measured per-layer sensitivity. Second, and more
+striking, our result runs in the \emph{opposite direction on the same architectural family}: on our
+runtime the recurrent layer cannot be quantized at all (Sec.~\ref{sec:runtime}), and the layer that
+must be protected is the small input convolution. We read this as evidence that ``which layer to
+protect'' is a property of the \emph{runtime and model}, not a transferable rule---which is an
+argument for measuring rather than assuming.
+
+\textbf{Hessian-guided allocation.} HAWQ~\cite{dong2019} and HAWQ-V2~\cite{dong2020} rank layers by
+curvature and are the standard sensitivity-based allocators. Our Sec.~\ref{sec:negative} result is
+adjacent but distinct: we do not compare against a Hessian proxy; we compare a \emph{perceptual}
+ranking against \emph{direct output-error} rankings, and find they coincide. Adding a Hessian-trace
+ranking as a third column is the single most valuable extension to this work.
+
+\textbf{Speech enhancement compression generally.} Other routes to the same budget include
+sign-exponent-only floating point~\cite{hsieh2021}, matrix-product-operator
+factorisation~\cite{sun2020}, and structured sparsity for tiny accelerators. These are
+complementary to PTQ rather than alternatives to it; our contribution is about \emph{where} the
+loss lives under PTQ, not about beating these methods.
+
+\textbf{Objective mismatch.} The framing---that an MSE-optimal quantizer may be wrong for the
+objective one actually cares about---was taken from TurboQuant~\cite{zandieh2025}. Its
+\emph{algorithm} does not apply here: there is no KV cache, no vector database, no memory
+bottleneck of the kind it addresses. We cite it for motivation only, and the perceptual-vs-MSE form
+of the hypothesis it suggested was refuted (Sec.~\ref{sec:negative}).
+
+\section{Method}
+
+\textbf{Model.} A Bark-band GTCRN, \texttt{ch96\_h96\_b4}, 722\,209 parameters---a stem
+convolution, four gated time--frequency convolution blocks with dilations $1/2/4/8$, a per-band GRU
+decoder, and a linear head producing per-band gains. FP32 size $2842.7$\,KB.
+
+\textbf{Quantization.} ONNX Runtime \texttt{quantize\_static}, QDQ format, per-layer control via
+\texttt{nodes\_to\_quantize}. Activation calibration uses 64 clips drawn from 11 training speakers.
+Per-layer control was verified to produce genuinely distinct graphs (uniform INT8 $=$ 172 QDQ
+nodes, head-only $=$ 5, stem-only $=$ 6) with distinct outputs, so the sensitivity study is
+mechanically meaningful rather than a no-op.
+
+\textbf{Leakage discipline.} Bit allocation is a model-selection decision, so it is made on a
+development set carved from TRAIN \textbf{by speaker}, never on the test set
+(Table~\ref{tab:splits}). The split builder hard-fails on speaker overlap, and the chosen
+allocation was written to disk \emph{before} any test-set evaluation was run.
+
+\begin{table}[t]
+\centering
+\caption{Speaker-disjoint splits. The test and external sets were each touched exactly once, after
+the allocation was frozen.}
+\label{tab:splits}
+\begin{tabular}{llrl}
+\toprule
+split & speakers & clips & used for \\
+\midrule
+calibration & 11 train spk. & 64 & QDQ activation calibration \\
+dev & p254, p256 & 200 & ranking + allocation search \\
+test & p232, p257 & 824 & final numbers \\
+external & MS-SNSD & 1100 & generalization \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Search space.} The band GRU is unquantizable on this runtime (Sec.~\ref{sec:runtime}) and
+INT4 is unavailable for Conv, so the precision axis is per-layer $\in \{$FP32, INT8$\}$ over
+\textbf{6} quantizable layers (5 Conv $+$ 1 MatMul)---$2^6 = 64$ configurations, small enough to
+enumerate exhaustively rather than search greedily. This matters given the non-additivity in
+Sec.~\ref{sec:additive}.
+
+\section{Experimental setup}
+
+VoiceBank-DEMAND 16\,kHz; 824-clip test set with official condition labels (5 noise types
+$\times$ 4 input SNRs). MS-SNSD provides 1\,100 external clips. Metrics: SI-SDR, STOI, ESTOI, LSD,
+and PESQ. Significance throughout is paired Wilcoxon signed-rank with $95\,\%$ bootstrap CIs on
+per-clip differences.
+
+\section{Results}
+
+\subsection{Perceptual and MSE sensitivity rankings coincide (negative result)}
+\label{sec:negative}
+
+\begin{table}[t]
+\centering
+\caption{Rank correlation between sensitivity orderings over the six quantizable layers. The
+perceptual and MSE-family rankings agree almost perfectly.}
+\label{tab:rankings}
+\begin{tabular}{lr}
+\toprule
+ranking comparison & Spearman $\rho$ \\
+\midrule
+PESQ vs SI-SDR & $+0.943$ \\
+PESQ vs mask-MSE & $\mathbf{+1.000}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\texttt{stem} ranks most sensitive under \emph{every} metric; \texttt{head} ranks least sensitive
+under \emph{every} metric (Table~\ref{tab:rankings}). The two induced allocations differ at exactly
+one position and produce a $\Delta$SI-SDR of $+0.0003$\,dB---indistinguishable.
+
+\textbf{Conclusion:} at INT8 and this granularity, MSE-guided allocation is already perceptually
+adequate for this model. We make no perceptual-advantage claim.
+
+\subsection{The stem exemption (main result, out-of-sample)}
+\label{sec:stem}
+
+\begin{table}[t]
+\centering
+\caption{Post-training quantization on the VoiceBank-DEMAND test set (824 clips, held out from the
+dev split used to choose the allocation). Exempting the 3.8\,KB stem convolution recovers
+essentially all of the quantization loss and yields a model statistically indistinguishable from
+FP32.}
+\label{tab:main}
+\begin{tabular}{lrrr}
+\toprule
+Method & Size (KB) & SI-SDR (dB) & vs FP32 \\
+\midrule
+FP32 (no quantization) & $2842.7$ & $18.377$ & --- \\
+\textbf{Mixed: stem FP32 (ours)} & $\mathbf{916.9}$ & $\mathbf{18.375}$ & $p = 0.25$ (n.s.) \\
+Uniform INT8 & $950.7$ & $18.267$ & $p = 3.7\mathrm{e}{-51}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+From Table~\ref{tab:main}:
+\begin{itemize}
+\item Stem exemption vs uniform: $+0.108$\,dB SI-SDR, $95\,\%$ CI $[+0.091, +0.126]$,
+$p = 9.2\mathrm{e}{-49}$.
+\item Mixed vs FP32: $\Delta = 0.0014$\,dB, CI $[-0.0012, +0.0041]$, \textbf{not significant}.
+\item Total quantization cost (FP32 $-$ uniform) is $0.109$\,dB; the stem accounts for
+$\mathbf{98.7\,\%}$ of it.
+\item The stem is $\mathbf{3\,840}$ bytes $= 0.133\,\%$ of model weights.
+\end{itemize}
+
+\textbf{The mixed model is also smaller than uniform INT8.} Verified cause: requesting quantization
+of every layer makes ONNX Runtime wrap ${\sim}143$ additional activation tensors in QDQ pairs
+(\textbf{172 vs 29} QDQ nodes), and that graph overhead exceeds the stem's $2.8$\,KB of weight
+savings. Quantizing the stem \emph{alone} even grows the file above FP32 ($2851.9$ vs
+$2842.7$\,KB). Any analysis that counts only bits-per-weight will miss this entirely.
+
+\textbf{Fidelity to FP32}---mean absolute per-clip deviation, the property PTQ is actually supposed
+to deliver---favours the mixed allocation in \textbf{8/8 metric--corpus cells, by $7$--$20\times$}
+(Table~\ref{tab:fidelity}).
+
+\begin{table}[t]
+\centering
+\caption{Mean absolute per-clip deviation from FP32 (lower is more faithful). All eight cells
+favour the mixed allocation.}
+\label{tab:fidelity}
+\begin{tabular}{llrrr}
+\toprule
+corpus & metric & mixed & uniform & adv. \\
+\midrule
+VB-824 & $|\Delta$SI-SDR$|$ & $\mathbf{0.0202}$ & $0.1458$ & $7.2\times$ \\
+VB-824 & $|\Delta$STOI$|$ & $\mathbf{0.00025}$ & $0.00186$ & $7.4\times$ \\
+VB-824 & $|\Delta$ESTOI$|$ & $\mathbf{0.00055}$ & $0.00481$ & $8.7\times$ \\
+VB-824 & $|\Delta$LSD$|$ & $\mathbf{0.0088}$ & $0.1708$ & $19.5\times$ \\
+MS-SNSD & $|\Delta$SI-SDR$|$ & $\mathbf{0.0328}$ & $0.2832$ & $8.6\times$ \\
+MS-SNSD & $|\Delta$STOI$|$ & $\mathbf{0.00051}$ & $0.00710$ & $13.9\times$ \\
+MS-SNSD & $|\Delta$ESTOI$|$ & $\mathbf{0.00079}$ & $0.00966$ & $12.2\times$ \\
+MS-SNSD & $|\Delta$LSD$|$ & $\mathbf{0.0209}$ & $0.2915$ & $13.9\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Condition robustness}
+\label{sec:conditions}
+
+\begin{table}[t]
+\centering
+\caption{Benefit of exempting the stem, by noise type and input SNR. The effect is statistically
+significant in every one of the nine conditions.}
+\label{tab:conditions}
+\begin{tabular}{lrrl}
+\toprule
+Condition & $n$ & $\Delta$SI-SDR (dB) & 95\,\% CI \\
+\midrule
+bus & 164 & $+0.087$ & $[+0.051, +0.130]$ \\
+cafe & 164 & $+0.156$ & $[+0.124, +0.189]$ \\
+living & 166 & $+0.098$ & $[+0.064, +0.134]$ \\
+office & 164 & $+0.024$ & $[+0.011, +0.038]$ \\
+psquare & 166 & $+0.175$ & $[+0.126, +0.235]$ \\
+\midrule
+2.5\,dB & 207 & $+0.125$ & $[+0.088, +0.165]$ \\
+7.5\,dB & 206 & $+0.095$ & $[+0.065, +0.128]$ \\
+12.5\,dB & 207 & $+0.104$ & $[+0.076, +0.137]$ \\
+17.5\,dB & 204 & $+0.108$ & $[+0.075, +0.151]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The effect is \textbf{flat across SNR} (Table~\ref{tab:conditions})---so it is not an SNR
+artifact---and largest in hard non-stationary noise (psquare, cafe), smallest in easy stationary
+office noise. That ordering is what one would predict if the stem's early feature extraction
+matters most when spectral structure is complex, which is a satisfying but \emph{post-hoc}
+explanation; we offer it as interpretation, not evidence.
+
+\subsection{Cross-corpus caveat---stated explicitly}
+\label{sec:crosscorpus}
+
+On MS-SNSD the stem-exemption SI-SDR benefit replicates ($+0.039$\,dB, $p = 3.0\mathrm{e}{-12}$)
+and mixed remains indistinguishable from FP32 on SI-SDR ($p = 0.17$). \textbf{However, on MS-SNSD
+uniform INT8 scores better than mixed on STOI ($-0.0060$), ESTOI ($-0.0067$) and LSD ($+0.233$).}
+
+This is not evidence that uniform is the better allocation. Uniform INT8 also beats \textbf{FP32
+itself} on MS-SNSD STOI ($0.8212$ vs $0.8154$)---a quantizer cannot improve on the model it is
+approximating. Its larger quantization noise acts as a mild dither that flatters intelligibility
+metrics under distribution shift while degrading waveform fidelity. The mixed model instead tracks
+FP32 closely on every metric (Table~\ref{tab:fidelity}).
+
+\textbf{The claim we make is therefore fidelity to FP32, not ``better enhancement on every metric
+everywhere.''} We state this in the abstract as well as here, because the temptation to overclaim
+is exactly what this result guards against.
+
+\subsection{Quantization error is not additive}
+\label{sec:additive}
+
+\begin{table}[t]
+\centering
+\caption{Layer-wise degradations do not sum. The interaction term's CI excludes zero on both
+corpora.}
+\label{tab:additive}
+\begin{tabular}{lrrrr}
+\toprule
+corpus & stem & 5 blocks & combined & ratio \\
+\midrule
+dev (200) & $-0.0061$ & $-0.0023$ & $-0.0996$ & $\mathbf{11.95\times}$ \\
+MS-SNSD (1100) & $+0.0260$ & $+0.0010$ & $-0.0377$ & $1.40\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Error \textbf{compounds} through the network rather than accumulating independently
+(Table~\ref{tab:additive}). The magnitude is strongly corpus-dependent, so we report the
+\emph{existence} of the interaction as robust and its \emph{size} as corpus-specific.
+
+Practical consequence: greedy per-layer allocation search assumes additive costs and is therefore
+unsound here. Exhaustive enumeration over the 64 configurations was affordable and is what we did.
+
+\subsection{Runtime limits (findings, not bugs)}
+\label{sec:runtime}
+
+\begin{itemize}
+\item \textbf{The band GRU cannot be quantized} by ONNX Runtime 1.20.1. Requesting it yields
+\textbf{0 QDQ nodes}, no size change ($2852.9$ vs $2842.7$\,KB) and no speedup ($0.995\times$). The
+recurrent decoder is incompressible on this runtime and is pinned to FP32 in every allocation. Note
+the direct contrast with~\cite{rusci2022}, whose method depends on quantizing exactly this layer
+type.
+\item \textbf{INT4 is unavailable for Conv} via \texttt{quantize\_static}. The runtime's 4-bit path
+covers MatMul only, and this graph has one tiny MatMul, so INT4 cannot reach the weight-heavy Conv
+layers.
+\item \textbf{INT8 is ${\sim}1.4\times$ slower than FP32} on x86, re-measured on a verified-idle
+machine ($6\,\%$ CPU load, AMD Ryzen~5 5600H, same runtime version): $1.39\times$ / $1.43\times$ /
+$1.46\times$ at 1 / 2 / 4 threads, with absolute RTF $0.084$ (FP32) vs $0.117$ (INT8)
+single-threaded. \textbf{On this hardware the benefit of quantization is memory, not speed}---and
+the disadvantage grows slightly with thread count, consistent with QDQ overhead parallelising worse
+than the dense kernels it replaces.
+\end{itemize}
+
+\section{Limitations}
+
+The negative result in Sec.~\ref{sec:negative} is scoped to this checkpoint, at INT8, over six
+layers. With a finer precision axis (INT4 available, or per-channel), or a model whose layers are
+less dominated by a single one, the perceptual and MSE rankings could plausibly diverge. We did not
+show that they never diverge; we showed they do not here, and explained why the search space was
+forced to be this coarse (Sec.~\ref{sec:runtime}).
+
+One checkpoint, one architecture. The stem-exemption magnitude is not claimed to transfer. The
+transferable claim is methodological: measure per-layer sensitivity, because the answer is
+runtime- and model-specific and contradicted a published rule for the same architecture family.
+
+No Hessian baseline. Without it, Sec.~\ref{sec:negative} compares a perceptual ranking against
+direct output-error rankings, not against the standard curvature proxy.
+
+No on-device measurement. All timings are x86 with thread pinning as an edge proxy. The contrast
+with~\cite{rusci2022} is therefore across both method \emph{and} hardware, and we cannot separate
+those two factors.
+
+\section{Conclusion}
+
+We tested whether perceptually-guided bit allocation beats MSE-guided allocation for a compact
+speech enhancer, and found that it does not---the rankings coincide almost perfectly. Reporting
+that negative result is worthwhile on its own: it licenses practitioners to keep using the cheap
+proxy.
+
+The sweep that produced it revealed something more useful. Quantization loss in this model is not
+distributed across layers; $\mathbf{0.133\,\%}$ \textbf{of the weights carry} $\mathbf{98.7\,\%}$
+\textbf{of it}. Protecting that one 3.8\,KB layer yields an FP32-indistinguishable model at
+$3.2\times$ compression, significant in every test condition, replicated on a second corpus---and,
+because of QDQ graph overhead, \emph{smaller} than quantizing everything. Combined with the
+non-additivity of layer-wise errors and the fact that a published mixed-precision rule for this
+architecture family is inverted on our runtime, the practical lesson is consistent: for PTQ of
+small speech models, per-layer sensitivity is worth measuring rather than assuming.
+
+\begin{thebibliography}{99}
+
+\bibitem{rusci2022}
+M.~Rusci, M.~Fariselli, M.~Croome, F.~Paci, and E.~Flamand, ``Accelerating RNN-based speech
+enhancement on a multi-core MCU with mixed FP16-INT8 post-training quantization,'' in \emph{ITEM
+Workshop, ECML-PKDD}, 2022.
+
+\bibitem{dong2019}
+Z.~Dong, Z.~Yao, A.~Gholami, M.~W.~Mahoney, and K.~Keutzer, ``HAWQ: Hessian aware quantization of
+neural networks with mixed-precision,'' in \emph{Proc.\ ICCV}, 2019.
+
+\bibitem{dong2020}
+Z.~Dong, Z.~Yao, D.~Arfeen, A.~Gholami, M.~W.~Mahoney, and K.~Keutzer, ``HAWQ-V2: Hessian aware
+trace-weighted quantization of neural networks,'' in \emph{Proc.\ NeurIPS}, 2020.
+
+\bibitem{zandieh2025}
+A.~Zandieh, M.~Daliri, M.~Hadian, and V.~Mirrokni, ``TurboQuant: Online vector quantization with
+near-optimal distortion rate,'' \emph{arXiv:2504.19874}, 2025.
+
+\bibitem{hsieh2021}
+Y.-T.~Hsieh \emph{et al.}, ``SEOFP-NET: Compression and acceleration of deep neural networks for
+speech enhancement using sign-exponent-only floating-points,'' \emph{arXiv:2111.04436}, 2021.
+
+\bibitem{sun2020}
+X.~Sun \emph{et al.}, ``A model compression method with matrix product operators for speech
+enhancement,'' \emph{arXiv:2010.04950}, 2020.
+
+\end{thebibliography}
+
+\end{document}
