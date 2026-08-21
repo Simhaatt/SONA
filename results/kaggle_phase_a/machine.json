@@ -1,0 +1,7 @@
+{
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "python": "3.12.13",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.00GHz",
+  "cpu_count": 4,
+  "loadavg_1min": 0.41
+}

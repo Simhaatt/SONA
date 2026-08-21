@@ -51,7 +51,16 @@ Frozen, significance-tested, and machine-audited. **Do not re-run these to try t
 - Complex mask: significantly better SI-SDR and STOI, significantly **worse** PESQ (−0.016,
   p = 0.005).
 - Dither diagnostic: 4/32 cells beat FP32, all on MS-SNSD, **none in-domain**.
-- INT8 is 1.39–1.46× **slower** than FP32 on x86, re-measured at 6 % machine load.
+- INT8 is **slower** than FP32 on both CPUs tested — 1.19–1.39× on Intel Xeon, 1.39–1.46× on AMD
+  Ryzen, both on verified-idle machines. Not a one-machine artifact.
+- **R2 — the stem exemption is smaller, faster *and* FP32-quality.** Mixed (29 QDQ nodes) beats
+  uniform INT8 (172 nodes) at every thread count: 916.9 vs 950.7 KB, 1.13–1.32× vs 1.19–1.39×
+  slowdown, and SI-SDR 18.691 against FP32's 18.690 (uniform: 18.569). The graph overhead causing
+  the slowdown is itself concentrated — the thesis appearing in a third quantity after loss and
+  file size.
+- **Enhancement degrades ASR, on three independent measurements**: +24.1 % (VoiceBank/`small.en`),
+  +23.1 % (VoiceBank/`tiny.en`), +46.6 % (MS-SNSD/`small.en`) relative corpus WER, all with CIs
+  excluding zero.
 - **E2 — three criterion families agree.** Perceptual (PESQ), output-error (SI-SDR, mask-MSE) and
   second-order curvature (full HAWQ-V2 Ω) all rank `stem` most sensitive and `head` least. The
   choice of sensitivity criterion does not matter, which makes the negative result comprehensive.
@@ -84,7 +93,21 @@ produced a striking-but-false conclusion that HAWQ-V2 misranks. The corrected cr
 the empirical damage ordering. Reporting the first version would have been a strawman. See
 `PERCEPTUAL_MP/results/hessian/FINDINGS_HESSIAN.md`.
 
-**3. Two WER aggregations disagree.** Per-clip averaging and corpus-level WER disagree about
+**3. "Concentration" in the WER leg was partly a power artifact — softened after the Kaggle
+batch.** On VoiceBank the degradation looked confined to babble and the lowest SNR bin. With 5.5×
+the effective sample (MS-SNSD, 704/1100 differing pairs vs 129/824), **8 of 9 noise types are
+individually significant**. Enhancement hurts ASR broadly, not narrowly; the VoiceBank
+per-condition nulls were lack of power, not evidence of unaffected conditions. The only exception
+is `Typing` — impulsive noise, where the enhancer barely acts at all.
+
+This one runs *against* the paper's usual direction: here the aggregate was right and our own
+disaggregation misled us. A paper about metrics misleading should be first to say so. See
+`results/kaggle_phase_a/FINDINGS_KAGGLE.md`.
+
+**4. The `bus` improvement is definitively an artifact.** It flips sign between recognisers on
+identical audio: −28 % with `small.en`, **+37 % with `tiny.en`**, neither significant.
+
+**5. Two WER aggregations disagree.** Per-clip averaging and corpus-level WER disagree about
 whether an aggregate effect exists *and* about the sign of a per-condition effect, on the same 824
 clips. This is not a nuisance — it is the paper's thesis reproducing itself inside one leg, and it
 should be foregrounded.
@@ -98,14 +121,16 @@ Each failure mode has a **validated** countermeasure. None is merely proposed.
 | perceptual ≈ MSE ranking | skip the PESQ-in-the-loop allocator | ρ = +1.000; allocations differ by 0.0003 dB |
 | metrics flattered by quantization noise | rank on \|deviation from FP32\| | R3: 4/32 cells beat FP32, none in-domain |
 | SI-SDR/PESQ conflict | report a metric set spanning phase sensitivity | complex-mask A/B (MOS deferred — the effect is below audibility, which is itself the point) |
-| enhancement degrades ASR | **keep the enhancer out of the ASR path** | R1: 0.0428 → 0.0345 |
+| enhancement degrades ASR | **keep the enhancer out of the ASR path** — no routing needed | R1 under `tiny.en`: the oracle picks passthrough for **all five** noise types, so oracle and never-enhance coincide (0.0711) |
 | recall misleads | use 1/Ratio@k — label-free, needs no downstream labels | E1b: MAE 0.033 vs recall's 0.428 across 36 points |
 | underpowered per-clip WER | aggregate at corpus level | E3b recovers the effect the per-clip test missed |
 
-On R1, note the honest reading: the learned router captures 61 % of headroom and significantly
-beats always-enhance, but **plain never-enhance beats the router**. The recommendation is the blunt
-one — different consumers, different optima. Presenting the router as the winner would be exactly
-the overclaiming this paper argues against.
+On R1, note the honest reading: the learned router captures 61–89 % of headroom and significantly
+beats always-enhance, but **plain never-enhance beats the router** — and under `tiny.en` the oracle
+selects passthrough in every condition, so there is no condition where enhancement helps ASR at
+all. More data made the recommendation *simpler*, not more elaborate. The routing experiment still
+earns its place by showing the decision is learnable from noisy audio alone and generalises to an
+unseen noise type, but it is reported as a negative for routing, not a win.
 
 ## What is still open
 
@@ -114,8 +139,8 @@ Nothing now blocks drafting. The remaining compute is optional strengthening.
 | item | blocking? | note |
 |---|---|---|
 | **MOS listening test** | **no — deferred to future work** | Built, validated, and ready (`mos_test/RUNBOOK.md`), but the effects are ~19x below what 20 raters can resolve, so it cannot pick a winner. Held for a larger-journal version, where the payoff is the *null*: significance at n=824 outrunning audibility |
-| R2 mixed-allocation timing | no | queued in `sona_phase_a_kaggle.ipynb`; possible free win if fewer QDQ nodes means less slowdown |
-| WER on MS-SNSD, and with `tiny.en` | no | queued on Kaggle; both attack the same zero-inflation power problem |
+| ~~R2 mixed-allocation timing~~ | **done** | Ran on Kaggle's idle Xeon. The free win landed: mixed is faster than uniform INT8 at every thread count |
+| ~~WER on MS-SNSD and `tiny.en`~~ | **done** | Effective sample up 1.7× and 5.5×; softened the concentration claim, settled the `bus` artifact |
 | ~~E4 second architecture~~ | **done** | Replicated: stem dominant on the complex-mask GTCRN too (92.1 % of damage), size inversion intact. Scope caveat: same backbone, different output head — a replication across *output representations*, not architecture families |
 | per-channel quantization | no | the one negative with a real chance (~30 %) of legitimately flipping |
 | on-device measurement | no | never done; argue from size and latency only |

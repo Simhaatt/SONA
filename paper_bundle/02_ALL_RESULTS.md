@@ -2211,9 +2211,314 @@ paper's argument in miniature.
 | 225.31394400001088 | 0.07031136537565308 | 950.7236328125 | 4 | 18.575175003881377 | 100 | int8 | 566.6405099999905 |
 
 
-## R2 — mixed vs uniform INT8 timing
+## R2 — mixed vs uniform INT8 timing (Kaggle Xeon, idle)
 
-> _Not yet generated: `results/onnx/edge_bench_mixed_2026-08-20/summary.csv`_
+`results/kaggle_phase_a/r2_timing/summary.csv`
+
+| n | backend | mean_latency_ms | mean_rtf | model_size_kb | p95_latency_ms | threads | mean_si_sdr |
+|---|---|---|---|---|---|---|---|
+| 100 | pytorch | 246.33039512000155 | 0.08852252809077228 |  | 464.54919720003426 | - | 18.689681435170804 |
+| 100 | fp32 | 255.70115134999068 | 0.08935685578203843 | 2842.724609375 | 535.3448834999908 | 1 | 18.689674850999573 |
+| 100 | fp32 | 221.89529489000276 | 0.08192477420697142 | 2842.724609375 | 404.1119893000143 | 2 | 18.689674850999573 |
+| 100 | fp32 | 228.84130237000593 | 0.08371187735148795 | 2842.724609375 | 431.6622877499583 | 4 | 18.689674850999573 |
+| 100 | int8 | 353.08148788000034 | 0.1243637959993404 | 950.7236328125 | 726.9409502000143 | 1 | 18.568605087311216 |
+| 100 | int8 | 273.5633676699984 | 0.09863537950183192 | 950.7236328125 | 561.5894404499983 | 2 | 18.568605087311216 |
+| 100 | int8 | 275.6481308100019 | 0.09944376315526213 | 950.7236328125 | 533.070024400007 | 4 | 18.568605087311216 |
+| 100 | mixed | 333.770573620003 | 0.11811881110560347 | 916.89453125 | 670.5171603500075 | 1 | 18.691494942389678 |
+| 100 | mixed | 260.0903731300008 | 0.09443354313509211 | 916.89453125 | 490.7808040500043 | 2 | 18.691494942389678 |
+| 100 | mixed | 261.2163371699933 | 0.09483465584202742 | 916.89453125 | 490.4127131999871 | 4 | 18.691494942389678 |
+
+
+## Kaggle Phase A — findings (R2 timing, W2/W3 power fixes)
+
+`results/kaggle_phase_a/FINDINGS_KAGGLE.md`
+
+### Kaggle Phase A batch — findings
+
+Run 2026-08-20 on Kaggle. **Intel Xeon @ 2.00 GHz, 4 cores, 1-min load average 0.41** (idle) —
+against the local AMD Ryzen 5 5600H, so the timing results double as a cross-architecture check.
+ONNX Runtime pinned to 1.20.1 as everywhere else.
+
+---
+
+#### R2 — the stem exemption is smaller, faster, *and* FP32-quality
+
+| backend | threads | mean RTF | slowdown vs FP32 | mean SI-SDR | size |
+|---|---:|---:|---:|---:|---:|
+| FP32 | 1 | 0.0894 | — | 18.690 | 2842.7 KB |
+| uniform INT8 | 1 | 0.1244 | 1.392× | 18.569 | 950.7 KB |
+| **mixed (stem FP32)** | 1 | **0.1181** | **1.322×** | **18.691** | **916.9 KB** |
+| FP32 | 2 | 0.0819 | — | 18.690 | 2842.7 KB |
+| uniform INT8 | 2 | 0.0986 | 1.204× | 18.569 | 950.7 KB |
+| **mixed** | 2 | **0.0944** | **1.153×** | **18.691** | **916.9 KB** |
+| FP32 | 4 | 0.0837 | — | 18.690 | 2842.7 KB |
+| uniform INT8 | 4 | 0.0994 | 1.188× | 18.569 | 950.7 KB |
+| **mixed** | 4 | **0.0948** | **1.133×** | **18.691** | **916.9 KB** |
+
+**The prediction held.** Mixed carries 29 QDQ nodes against uniform INT8's 172, and it is faster at
+every thread count — by 4–5 % consistently. So exempting the stem gives a model that is
+simultaneously:
+
+- **smaller** than uniform INT8 (916.9 vs 950.7 KB),
+- **faster** than uniform INT8 (1.13–1.32× vs 1.19–1.39× slowdown),
+- **quality-identical to FP32** (18.691 vs 18.690 SI-SDR, against uniform's 18.569).
+
+This converts the study's "INT8 is slower than FP32" negative into a positive: the graph overhead
+that causes the slowdown is itself concentrated, and the same exemption that recovers the quality
+also recovers part of the speed. It is the concentration thesis showing up in a third quantity
+after loss and file size.
+
+**Cross-architecture replication.** INT8 is slower than FP32 on both CPUs tested — 1.19–1.39× on
+Intel Xeon, 1.39–1.46× on AMD Ryzen. The finding is not an artifact of one machine. Absolute RTFs
+differ, as expected, and both are now measured on verified-idle machines.
+
+---
+
+#### W2 / W3 — the power fixes worked, and they change a claim
+
+Effective sample — clips whose WER actually differs between GTCRN and passthrough:
+
+| evaluation | effective n | vs original |
+|---|---|---|
+| VoiceBank, `small.en` (original) | 129 / 824 = 15.7 % | — |
+| VoiceBank, `tiny.en` | 216 / 824 = 26.2 % | 1.7× |
+| **MS-SNSD, `small.en`** | **704 / 1100 = 64.0 %** | **5.5×** |
+
+##### The aggregate degradation is now firmly established
+
+Enhancement significantly raises corpus WER on **three independent measurements**:
+
+| evaluation | Δ corpus WER | relative | CI excludes 0 |
+|---|---:|---:|---|
+| VoiceBank / `small.en` | +0.0083 | +24.1 % | yes |
+| VoiceBank / `tiny.en` | +0.0165 | +23.1 % | yes |
+| MS-SNSD / `small.en` | +0.0641 | +46.6 % | yes |
+
+The two VoiceBank figures agree closely (+24.1 % and +23.1 %) despite different recognisers, which
+is strong evidence the effect is real and not an artifact of one ASR model.
+
+##### A claim that must be softened: "concentration" was partly a power artifact
+
+The earlier reading — *degradation concentrated in babble and the lowest SNR bin* — does not
+survive better power. On MS-SNSD, **8 of 9 noise types are individually significant**:
+
+| noise | relative Δ | significant |
+|---|---:|---|
+| CopyMachine | +76.1 % | yes |
+| Babble | +44.2 % | yes |
+| AirportAnnouncements | +78.4 % | yes |
+| ShuttingDoor | +94.3 % | yes |
+| Munching | +80.4 % | yes |
+| AirConditioner | +67.6 % | yes |
+| VacuumCleaner | +41.8 % | yes |
+| Neighbor | +12.4 % | yes |
+| **Typing** | +23.2 % | **no** |
+
+With 5.5× the effective sample, enhancement hurts ASR **nearly everywhere**, not in a couple of
+conditions. The VoiceBank per-condition nulls were largely a lack of power, not evidence that those
+conditions are unaffected.
+
+Corrected statement:
+
+> Enhancement significantly degrades ASR accuracy, replicated across two corpora and two
+> recognisers (+23 % to +47 % relative). The degradation is broad rather than concentrated: with
+> adequate statistical power, 8 of 9 MS-SNSD noise types show it individually. The only exception
+> is `Typing` — impulsive noise, where the enhancer barely acts at all (+0.2 dB SI-SDRi in the
+> objective benchmark), so there is little processing to do damage.
+
+Note this is the opposite direction to the rest of the paper: here the *aggregate* was right and the
+disaggregation initially misled us, because the per-condition tests were underpowered. That is worth
+stating plainly — a paper about metrics misleading should be first to report when its own
+disaggregation was the misleading step.
+
+##### The `bus` improvement is definitively an artifact
+
+Across three measurements of the same clips it does not hold a sign:
+
+| measurement | `bus` relative Δ | significant |
+|---|---:|---|
+| VoiceBank `small.en`, per-clip | −41.7 % (helps) | fails FDR (q = 0.095) |
+| VoiceBank `small.en`, corpus | −28.0 % (helps) | no |
+| VoiceBank `tiny.en`, corpus | **+37.2 % (hurts)** | no |
+
+A sign flip between recognisers on identical audio settles it. The earlier correction was right and
+now has independent support.
+
+---
+
+#### R1 remedy re-tested — and it gets simpler
+
+Re-running condition-gated enhancement against the `tiny.en` labels:
+
+| routing | corpus WER |
+|---|---:|
+| always enhance | 0.0876 |
+| learned router (leave-one-noise-type-out) | 0.0730 |
+| **never enhance** | **0.0711** |
+| oracle, per noise type | 0.0711 |
+
+**The oracle chooses passthrough for all five noise types.** Under this recogniser there is no
+condition where enhancement helps ASR, so the oracle and never-enhance coincide exactly.
+
+The router still beats always-enhance significantly (CI [−0.0215, −0.0083], 89 % of headroom
+captured) but cannot beat simply switching the enhancer off. Combined with the MS-SNSD result, the
+recommendation is now unambiguous and needs no routing machinery at all:
+
+> **Keep the enhancer out of the ASR path.** Give the recogniser the unprocessed signal and the
+> human listener the enhanced one. They are different consumers with different optima.
+
+More data made the recommendation *simpler*, not more elaborate. The routing experiment was still
+worth running — it establishes that the decision is learnable from noisy audio alone and
+generalises to an unseen noise type — but it is reported as a negative for routing, not a win.
+
+## W2 — MS-SNSD WER (small.en, 1100 clips)
+
+`results/kaggle_phase_a/w2_wer_ms_snsd/summary_wer.md`
+
+| method | n | wer | rtf |
+|---|---|---|---|
+| passthrough | 1100 | **0.137** | 0.011 |
+| spectral_subtraction | 1100 | 0.184 | 0.017 |
+| wiener | 1100 | 0.226 | 0.020 |
+| neural_gtcrn | 1100 | 0.201 | **0.003** |
+
+## W2 — MS-SNSD corpus-level significance
+
+`results/kaggle_phase_a/w2_significance/wer_corpus_level.md`
+
+### Corpus-level WER (total errors / total reference words)
+
+Standard ASR aggregation, weighting each clip by its reference length instead of averaging per-clip rates. Avoids the zero-inflation that collapses the effective sample in the per-clip analysis. Uncertainty from a **paired** clip bootstrap (10000 replicates): each replicate resamples clip indices once and scores both methods on the same clips.
+
+Difference is method minus baseline, so **negative is better**.
+
+| method | split | condition | clips | words | corpus WER | baseline | diff | rel % | 95% CI | boot p |
+|---|---|---|---|---|---|---|---|---|---|---|
+| neural_gtcrn | noise | AirConditioner | 218 | 6926 | 0.1353 | 0.0807 | +0.0546 | +67.6 | [+0.0419, +0.0676] | 0.0001 |
+| neural_gtcrn | noise | AirportAnnouncements | 91 | 2908 | 0.2191 | 0.1228 | +0.0962 | +78.4 | [+0.0696, +0.1260] | 0.0001 |
+| neural_gtcrn | noise | Babble | 184 | 5818 | 0.3449 | 0.2393 | +0.1057 | +44.2 | [+0.0833, +0.1300] | 0.0001 |
+| neural_gtcrn | noise | CopyMachine | 35 | 1123 | 0.4358 | 0.2475 | +0.1883 | +76.1 | [+0.1282, +0.2558] | 0.0001 |
+| neural_gtcrn | noise | Munching | 180 | 5721 | 0.1221 | 0.0677 | +0.0544 | +80.4 | [+0.0364, +0.0739] | 0.0001 |
+| neural_gtcrn | noise | Neighbor | 166 | 5313 | 0.3095 | 0.2752 | +0.0342 | +12.4 | [+0.0057, +0.0622] | 0.0184 |
+| neural_gtcrn | noise | ShuttingDoor | 165 | 5319 | 0.0860 | 0.0442 | +0.0417 | +94.3 | [+0.0290, +0.0565] | 0.0001 |
+| neural_gtcrn | noise | Typing | 44 | 1379 | 0.0661 | 0.0536 | +0.0125 | +23.2 | [-0.0082, +0.0308] | 0.2090 |
+| neural_gtcrn | noise | VacuumCleaner | 17 | 530 | 0.1928 | 0.1360 | +0.0568 | +41.8 | [+0.0095, +0.1075] | 0.0160 |
+| neural_gtcrn | overall | all | 1100 | 35037 | 0.2016 | 0.1375 | +0.0641 | +46.6 | [+0.0559, +0.0726] | 0.0001 |
+| neural_gtcrn | snr | -5.0 | 275 | 8695 | 0.4808 | 0.3380 | +0.1428 | +42.3 | [+0.1201, +0.1658] | 0.0001 |
+| neural_gtcrn | snr | 0.0 | 275 | 8840 | 0.2320 | 0.1470 | +0.0850 | +57.8 | [+0.0669, +0.1024] | 0.0001 |
+| neural_gtcrn | snr | 10.0 | 275 | 8725 | 0.0306 | 0.0222 | +0.0084 | +37.9 | [+0.0042, +0.0128] | 0.0001 |
+| neural_gtcrn | snr | 5.0 | 275 | 8777 | 0.0644 | 0.0439 | +0.0205 | +46.8 | [+0.0134, +0.0278] | 0.0001 |
+| spectral_subtraction | noise | AirConditioner | 218 | 6926 | 0.0982 | 0.0807 | +0.0175 | +21.6 | [+0.0067, +0.0279] | 0.0014 |
+| spectral_subtraction | noise | AirportAnnouncements | 91 | 2908 | 0.1887 | 0.1228 | +0.0659 | +53.6 | [+0.0465, +0.0869] | 0.0001 |
+| spectral_subtraction | noise | Babble | 184 | 5818 | 0.3129 | 0.2393 | +0.0736 | +30.8 | [+0.0541, +0.0935] | 0.0001 |
+| spectral_subtraction | noise | CopyMachine | 35 | 1123 | 0.2972 | 0.2475 | +0.0497 | +20.1 | [+0.0128, +0.0884] | 0.0086 |
+| spectral_subtraction | noise | Munching | 180 | 5721 | 0.1214 | 0.0677 | +0.0537 | +79.4 | [+0.0386, +0.0684] | 0.0001 |
+| spectral_subtraction | noise | Neighbor | 166 | 5313 | 0.3224 | 0.2752 | +0.0472 | +17.1 | [+0.0227, +0.0697] | 0.0001 |
+| spectral_subtraction | noise | ShuttingDoor | 165 | 5319 | 0.0793 | 0.0442 | +0.0351 | +79.3 | [+0.0256, +0.0448] | 0.0001 |
+| spectral_subtraction | noise | Typing | 44 | 1379 | 0.0997 | 0.0536 | +0.0461 | +86.0 | [+0.0201, +0.0723] | 0.0004 |
+| spectral_subtraction | noise | VacuumCleaner | 17 | 530 | 0.1714 | 0.1360 | +0.0354 | +26.0 | [-0.0066, +0.0875] | 0.1156 |
+| spectral_subtraction | overall | all | 1100 | 35037 | 0.1838 | 0.1375 | +0.0463 | +33.7 | [+0.0398, +0.0530] | 0.0001 |
+| spectral_subtraction | snr | -5.0 | 275 | 8695 | 0.4179 | 0.3380 | +0.0800 | +23.7 | [+0.0617, +0.0983] | 0.0001 |
+| spectral_subtraction | snr | 0.0 | 275 | 8840 | 0.2027 | 0.1470 | +0.0557 | +37.9 | [+0.0395, +0.0716] | 0.0001 |
+| spectral_subtraction | snr | 10.0 | 275 | 8725 | 0.0392 | 0.0222 | +0.0170 | +76.7 | [+0.0121, +0.0221] | 0.0001 |
+| spectral_subtraction | snr | 5.0 | 275 | 8777 | 0.0767 | 0.0439 | +0.0328 | +74.6 | [+0.0263, +0.0394] | 0.0001 |
+| wiener | noise | AirConditioner | 218 | 6926 | 0.1093 | 0.0807 | +0.0285 | +35.3 | [+0.0175, +0.0399] | 0.0001 |
+| wiener | noise | AirportAnnouncements | 91 | 2908 | 0.2409 | 0.1228 | +0.1181 | +96.1 | [+0.0877, +0.1511] | 0.0001 |
+| wiener | noise | Babble | 184 | 5818 | 0.3884 | 0.2393 | +0.1491 | +62.3 | [+0.1253, +0.1745] | 0.0001 |
+| wiener | noise | CopyMachine | 35 | 1123 | 0.3956 | 0.2475 | +0.1480 | +59.8 | [+0.0899, +0.2092] | 0.0001 |
+| wiener | noise | Munching | 180 | 5721 | 0.1569 | 0.0677 | +0.0892 | +131.9 | [+0.0706, +0.1092] | 0.0001 |
+| wiener | noise | Neighbor | 166 | 5313 | 0.3771 | 0.2752 | +0.1019 | +37.0 | [+0.0685, +0.1342] | 0.0001 |
+| wiener | noise | ShuttingDoor | 165 | 5319 | 0.1073 | 0.0442 | +0.0630 | +142.5 | [+0.0509, +0.0758] | 0.0001 |
+| wiener | noise | Typing | 44 | 1379 | 0.1584 | 0.0536 | +0.1048 | +195.4 | [+0.0725, +0.1394] | 0.0001 |
+| wiener | noise | VacuumCleaner | 17 | 530 | 0.1883 | 0.1360 | +0.0523 | +38.5 | [+0.0068, +0.1006] | 0.0234 |
+| wiener | overall | all | 1100 | 35037 | 0.2269 | 0.1375 | +0.0894 | +65.1 | [+0.0805, +0.0985] | 0.0001 |
+| wiener | snr | -5.0 | 275 | 8695 | 0.4882 | 0.3380 | +0.1502 | +44.4 | [+0.1274, +0.1732] | 0.0001 |
+| wiener | snr | 0.0 | 275 | 8840 | 0.2610 | 0.1470 | +0.1141 | +77.6 | [+0.0932, +0.1352] | 0.0001 |
+| wiener | snr | 10.0 | 275 | 8725 | 0.0590 | 0.0222 | +0.0368 | +165.6 | [+0.0296, +0.0443] | 0.0001 |
+| wiener | snr | 5.0 | 275 | 8777 | 0.1008 | 0.0439 | +0.0569 | +129.5 | [+0.0470, +0.0668] | 0.0001 |
+
+## W3 — VoiceBank WER (tiny.en, 824 clips)
+
+`results/kaggle_phase_a/w3_wer_tiny/summary_wer.md`
+
+| method | n | wer | rtf |
+|---|---|---|---|
+| passthrough | 824 | **0.084** | 0.011 |
+| spectral_subtraction | 824 | 0.147 | 0.017 |
+| wiener | 824 | 0.215 | 0.020 |
+| neural_gtcrn | 824 | 0.101 | **0.006** |
+
+## W3 — VoiceBank corpus-level significance (tiny.en)
+
+`results/kaggle_phase_a/w3_significance/wer_corpus_level.md`
+
+### Corpus-level WER (total errors / total reference words)
+
+Standard ASR aggregation, weighting each clip by its reference length instead of averaging per-clip rates. Avoids the zero-inflation that collapses the effective sample in the per-clip analysis. Uncertainty from a **paired** clip bootstrap (10000 replicates): each replicate resamples clip indices once and scores both methods on the same clips.
+
+Difference is method minus baseline, so **negative is better**.
+
+| method | split | condition | clips | words | corpus WER | baseline | diff | rel % | 95% CI | boot p |
+|---|---|---|---|---|---|---|---|---|---|---|
+| neural_gtcrn | noise | bus | 164 | 1219 | 0.0515 | 0.0376 | +0.0140 | +37.2 | [-0.0026, +0.0312] | 0.1008 |
+| neural_gtcrn | noise | cafe | 164 | 1246 | 0.1745 | 0.1350 | +0.0395 | +29.3 | [+0.0105, +0.0707] | 0.0056 |
+| neural_gtcrn | noise | living | 166 | 1209 | 0.1031 | 0.0982 | +0.0049 | +5.0 | [-0.0199, +0.0308] | 0.7154 |
+| neural_gtcrn | noise | office | 164 | 1259 | 0.0430 | 0.0288 | +0.0142 | +49.1 | [+0.0026, +0.0269] | 0.0128 |
+| neural_gtcrn | noise | psquare | 166 | 1274 | 0.0665 | 0.0570 | +0.0095 | +16.7 | [-0.0075, +0.0274] | 0.2850 |
+| neural_gtcrn | overall | all | 824 | 6207 | 0.0876 | 0.0711 | +0.0165 | +23.1 | [+0.0069, +0.0260] | 0.0004 |
+| neural_gtcrn | snr | 12.5 | 207 | 1546 | 0.0388 | 0.0416 | -0.0028 | -6.7 | [-0.0158, +0.0105] | 0.6548 |
+| neural_gtcrn | snr | 17.5 | 204 | 1530 | 0.0374 | 0.0370 | +0.0004 | +1.1 | [-0.0095, +0.0110] | 0.9680 |
+| neural_gtcrn | snr | 2.5 | 207 | 1556 | 0.1931 | 0.1375 | +0.0556 | +40.5 | [+0.0287, +0.0834] | 0.0001 |
+| neural_gtcrn | snr | 7.5 | 206 | 1575 | 0.0800 | 0.0678 | +0.0123 | +18.1 | [-0.0070, +0.0313] | 0.2160 |
+| spectral_subtraction | noise | bus | 164 | 1219 | 0.0856 | 0.0376 | +0.0481 | +128.0 | [+0.0268, +0.0701] | 0.0001 |
+| spectral_subtraction | noise | cafe | 164 | 1246 | 0.2363 | 0.1350 | +0.1013 | +75.1 | [+0.0662, +0.1397] | 0.0001 |
+| spectral_subtraction | noise | living | 166 | 1209 | 0.1212 | 0.0982 | +0.0230 | +23.4 | [-0.0037, +0.0501] | 0.0950 |
+| spectral_subtraction | noise | office | 164 | 1259 | 0.1016 | 0.0288 | +0.0728 | +252.5 | [+0.0488, +0.0980] | 0.0001 |
+| spectral_subtraction | noise | psquare | 166 | 1274 | 0.1149 | 0.0570 | +0.0579 | +101.7 | [+0.0322, +0.0850] | 0.0001 |
+| spectral_subtraction | overall | all | 824 | 6207 | 0.1320 | 0.0711 | +0.0609 | +85.6 | [+0.0484, +0.0736] | 0.0001 |
+| spectral_subtraction | snr | 12.5 | 207 | 1546 | 0.0986 | 0.0416 | +0.0570 | +137.1 | [+0.0366, +0.0788] | 0.0001 |
+| spectral_subtraction | snr | 17.5 | 204 | 1530 | 0.0808 | 0.0370 | +0.0438 | +118.4 | [+0.0247, +0.0635] | 0.0001 |
+| spectral_subtraction | snr | 2.5 | 207 | 1556 | 0.2151 | 0.1375 | +0.0776 | +56.4 | [+0.0441, +0.1134] | 0.0001 |
+| spectral_subtraction | snr | 7.5 | 206 | 1575 | 0.1326 | 0.0678 | +0.0649 | +95.7 | [+0.0441, +0.0875] | 0.0001 |
+| wiener | noise | bus | 164 | 1219 | 0.1310 | 0.0376 | +0.0934 | +248.7 | [+0.0661, +0.1231] | 0.0001 |
+| wiener | noise | cafe | 164 | 1246 | 0.3183 | 0.1350 | +0.1833 | +135.8 | [+0.1329, +0.2358] | 0.0001 |
+| wiener | noise | living | 166 | 1209 | 0.2162 | 0.0982 | +0.1180 | +120.2 | [+0.0844, +0.1543] | 0.0001 |
+| wiener | noise | office | 164 | 1259 | 0.1673 | 0.0288 | +0.1385 | +480.6 | [+0.1066, +0.1719] | 0.0001 |
+| wiener | noise | psquare | 166 | 1274 | 0.1698 | 0.0570 | +0.1129 | +198.2 | [+0.0820, +0.1463] | 0.0001 |
+| wiener | overall | all | 824 | 6207 | 0.2005 | 0.0711 | +0.1294 | +181.9 | [+0.1133, +0.1465] | 0.0001 |
+| wiener | snr | 12.5 | 207 | 1546 | 0.1408 | 0.0416 | +0.0992 | +238.5 | [+0.0716, +0.1290] | 0.0001 |
+| wiener | snr | 17.5 | 204 | 1530 | 0.1370 | 0.0370 | +0.1000 | +270.4 | [+0.0730, +0.1289] | 0.0001 |
+| wiener | snr | 2.5 | 207 | 1556 | 0.3128 | 0.1375 | +0.1754 | +127.5 | [+0.1337, +0.2196] | 0.0001 |
+| wiener | snr | 7.5 | 206 | 1575 | 0.2100 | 0.0678 | +0.1422 | +209.8 | [+0.1135, +0.1718] | 0.0001 |
+
+## R1 re-tested under tiny.en
+
+`results/kaggle_phase_a/w3_condition_gating/condition_gating.md`
+
+### Condition-gated enhancement (R1)
+
+Remedy for the ASR degradation. The decision is *which signal the recogniser consumes*; the human listener gets the enhanced signal either way.
+
+| routing | corpus WER | vs always-enhance |
+|---|---|---|
+| always enhance (current) | 0.0876 | — |
+| never enhance | 0.0711 | -0.0165 |
+| **oracle, per noise type** (upper bound, not deployable) | **0.0711** | -0.0165 |
+| **learned router** (leave-one-noise-type-out) | **0.0730** | -0.0146 |
+
+Headroom between always-enhance and the oracle is +0.0165 WER. The router captures **89 %** of it, with a paired clip bootstrap 95 % CI on the router-minus-always difference of [-0.0215, -0.0083] — excludes zero.
+
+Oracle decision per noise type: `bus`=passthrough, `cafe`=passthrough, `living`=passthrough, `office`=passthrough, `psquare`=passthrough.
+
+#### Folds
+
+| held-out noise | n | routed to passthrough | oracle choice |
+|---|---|---|---|
+| bus | 164 | 13 (8 %) | passthrough |
+| cafe | 164 | 71 (43 %) | passthrough |
+| living | 166 | 0 (0 %) | passthrough |
+| office | 164 | 56 (34 %) | passthrough |
+| psquare | 166 | 49 (30 %) | passthrough |
 
 ## Scene classifier
 

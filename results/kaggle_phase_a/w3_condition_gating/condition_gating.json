@@ -1,0 +1,61 @@
+{
+  "n_clips": 824,
+  "corpus_wer": {
+    "always_enhance": 0.08760040373138489,
+    "never_enhance": 0.07113980125096607,
+    "oracle_per_type": 0.07113980125096607,
+    "learned_router": 0.07302203238645964
+  },
+  "oracle_choice": {
+    "bus": "passthrough",
+    "cafe": "passthrough",
+    "living": "passthrough",
+    "office": "passthrough",
+    "psquare": "passthrough"
+  },
+  "headroom_vs_always": 0.01646060248041882,
+  "router_gain_vs_always": 0.014578371344925248,
+  "fraction_of_headroom_captured": 0.885652354600469,
+  "router_vs_always_ci95": [
+    -0.021524640478200848,
+    -0.008264911455152792
+  ],
+  "router_significant": true,
+  "folds": [
+    {
+      "held_out_noise": "bus",
+      "n": 164,
+      "routed_to_passthrough": 13,
+      "frac_passthrough": 0.07926829268292683,
+      "oracle_choice": "passthrough"
+    },
+    {
+      "held_out_noise": "cafe",
+      "n": 164,
+      "routed_to_passthrough": 71,
+      "frac_passthrough": 0.4329268292682927,
+      "oracle_choice": "passthrough"
+    },
+    {
+      "held_out_noise": "living",
+      "n": 166,
+      "routed_to_passthrough": 0,
+      "frac_passthrough": 0.0,
+      "oracle_choice": "passthrough"
+    },
+    {
+      "held_out_noise": "office",
+      "n": 164,
+      "routed_to_passthrough": 56,
+      "frac_passthrough": 0.34146341463414637,
+      "oracle_choice": "passthrough"
+    },
+    {
+      "held_out_noise": "psquare",
+      "n": 166,
+      "routed_to_passthrough": 49,
+      "frac_passthrough": 0.29518072289156627,
+      "oracle_choice": "passthrough"
+    }
+  ]
+}
