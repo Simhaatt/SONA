@@ -1,6 +1,10 @@
 # Paper bundle
 
-Everything needed to write the paper, in five documents. Assembled 2026-08-20.
+Everything needed to write the paper, in six documents. Assembled 2026-08-20, venue note added
+2026-08-21.
+
+**Format decision:** write in **IEEE format (IEEEtran)** now; venue is deferred. Safe order — the
+conference/journal switch is one documentclass option, so nothing is locked. See `05_VENUE.md`.
 
 Read them in this order:
 
@@ -11,6 +15,7 @@ Read them in this order:
 | 02 | [`02_ALL_RESULTS.md`](02_ALL_RESULTS.md) | every result table in the project, ~1900 lines, **generated** — never hand-edit |
 | 03 | [`03_FRAMING.md`](03_FRAMING.md) | what the paper is about, why the two drafts merge, how each result earns its place |
 | 04 | [`04_WRITING_GUIDE.md`](04_WRITING_GUIDE.md) | how research papers are written, and how not to sound machine-generated |
+| 05 | [`05_VENUE.md`](05_VENUE.md) | venue costs and the decision: **write in IEEE format now, pick the venue later** |
 
 `02_ALL_RESULTS.md` is produced by `scripts/build_paper_bundle.py`. Re-run it after any experiment
 and the compendium is current by construction — that is the whole point, so numbers cannot drift
