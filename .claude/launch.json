@@ -7,6 +7,12 @@
       "runtimeArgs": ["app.py"],
       "cwd": "web_demo",
       "port": 7860
+    },
+    {
+      "name": "static-docs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1"],
+      "port": 8765
     }
   ]
 }

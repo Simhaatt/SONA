@@ -53,8 +53,16 @@ class PairDataset:
         self._rows: list[dict] = []
 
         if manifest is not None:
-            with open(manifest, newline="", encoding="utf-8") as fh:
+            manifest_path = Path(manifest)
+            with open(manifest_path, newline="", encoding="utf-8") as fh:
                 self._rows = list(csv.DictReader(fh))
+            # Portable manifests may store paths relative to the manifest directory.
+            # Existing machine-absolute manifests continue to work unchanged.
+            for row in self._rows:
+                for key in ("clean", "noisy"):
+                    value = row.get(key)
+                    if value and not Path(value).is_absolute():
+                        row[key] = str((manifest_path.parent / value).resolve())
         elif clean_dir is not None and noisy_dir is not None:
             clean_dir, noisy_dir = Path(clean_dir), Path(noisy_dir)
             for noisy_path in sorted(noisy_dir.rglob("*.wav")):

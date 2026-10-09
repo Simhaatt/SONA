@@ -10,6 +10,7 @@ from .rl_agent import RLGainPolicy
 from .rl_attention import RLAttentionPolicy, OnlineAdapter
 from .eq import ParametricEQ, Compressor, hum_notch_curve, GRAPHIC_EQ_FREQS
 from .adapt import make_adapter, ADAPTERS, ScalarBias, BandBias, LowRankBias, FiLM
+from .onnx_enhancer import OnnxNeuralEnhancer
 
 MODELS = {
     "mask_gru": MaskGRU,
@@ -54,6 +55,7 @@ __all__ = [
     "BandBias",
     "LowRankBias",
     "FiLM",
+    "OnnxNeuralEnhancer",
     "MODELS",
     "RL_MODELS",
 ]

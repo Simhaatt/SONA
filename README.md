@@ -1,53 +1,55 @@
-# SONA — Self-supervised Online Neural Audio engine
+# SONA: Self-supervised Online Neural Audio engine
 
-Real-time speech enhancement that **adapts after deployment, with no clean reference and no
-cloud**. Audio flows through **STFT → per-band attenuation (+ EQ / dynamic-range) → ISTFT /
-overlap-add**, where the gains are set by a lightweight learned controller. At inference the
-controller is refined online by maximizing a **pretrained non-intrusive quality estimator
-(TorchAudio-SQUIM)** — the reference-free reward.
+SONA removes background noise from recorded speech: fans, traffic, babble, typing and machines. A compact learned model (a 722,209-parameter GTCRN) predicts how much of each frequency band to keep. It runs about 10× faster than real time on one laptop CPU core, and the whole system works offline.
 
-Built as a fair, equal-footing **benchmark study + a defensible novelty** to support a journal
-paper, a provisional patent, and the FYP demo.
+Final-year project, Department of Electrical and Electronics Engineering, Sri Sivasubramaniya Nadar College of Engineering, Chennai.
+Team: A. Rohit Daniel, Simhaa T. T., Vijayaraghavan A. · Supervisor: Dr. G. R. Venkatakrishnan.
+Phase I (this repository) is the software system and its evaluation. Phase II moves the same model onto an embedded live microphone-to-headphone device.
 
-> **Central design principle:** every method — classical or learned — shares the **same STFT
-> front-end, the same per-band gain output space, and the same evaluation harness**. Only the
-> gain-estimation step differs. That is what makes the comparison publishable.
+Every method, classical or learned, shares the same STFT front-end (512-point Hann window, 128 hop, 32 Bark bands), the same per-band gain output and the same evaluation harness. Only the gain estimator changes, so a score difference comes from the estimator alone.
 
-## The idea (why this is novel)
+## Results
 
-Plain ML frequency masking (RNNoise, DeepFilterNet, …) is well-trodden and not patentable. SONA's
-core is different and narrow enough to defend:
+**VoiceBank-DEMAND test set, 824 clips** (speakers and noise types unseen in training):
 
-> A learned controller adjusts the parameters of an **interpretable DSP chain**, and a
-> **low-dimensional** adaptation module is updated **online at inference** by maximizing a
-> **reference-free** quality signal — stable and cheap enough to run on edge hardware.
+| Method | SI-SDRi (dB) | PESQ | STOI | ESTOI | LSD (dB) |
+|---|---:|---:|---:|---:|---:|
+| Original (no processing) | 0.00 | 1.97 | 0.921 | 0.787 | 10.50 |
+| Spectral subtraction | −0.25 | — | 0.884 | 0.734 | 8.86 |
+| Wiener filter | −1.93 | — | 0.824 | 0.677 | 10.87 |
+| Hard threshold | −3.69 | — | 0.767 | 0.573 | 13.78 |
+| Soft threshold | −5.82 | — | 0.728 | 0.532 | 15.28 |
+| Causal Transformer | 9.08 | 2.50 | 0.932 | 0.834 | 5.97 |
+| **GTCRN (locked model)** | **9.93** | **2.52** | 0.930 | 0.832 | 6.47 |
 
-- **Layer A (research / patent core):** reference-free online adaptation of a small controller.
-  Headline result = it beats a frozen model of equal size under **noise-distribution shift**.
-- **Layer B (product / demo / dependent claims):** the *same* controller drives EQ + dynamic
-  range; plus audio-scene context, a self-learning preference loop, GUI, and Raspberry Pi.
+- All four classical filters score below the unprocessed input, in every noise type and SNR level.
+- **MS-SNSD, 1,100 clips never used in training:** GTCRN gains +3.15 dB SI-SDR, but intelligibility does not improve (STOI 0.818 before, 0.816 after).
+- **Complex vs magnitude mask:** +0.31 dB SI-SDR, −0.016 PESQ (p = 0.005). It is a trade-off, not a win.
+- **Guarded test-time (online) adaptation**, the project's original idea, is safe but gives about zero gain. It is reported as a negative result.
+- **Quantisation:** one 960-parameter layer (0.133 % of weights) carries 98.7 % of the INT8 loss. Keeping it in FP32 gives a 916.9 KB model with no detectable loss.
+- **Speech recognition:** enhancement raises Whisper's corpus word error rate by 23–47 %.
 
-See the full plan in the design doc referenced at the bottom.
+Frozen tables: `sona-final-month/FINAL_TABLES/`. Significance tests: `sona-final-month/SIGNIFICANCE/significance.md`. Full write-up: `paper_bundle/`.
 
-## Status
+**Paper:** *Where the Loss Lives: Concentrated Damage in Audio Compression and Evaluation*, submitted to the 7th International Conference on Cognitive Computing and Cyber Physical Systems (IC4S 2026).
 
-| Phase | State |
-|---|---|
-| Foundation: shared front-end, classical baselines, eval harness, learned models (M0–M3) | ✅ |
-| RL policy + attention hybrid + reference-free `OnlineAdapter` (M4) | ✅ |
-| **P2** non-intrusive SQUIM reward + pluggable reward in adapter + distribution-shift eval + Kaggle path | In progress: real-data path works; online adaptation improves PESQ in RL but still needs tuning to preserve SI-SDR/STOI |
-| **P3** adaptation-dimensionality ablation (scalar / low-rank / band-bias / FiLM) | ✅ (low-dim adaptation wins locally) |
-| **P4** differentiable parametric EQ + hum notch + compressor/limiter | ✅ built & tested |
-| P4 unified controller (EQ/DRC in the action space) + scene classifier + preference loop | ✅ scene classifier now a learned 1,716-param model at 0.748 grouped-CV accuracy |
-| P5 real-time streaming, latency/RTF, ONNX export, web demo | ✅ except Raspberry Pi (never measured on hardware) |
-| P6 paper write-up | ⏳ results frozen; writing is the remaining work |
+## Web application
 
-75 tests passing (`tests/` + `web_demo/tests`), plus 34 in `AudioVQ/`.
+```bash
+pip install -r requirements.txt
+python web_demo/app.py --open        # http://localhost:7860
+```
 
-> **`PROJECTS_STATUS.md` is the current state of everything** — this README describes the SONA
-> core only. Since 2026-07 the tree also carries a mixed-precision quantization study
-> (`PERCEPTUAL_MP/`), the final-month analysis package and FYP report (`sona-final-month/`), and a
-> separate paper on data-oblivious vector quantization (`AudioVQ/`).
+The app ships with ten test clips that have clean references, plus the five trained models it needs. It has five pages:
+- **Enhance:** pick a test clip or upload your own file.
+- **Results:** instant before/after playback, spectrograms and quality scores against the original.
+- **Compare:** runs nine methods on the same clip.
+- **Real-time:** a block-streaming simulation.
+- **About:** every benchmark table.
+
+Microphone input is Phase II. See [`web_demo/README.md`](web_demo/README.md). `python web_demo/tools/package_demo.py` builds a portable zip with one-click launchers for Windows, macOS and Linux.
+
+`SONA_Project_Explainer.html` explains the whole project from scratch, with interactive demos.
 
 ## Install
 
@@ -164,7 +166,3 @@ identity at reset; online adaptation runs with every adapter.
 SI-SDR & SI-SDRi, SNR & SNRi, PESQ (wb), STOI/ESTOI, DNSMOS, LSD, WER, plus latency/RTF (and
 params/MACs during profiling). Missing optional backends report `null` rather than failing.
 
----
-
-Design doc / roadmap: `C:\Users\hp\.claude\plans\c-users-hp-appdata-local-packages-53192-vectorized-wirth.md`
-(SONA plan — Layers A/B, datasets, phased milestones, patent-claim sketch).

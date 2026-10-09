@@ -7,7 +7,8 @@ The most important guarantee: STFT->ISTFT with an unmodified spectrum reconstruc
 import numpy as np
 import pytest
 
-from src.dsp import STFT, BandMapper, FrameFeatures, estimate_noise_psd
+from src.dsp import (STFT, BandMapper, FrameFeatures, TransientDWTConfig,
+                     apply_transient_dwt, estimate_noise_psd, transient_confidence)
 
 
 def _sig(n=16000, sr=16000):
@@ -84,3 +85,30 @@ def test_noise_psd_estimators():
         noise = estimate_noise_psd(power, method=method)
         assert noise.shape == power.shape
         assert (noise >= 0).all()
+
+
+def test_transient_dwt_identity_when_disabled():
+    x = _sig(n=16003)
+    config = TransientDWTConfig(threshold=1e6, detail_attenuation=0.0,
+                                soft_threshold=0.0, local_gain=1.0)
+    y, diagnostics = apply_transient_dwt(x, x, 16000, config)
+    assert y.shape == x.shape
+    assert np.max(np.abs(y - x)) < 1e-6
+    assert diagnostics["active_fraction"] == 0.0
+
+
+def test_transient_dwt_detects_and_localizes_impulse():
+    rng = np.random.default_rng(4)
+    noisy = (0.01 * rng.standard_normal(16000)).astype(np.float32)
+    noisy[8000:8010] += 1.0
+    enhanced = noisy.copy()
+    config = TransientDWTConfig(threshold=2.0, dilation_frames=1,
+                                detail_attenuation=.65, soft_threshold=.45,
+                                local_gain=.9)
+    confidence = transient_confidence(noisy, enhanced, 16000, config)
+    output, diagnostics = apply_transient_dwt(noisy, enhanced, 16000, config)
+    assert confidence.max() > .5
+    assert diagnostics["active_fraction"] < .15
+    assert np.max(np.abs(output[7900:8110])) < np.max(np.abs(enhanced[7900:8110]))
+    # The distant stationary region is unchanged because this is a local filter.
+    assert np.max(np.abs(output[:3000] - enhanced[:3000])) < 1e-6

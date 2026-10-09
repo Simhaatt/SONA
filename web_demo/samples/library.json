@@ -1,0 +1,82 @@
+[
+  {
+    "id": "mssnsd_airconditioner_0db",
+    "title": "Air conditioner hum",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "AirConditioner",
+    "snr_db": 0.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_babble_5db",
+    "title": "Cafe babble",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "Babble",
+    "snr_db": 5.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_typing_0db",
+    "title": "Keyboard typing",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "Typing",
+    "snr_db": 0.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_vacuumcleaner_0db",
+    "title": "Vacuum cleaner",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "VacuumCleaner",
+    "snr_db": 0.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_shuttingdoor_5db",
+    "title": "Door slams",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "ShuttingDoor",
+    "snr_db": 5.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_airportannouncements_5db",
+    "title": "Airport announcements",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "AirportAnnouncements",
+    "snr_db": 5.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_copymachine_m5db",
+    "title": "Copy machine (very noisy)",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "CopyMachine",
+    "snr_db": -5.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "mssnsd_munching_0db",
+    "title": "Munching / eating",
+    "dataset": "MS-SNSD (unseen corpus)",
+    "noise": "Munching",
+    "snr_db": 0.0,
+    "duration_s": 8.0
+  },
+  {
+    "id": "vbd_p232_005",
+    "title": "VoiceBank-DEMAND test clip A",
+    "dataset": "VoiceBank-DEMAND test",
+    "noise": "DEMAND (mixed)",
+    "snr_db": null,
+    "duration_s": 6.25
+  },
+  {
+    "id": "vbd_p257_010",
+    "title": "VoiceBank-DEMAND test clip B",
+    "dataset": "VoiceBank-DEMAND test",
+    "noise": "DEMAND (mixed)",
+    "snr_db": null,
+    "duration_s": 2.37
+  }
+]

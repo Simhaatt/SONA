@@ -1,0 +1,20 @@
+{
+  "voicebank": {
+    "title": "VoiceBank-DEMAND test (824 clips)",
+    "n": 824,
+    "si_sdr": 8.4455,
+    "snr": 8.4461,
+    "stoi": 0.9211,
+    "estoi": 0.7867,
+    "lsd": 10.3454
+  },
+  "ms_snsd": {
+    "title": "MS-SNSD external test (1,100 clips)",
+    "n": 1100,
+    "si_sdr": 2.4998,
+    "snr": 2.9816,
+    "stoi": 0.8184,
+    "estoi": 0.6676,
+    "lsd": 13.9299
+  }
+}

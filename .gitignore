@@ -1,8 +1,9 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+tmp/
 .ipynb_checkpoints/
 .venv/
 venv/
@@ -10,6 +11,9 @@ venv/
 # Data & artifacts (too large / regenerable)
 *.zip
 data/raw/
+data/downloads/
+shravan_kaggle_bundle/
+shravan_kaggle_bundle.zip
 data/voicebank/
 data/dns/
 external_data/
@@ -68,3 +72,47 @@ sona_kaggle_data.zip
 
 # Staged Kaggle upload (1.2 GB of copied corpora); rebuild with scripts/stage_kaggle_dataset.py
 kaggle_upload/
+
+# --- Public GitHub repo: SONA only (added 2026-10-09) ---
+# Separate SIH / SHRAVAN project material stays local.
+SHRAVAN_*
+SIH_*
+shravan_*/
+SHRAVAN_GITHUB/
+**/*shravan*
+**/*SHRAVAN*
+models/releases/
+src/events/
+src/realtime/
+src/models/phase6_pretrained.py
+src/train/train_distillation.py
+src/utils/kaggle_bundle.py
+tests/test_critical_events.py
+tests/test_kaggle_bundle.py
+scripts/kaggle_*_job.py
+scripts/colab_*_job.py
+scripts/evaluate_critical_events.py
+scripts/train_critical_event_tree.py
+scripts/train_phase7_cmgan.py
+scripts/prepare_kaggle_workspace.py
+r2plus1d_block.py
+requirements-kaggle.txt
+FYP_REVIEW_2_PACKAGE/
+/data/
+# Personal / third-party files
+*.avi
+*.xls
+*.sha256
+IRIS_project_list_*.pdf
+s41586-020-2145-8.pdf
+# Build outputs (the report kit is shipped as a zip)
+SONA_Report_Kit/
+
+# Ship what the web app needs: its 5 model checkpoints and the sample-clip library
+!results/kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07/extracted/ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25/last.pt
+!sona-final-month/COMPLEX_MASK_FULL5K/ckpt_complex_gtcrn/last.pt
+!results/kaggle_voicebank_strict_guard_full824_2026-07-05/extracted/ckpt_attention/last.pt
+!results/kaggle_voicebank_online_2026-07-03_run2/extracted/ckpt_mask_gru/last.pt
+!results/kaggle_voicebank_online_2026-07-03_run2/extracted/ckpt_mask_tcn/last.pt
+!web_demo/samples/**/*.wav
+STATUS.md

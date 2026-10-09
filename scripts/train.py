@@ -49,6 +49,10 @@ def main() -> None:
     ap.add_argument("--config", default="configs/model_supervised.yaml")
     ap.add_argument("--epochs", type=int, default=None)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--init-checkpoint", default=None,
+                    help="warm-start model weights from an architecture-compatible checkpoint")
+    ap.add_argument("--ckpt-dir", default=None,
+                    help="checkpoint output directory (default: <repo>/checkpoints)")
     args = ap.parse_args()
 
     cfg = load_config(ROOT / args.config)
@@ -74,7 +78,14 @@ def main() -> None:
     val_ds = TorchPairDataset(val_samples, crop_len=crop, train=False)
 
     # ---- train
-    model = train(cfg, train_ds, val_ds, device=device, ckpt_dir=ROOT / "checkpoints")
+    model = train(
+        cfg,
+        train_ds,
+        val_ds,
+        device=device,
+        ckpt_dir=Path(args.ckpt_dir) if args.ckpt_dir else ROOT / "checkpoints",
+        init_checkpoint=args.init_checkpoint,
+    )
 
     # ---- benchmark trained model vs classical baselines on the val set
     tf = build_frontend(cfg).to(device)

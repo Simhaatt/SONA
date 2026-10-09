@@ -115,7 +115,14 @@ def main() -> None:
         for backend, threads in backends:
             gain, elapsed = run_backend(feats_np, backend, threads)
             with torch.no_grad():
-                enhanced = tf.apply_band_gain(spec, gain, length=wav.shape[-1]).squeeze(0).numpy()
+                if getattr(model, "is_complex", False):
+                    enhanced = tf.apply_band_complex(
+                        spec, gain, length=wav.shape[-1]
+                    ).squeeze(0).numpy()
+                else:
+                    enhanced = tf.apply_band_gain(
+                        spec, gain, length=wav.shape[-1]
+                    ).squeeze(0).numpy()
             row = {
                 "backend": backend,
                 "threads": threads if threads is not None else "-",

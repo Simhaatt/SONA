@@ -1,109 +1,120 @@
 # SONA Web Demo
 
-Local web app for the SONA neural audio enhancement engine. It wraps the locked
-Layer A GTCRN checkpoint and the Layer B controller (`src/controller`) behind a
-Flask backend with a single-page studio-style frontend.
+Local web app for the SONA speech-enhancement final-year project. A Flask backend
+wraps the research code in `src/` (every trained model, the classical baselines,
+the Layer B controller, the metric suite and the streaming processor) behind a
+multi-page frontend. Nothing leaves the machine.
 
 ![stack](https://img.shields.io/badge/stack-Flask%20%2B%20vanilla%20JS-informational)
-
-## What it does
-
-- Load the bundled noisy sample (a real pre-mixed MS-SNSD test clip, AirConditioner noise @ 0 dB SNR) or upload audio.
-- Classify the acoustic scene (speech / music / traffic / fan / crowd / mixed / unknown).
-- Enhance with the locked `gtcrn_ch96_h96_b4_mw1p25_mr0p25` checkpoint plus
-  mode presets, denoise strength, safety floor, 8-band EQ, compressor, limiter.
-- Play original vs enhanced vs removed-noise residual (A/B/N), download the enhanced WAV.
-- Remember/restore per-scene preferences (JSON store).
-- Analytics: durations, peaks, input/output/residual RMS, estimated noise removed %,
-  loudness change, processing time, realtime factor, per-stage timings.
-- Visualizations: input/output waveforms on a **shared amplitude scale**
-  (per-signal scaling only via the visible "normalized view" toggle),
-  removed-noise residual view (`input − enhanced`), spectrum overlay with
-  10th-percentile noise-floor curves and a "background noise above 2 kHz"
-  reduction readout, and a draggable before/after comparison.
-- A "Low-noise input detected; enhancement may be subtle." notice appears for
-  inputs with a high activity-to-floor ratio (and again after enhancement if
-  less than ~3 % of energy was removed).
-
-## Install
-
-Everything runs on the packages already used by the repo (torch, numpy,
-soundfile) plus Flask:
-
-```
-pip install flask
-```
-
-(No other new dependencies. No retraining, no GPU required — CPU realtime
-factor for the 8 s sample is about 0.06×.)
 
 ## Run
 
 ```
-cd "D:\noise cancellation\web_demo"
-python app.py
+pip install flask          # everything else is already in requirements.txt
+python web_demo/app.py
 ```
 
-Then open **http://localhost:7860**.
+Then open **http://localhost:7860**. CPU only, no GPU needed.
 
-## Demo flow
+## Pages
 
-1. Wait for the loading screen (the GTCRN checkpoint warms in the background).
-2. Click **Use sample noisy audio** (or drop your own WAV/FLAC/OGG/MP3).
-3. Optionally click **Classify scene**, or leave the **auto** toggle on.
-4. Pick a mode preset and/or adjust the sliders.
-5. Click **Enhance Audio** and watch the pipeline stages.
-6. A/B the original vs enhanced audio, inspect analytics, download the WAV.
-7. Use **Remember for scene** so the same scene restores your settings next time.
+The app has one task per page; advanced settings live in a slide-in **Settings** panel.
+
+**Home** — what SONA does, with buttons to try a sample clip or use your own file.
+
+**Enhance** — choose audio from the **sample library** (10 real test-set mixtures
+from MS-SNSD and VoiceBank-DEMAND, each with its clean reference) or **upload** a
+file (WAV/FLAC/OGG/MP3, up to 5 min; an optional clean reference can be attached).
+Press Enhance; the defaults work well.
+
+**Settings panel** (from Enhance or "Adjust and re-run" on Results)
+- *Model:* any of **9 engines** — GTCRN (locked FYP model), complex-mask GTCRN,
+  causal Transformer, Mask-GRU, Mask-TCN, Wiener, spectral subtraction, soft and
+  hard thresholding — plus experimental **online adaptation** (strict-guard
+  `OnlineAdapter`, with a report on whether the guard accepted the update).
+- *Sound:* 7 mode presets or automatic, noise-removal strength, **50/60 Hz hum
+  filter**, loudness matching; advanced EQ, compressor and bypass switches.
+- *Scene:* automatic scene detection, manual scene, per-scene remembered settings.
+
+**Results** — player with Original / Enhanced / Removed / Clean (switch while
+playing with `1`–`4`, `Space` to play/pause), a live audio visualiser,
+before/after **spectrograms** on a shared dB scale and four headline numbers.
+"More detail" holds the full metric table (SI-SDR(i), SNRi, STOI, ESTOI, LSD, PESQ
+when installed — for both the raw model output and the delivered output),
+waveforms, spectrum, a before/after slider, stage timings and this session's runs.
+
+**Compare** — run any set of engines on the current clip through the same harness
+(raw output, no post-processing): ranking chart plus a sortable table with a play
+button per method.
+
+**Real-time** — streams the clip through the FYP's COLA block processor
+(`sona-final-month/realtime/stream_processor.py`) at 32/64/128/256 ms blocks:
+delay, per-block compute time vs the deadline, late blocks, speed, and streamed vs
+whole-file quality. This is a simulation on a file; live microphone processing is
+Phase 2 (hardware).
+
+**About** — model cards, the frozen benchmark tables from
+`sona-final-month/FINAL_TABLES`, and the key findings.
+
+Dark futuristic theme by default with a light option; animations switch off when
+the system asks for reduced motion; layout works down to phone width.
 
 ## Paths
 
 | Thing | Path |
 | --- | --- |
-| Layer A checkpoint (read-only) | `results\kaggle_voicebank_gtcrn_loss_focus_full824_rerun_2026-07-07\extracted\ckpt_gtcrn_ch96_h96_b4_mw1p25_mr0p25\last.pt` |
-| Bundled sample | `web_demo\samples\sample_noisy.wav` (regenerate: `python tools\make_sample.py`) |
-| Uploaded/registered inputs | `results\web_demo_uploads\` |
-| Enhanced outputs | `results\web_demo_outputs\` |
-| Preference memory | `results\web_demo_preferences.json` |
+| Model checkpoints (read-only) | see `ENGINES` in `engine.py` |
+| Sample library | `web_demo/samples/*_noisy.wav`, `*_clean.wav`, `library.json` (rebuild: `python web_demo/tools/build_sample_library.py`) |
+| Legacy demo mix | `web_demo/samples/sample_noisy.wav` (`python web_demo/tools/make_sample.py`) |
+| Uploaded inputs (+ `_ref.wav` references) | `results/web_demo_uploads/` |
+| Enhanced / compare / stream outputs | `results/web_demo_outputs/` |
+| Preference memory | `results/web_demo_preferences.json` |
 
 ## API (all local)
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
-| `/api/health` | GET | engine status, checkpoint presence, device |
+| `/api/health` | GET | engine status, loaded engines, available metric backends |
+| `/api/engines` | GET | the 9 engines with summaries and benchmark numbers |
 | `/api/modes` | GET | mode presets + scene→mode routing |
-| `/api/sample` | POST | register bundled sample as input |
+| `/api/samples` | GET | sample library |
+| `/api/sample` | POST | register a library sample (`sample_id`) or the legacy mix |
 | `/api/upload` | POST | multipart upload (validated, ≤60 MB, ≤300 s) |
+| `/api/reference` | POST / DELETE | attach / remove a clean reference for an input |
 | `/api/classify` | POST | scene label + confidence + features |
-| `/api/enhance` | POST | full pipeline; returns analytics + output id |
-| `/api/audio/input/<id>`, `/api/audio/output/<id>`, `/api/audio/residual/<id>` | GET | stream WAV |
+| `/api/enhance` | POST | full pipeline (`engine`, `online_adapt`, `hum_notch_hz`, controller settings) |
+| `/api/compare` | POST | run several engines on one clip (≤60 s) |
+| `/api/stream` | POST | streaming simulation (`block_ms`, `engine`; ≤60 s) |
+| `/api/research` | GET | frozen benchmark tables |
+| `/api/audio/{input,reference,output,residual}/<id>` | GET | stream WAV |
 | `/api/download/<id>` | GET | download enhanced WAV |
 | `/api/preferences` | GET/POST/DELETE | scene preference store |
 
 Safety: uploads are extension-checked and decode-verified, stored under fresh
-UUID names; audio/download routes only accept 32-char hex ids inside the fixed
-demo folders, so user input can never address arbitrary paths. Errors return
-JSON without tracebacks; details go to the server log.
+UUID names; audio routes only accept 32-char hex ids (sample ids are
+`[a-z0-9_]`) inside the fixed demo folders, so user input can never address
+arbitrary paths. Errors return JSON without tracebacks.
 
 ## Tests
 
 ```
-cd "D:\noise cancellation\web_demo"
+cd web_demo
 python -m pytest tests -q
 ```
 
-17 tests cover health, sample presence, upload validation, classification,
-end-to-end enhancement (real checkpoint, produces a WAV), download-path safety,
-and the preference-memory round trip. The preference store is isolated to a
-temp file during tests.
+29 tests: health, upload validation, classification, end-to-end enhancement
+with the real checkpoints, engine/hum/online-adaptation validation, reference
+metrics (the locked model must improve a real test mixture by >3 dB SI-SDR),
+compare, streaming, research tables, download-path safety and the preference
+store (isolated to a temp file).
 
 ## Known limitations
 
-- Offline file processing only — the realtime mic pipeline is a later roadmap stage.
-- Everything is resampled to 16 kHz mono (the pipeline's native format).
-- MP3 upload support depends on the installed libsndfile version.
-- The Layer B compressor noticeably reduces RMS level; the
-  "Normalize output loudness" toggle (default on) rescales the output peak to
-  the input peak for fair A/B listening.
-- The scene classifier is the deterministic feature-based starter, not a trained model.
-- Uploaded-name display list is in-memory; restarting the server forgets display names (files remain).
+- Works on audio files only. Live microphone input is planned for Phase 2
+  (hardware); the command-line `sona-final-month/realtime/realtime_demo.py --mode live`
+  is the existing prototype.
+- Everything is resampled to 16 kHz mono (the models' native format).
+- PESQ shows "n/a" on Python 3.14 (no `pesq` wheel); all other metrics work.
+- Streaming enhances each block independently, so quality is lower than
+  whole-file processing — the Real-time view measures exactly that trade-off.
+- Real-time numbers are for this CPU under its current load, not an edge board.

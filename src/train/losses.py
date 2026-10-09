@@ -59,9 +59,32 @@ def multi_resolution_magnitude_loss(
     return torch.stack(losses).mean()
 
 
+def compressed_complex_stft_loss(
+    estimate: torch.Tensor,
+    reference: torch.Tensor,
+    n_fft: int = 512,
+    hop: int = 128,
+    compression: float = 0.3,
+) -> torch.Tensor:
+    """Phase-aware L1 loss on power-compressed complex STFT coefficients.
+
+    Power compression limits domination by loud bins while retaining the real/imaginary structure
+    that a magnitude-only loss discards. It is useful for perceptual fine-tuning and complex masks.
+    """
+    window = torch.hann_window(n_fft, periodic=True, device=estimate.device)
+    kw = dict(n_fft=n_fft, hop_length=hop, win_length=n_fft, window=window,
+              center=True, return_complex=True)
+    est = torch.stft(estimate, **kw)
+    ref = torch.stft(reference, **kw)
+    est_comp = est.abs().clamp_min(EPS).pow(compression) * torch.exp(1j * torch.angle(est))
+    ref_comp = ref.abs().clamp_min(EPS).pow(compression) * torch.exp(1j * torch.angle(ref))
+    return torch.view_as_real(est_comp - ref_comp).abs().mean()
+
+
 def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: float = 0.5,
                   n_fft: int = 512, hop: int = 128,
-                  mr_mag_weight: float = 0.0, snr_weight: float = 0.0) -> torch.Tensor:
+                  mr_mag_weight: float = 0.0, snr_weight: float = 0.0,
+                  complex_stft_weight: float = 0.0) -> torch.Tensor:
     loss = si_sdr_loss(estimate, reference)
     if mag_weight > 0:
         loss = loss + mag_weight * magnitude_loss(estimate, reference, n_fft, hop)
@@ -69,6 +92,10 @@ def combined_loss(estimate: torch.Tensor, reference: torch.Tensor, mag_weight: f
         loss = loss + mr_mag_weight * multi_resolution_magnitude_loss(estimate, reference)
     if snr_weight > 0:
         loss = loss + snr_weight * snr_loss(estimate, reference)
+    if complex_stft_weight > 0:
+        loss = loss + complex_stft_weight * compressed_complex_stft_loss(
+            estimate, reference, n_fft=n_fft, hop=hop
+        )
     return loss
 
 

@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -119,6 +120,27 @@ def main() -> None:
     print(f"PyTorch vs FP32-ONNX max abs diff on dummy input: {max_abs_diff:.3e}")
     if max_abs_diff > 1e-3:
         print("WARNING: diff larger than expected for FP32 export -- inspect before trusting benchmarks.")
+
+    int8_sess = ort.InferenceSession(str(int8_path), providers=["CPUExecutionProvider"])
+    int8_out = int8_sess.run(["gain"], {"feats": dummy.numpy()})[0]
+    int8_max_abs_diff = float(abs(torch_out - int8_out).max())
+    int8_mean_abs_diff = float(abs(torch_out - int8_out).mean())
+    report = {
+        "checkpoint": str(Path(args.checkpoint).resolve()),
+        "is_complex": bool(getattr(model, "is_complex", False)),
+        "parameters": model.num_params(),
+        "calibration_manifest": str(Path(args.calib_manifest).resolve()),
+        "calibration_samples": len(calib_feats),
+        "fp32_bytes": fp32_path.stat().st_size,
+        "int8_bytes": int8_path.stat().st_size,
+        "fp32_max_abs_diff_vs_pytorch": float(max_abs_diff),
+        "int8_max_abs_diff_vs_pytorch": int8_max_abs_diff,
+        "int8_mean_abs_diff_vs_pytorch": int8_mean_abs_diff,
+    }
+    (out / "export_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(f"INT8 max/mean abs diff vs PyTorch: {int8_max_abs_diff:.3e} / "
+          f"{int8_mean_abs_diff:.3e}")
+    print(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":

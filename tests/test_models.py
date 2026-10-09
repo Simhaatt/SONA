@@ -17,7 +17,11 @@ from src.models import (
 )
 from src.data import SyntheticNoisyDataset
 from src.train.train_supervised import overfit_batch
-from src.train.losses import mask_polarity_loss, multi_resolution_magnitude_loss
+from src.train.losses import (
+    compressed_complex_stft_loss,
+    mask_polarity_loss,
+    multi_resolution_magnitude_loss,
+)
 
 
 def _cfg(kind, **model_kw):
@@ -132,6 +136,17 @@ def test_multi_resolution_magnitude_loss_is_finite():
     loss = multi_resolution_magnitude_loss(x, y, resolutions=((128, 32), (256, 64)))
     assert torch.isfinite(loss)
     assert float(loss) >= 0.0
+
+
+def test_compressed_complex_stft_loss_is_phase_aware_and_differentiable():
+    reference = torch.randn(2, 2048)
+    estimate = reference.clone().requires_grad_(True)
+    identical = compressed_complex_stft_loss(estimate, reference, n_fft=256, hop=64)
+    assert float(identical.detach()) < 1e-6
+    changed = compressed_complex_stft_loss(-estimate, reference, n_fft=256, hop=64)
+    assert float(changed.detach()) > float(identical.detach())
+    changed.backward()
+    assert estimate.grad is not None and torch.isfinite(estimate.grad).all()
 
 
 def test_gru_overfits_single_batch():
